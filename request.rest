@@ -1,0 +1,15 @@
+### Test Koneksi
+GET http://localhost:3000/
+
+### Token
+GET http://localhost:3000/guru
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJHVVJVIiwiaWF0IjoxNzU1MDczMzQ4LCJleHAiOjE3NTUxNTk3NDh9.wL5yAC8NUz1CK0mlupYkhFoj8u6L3NdBCrbVIMsPQ7U
+
+### Login sebagai Guru
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "tari.prakasa36@gmail.com",
+  "password": "password123"
+}
