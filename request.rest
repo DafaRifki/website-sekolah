@@ -1,15 +1,15 @@
 ### Test Koneksi
-GET http://localhost:3000/
+GET http://localhost:3000/api
 
 ### Token
-GET http://localhost:3000/guru
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJHVVJVIiwiaWF0IjoxNzU1MDczMzQ4LCJleHAiOjE3NTUxNTk3NDh9.wL5yAC8NUz1CK0mlupYkhFoj8u6L3NdBCrbVIMsPQ7U
+GET http://localhost:3000/api/siswa
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQsInJvbGUiOiJHVVJVIiwiaWF0IjoxNzU1MTM3NTc3LCJleHAiOjE3NTUyMjM5Nzd9.7xuZAwxDo-MIlv4-cOd-r3T7vrfNSRo2MxXLDseQU9c
 
 ### Login sebagai Guru
-POST http://localhost:3000/auth/login
+POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "tari.prakasa36@gmail.com",
+  "email": "carub_dirgantara30@gmail.com.2",
   "password": "password123"
 }

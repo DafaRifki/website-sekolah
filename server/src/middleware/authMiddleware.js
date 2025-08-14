@@ -18,7 +18,7 @@ export const authenticate = (req, res, next) => {
 
 export const authorizeRoles = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!roles.includes(req.user.role) === true) {
       return res.status(403).json({ error: "Akses ditolak" });
     }
     next();

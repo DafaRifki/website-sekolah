@@ -31,6 +31,7 @@ model Guru {
   fotoProfil    String?
   userId        Int     @unique
   user          User    @relation(fields: [userId], references: [id])
+  waliKelas     Kelas[]
 }
 
 model Siswa {
@@ -42,6 +43,16 @@ model Siswa {
   fotoProfil   String?
   userId       Int      @unique
   user         User     @relation(fields: [userId], references: [id])
+  kelasId      Int?
+  kelas        Kelas?   @relation(fields: [kelasId], references: [id])
+}
+
+model Kelas {
+  id     Int     @id @default(autoincrement())
+  nama   String  @unique
+  guruId Int
+  guru   Guru    @relation(fields: [guruId], references: [id])
+  siswa  Siswa[]
 }
 
 enum Role {
