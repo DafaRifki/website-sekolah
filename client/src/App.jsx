@@ -1,17 +1,16 @@
-import React from "react";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LoginPage from './pages/projects/LoginPage';
+import SignUpPage from './pages/projects/SignUpPage';
 
-const App = () => {
+export default function App() {
   return (
-    <section className="section">
-      <div className="container">
-        <h1 className="title">Hello, Testing Desain Bulma</h1>
-        <p className="subtitle">
-          ini <strong>Bulma</strong> di React + Vite
-        </p>
-        <button className="button is-primary">Tombol Utama</button>
-      </div>
-    </section>
+    <Router>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+      </Routes>
+    </Router>
   );
-};
-
-export default App;
+}
