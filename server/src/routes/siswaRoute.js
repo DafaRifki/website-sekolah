@@ -8,12 +8,12 @@ import {
   updateSiswa,
 } from "../controllers/siswaController.js";
 import { isWaliKelas } from "../middleware/isWaliKelas.js";
-import { authenticate } from "../middleware/authMiddleware.js";
+import { authenticate, authorizeRoles } from "../middleware/authMiddleware.js";
+import { upload } from "../middleware/uploadFile.js";
 
 const router = Router();
-const upload = multer({ dest: "uploads/" });
 
-router.get("/", getAllSiswa);
+router.get("/", authenticate, getAllSiswa);
 router.get("/:id", authenticate, getSiswaById);
 router.post("/", upload.single("fotoProfil"), isWaliKelas, createSiswa);
 router.patch(
@@ -21,6 +21,6 @@ router.patch(
   upload.fields([{ name: "fotoProfil", maxCount: 1 }]),
   updateSiswa
 );
-router.delete("/:id", isWaliKelas, deleteSiswa);
+router.delete("/:id", authenticate, isWaliKelas, deleteSiswa);
 
 export default router;

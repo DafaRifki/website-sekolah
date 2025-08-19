@@ -79,9 +79,80 @@ export const login = async (req, res) => {
     { expiresIn: "1d" }
   );
 
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // true di production
+    sameSite: "strict",
+    maxAge: 24 * 60 * 60 * 1000, // 1 hari
+  });
+
   res.json({
     message: "Login berhasil",
     token,
     role: user.role,
   });
+};
+
+export const whoami = async (req, res) => {
+  try {
+    const { userId, role } = req.user;
+
+    const userData = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        siswa:
+          role === "SISWA"
+            ? { select: { id: true, nama: true, nis: true } }
+            : false,
+        guru:
+          role === "GURU"
+            ? { select: { id: true, nama: true, nip: true } }
+            : false,
+      },
+    });
+
+    if (!userData) {
+      return res.status(404).json({
+        success: false,
+        message: "User tidak ditemukan",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Informasi pengguna",
+      user: userData,
+    });
+  } catch (error) {
+    console.error("Error whoami:", error);
+    res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
+      error: error.message,
+    });
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    res.json({
+      success: true,
+      message: "Logout berhasil",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
+      error: error.message,
+    });
+  }
 };

@@ -10,6 +10,11 @@ POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "carub_dirgantara30@gmail.com.2",
+  "email": "admin@example.com",
   "password": "password123"
 }
+
+### Informasi pengguna
+
+GET http://localhost:3000/api/auth/whoami
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1NTI2NjQ2OSwiZXhwIjoxNzU1MzUyODY5fQ.NIh4w6t9If0vIOJzMYPqY0kManjrhIT0-GyjK5PamaU
