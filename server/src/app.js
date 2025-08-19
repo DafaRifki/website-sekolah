@@ -1,6 +1,7 @@
 import express from "express";
 import "dotenv/config";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import path from "path";
 import siswaRoutes from "./routes/siswaRoute.js";
 import guruRoutes from "./routes/guruRoute.js";
@@ -14,6 +15,7 @@ app.use(
     credentials: true,
   })
 );
+app.use(cookieParser());
 app.use(express.json());
 
 app.get("/api", (req, res) => res.json({ ok: true, message: "API siap" }));
