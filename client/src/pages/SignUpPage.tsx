@@ -9,11 +9,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import apiClient from "@/config/axios";
 import delay from "@/lib/delay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
+import { Await, Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import z from "zod";
 
@@ -55,6 +56,8 @@ const SignUpPage = () => {
     setLoading(true);
     try {
       await delay(500);
+     const {data} = await apiClient.post('auth/register', values)
+     console.log(data)
       toast.success("Register Berhasil", {
         onAutoClose: () => {
           setLoading(false);
