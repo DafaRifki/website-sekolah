@@ -4,52 +4,37 @@ import jwt from "jsonwebtoken";
 
 export const register = async (req, res) => {
   try {
-    const { email, password, nama, nis, alamat, tanggalLahir, fotoProfil } =
-      req.body;
+    const { name, email, password } = req.body;
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    // cek email sudah ada
+    const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return res.status(400).json({ message: "Email sudah digunakan" });
     }
 
-    const existingSiswa = await prisma.siswa.findUnique({
-      where: { nis },
-    });
-    if (existingSiswa) {
-      return res.status(400).json({ message: "NIS sudah digunakan" });
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // role default = SISWA
     const newUser = await prisma.user.create({
       data: {
+        name,
         email,
         password: hashedPassword,
         role: "SISWA",
-        siswa: {
-          create: {
-            nama,
-            nis,
-            alamat,
-            tanggalLahir: new Date(tanggalLahir),
-            fotoProfil: fotoProfil || null,
-          },
-        },
       },
-      include: { siswa: true },
     });
 
     res.status(201).json({
       message: "Register berhasil",
       user: {
+        name: newUser.name,
         email: newUser.email,
         role: newUser.role,
         siswa: newUser.siswa,
       },
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -95,44 +80,46 @@ export const login = async (req, res) => {
 
 export const whoami = async (req, res) => {
   try {
-    const { userId, role } = req.user;
-
-    const userData = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        siswa:
-          role === "SISWA"
-            ? { select: { id: true, nama: true, nis: true } }
-            : false,
-        guru:
-          role === "GURU"
-            ? { select: { id: true, nama: true, nip: true } }
-            : false,
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      include: {
+        siswa: true,
+        guru: true,
       },
     });
 
-    if (!userData) {
-      return res.status(404).json({
-        success: false,
-        message: "User tidak ditemukan",
-      });
+    if (!user) {
+      return res.status(404).json({ error: "User tidak ditemukan" });
     }
 
+    let name = null;
+    let avatarFilename = null; // Ganti nama variabel agar lebih jelas
+
+    if (user.role === "GURU" && user.guru) {
+      name = user.guru?.nama;
+      avatarFilename = user.guru?.fotoProfil;
+    } else if (user.role === "SISWA" && user.siswa) {
+      name = user.siswa?.nama;
+      avatarFilename = user.siswa?.fotoProfil;
+    }
+
+    // --- PERUBAHAN DI SINI ---
+    // Bangun URL lengkap jika ada nama file avatar
+    const avatarUrl = avatarFilename
+      ? `${process.env.BACKEND_URL}${avatarFilename}`
+      : null;
+
     res.json({
-      success: true,
-      message: "Informasi pengguna",
-      user: userData,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        name,
+        fotoProfil: avatarUrl, // Kirim URL lengkap atau null
+      },
     });
   } catch (error) {
-    console.error("Error whoami:", error);
-    res.status(500).json({
-      success: false,
-      message: "Terjadi kesalahan server",
-      error: error.message,
-    });
+    res.status(500).json({ error: error.message });
   }
 };
 

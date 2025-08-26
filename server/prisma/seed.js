@@ -1,52 +1,57 @@
 import prisma from "../src/models/prisma.js";
-import { faker } from "@faker-js/faker/locale/id_ID";
+// import { faker } from "@faker-js/faker/locale/id_ID";
 import bcrypt from "bcrypt";
 
 async function main() {
-  // Bersihkan data lama
-  await prisma.siswa.deleteMany();
-  await prisma.kelas.deleteMany();
-  await prisma.guru.deleteMany();
-  await prisma.user.deleteMany();
-
   const hashedPassword = await bcrypt.hash("password123", 10);
 
   // Admin
-  const admin = await prisma.user.create({
-    data: {
-      email: "admin@example.com",
-      password: hashedPassword,
-      role: "ADMIN",
-    },
+  const admin = await prisma.user.createMany({
+    data: [
+      {
+        email: "admin1@example.com",
+        password: hashedPassword,
+        role: "ADMIN",
+      },
+    ],
+    data: [
+      {
+        email: "admin2@example.com",
+        password: hashedPassword,
+        role: "ADMIN",
+      },
+    ],
+    data: [
+      {
+        email: "admin3@example.com",
+        password: hashedPassword,
+        role: "ADMIN",
+      },
+    ],
   });
   console.log(`✅ Admin dibuat: ${admin.email}`);
 
   // Guru
   const guruList = [];
-  for (let i = 0; i < 10; i++) {
-    const user = await prisma.user.create({
+  for (let i = 0; i < 3; i++) {
+    const guru = await prisma.guru.create({
       data: {
-        email: faker.internet.email().toLowerCase() + `.${i}`, // pastikan unik
-        password: hashedPassword,
-        role: "GURU",
+        nip: `198000${i}`,
+        nama: `Guru ${i}`,
+        jenisKelamin: i % 2 === 0 ? "Perempuan" : "Laki-laki",
+        alamat: `Alamat Guru ${i}`,
+        noHP: `08123${i}45678`,
+        email: `guru${i}@sekolah.com`,
+        jabatan: "Guru Mapel",
       },
     });
 
-    const guru = await prisma.guru.create({
+    await prisma.user.create({
       data: {
-        nama: faker.person.fullName(),
-        nip: faker.string.numeric({ length: 18 }),
-        mataPelajaran: faker.helpers.arrayElement([
-          "Matematika",
-          "Bahasa Indonesia",
-          "Bahasa Inggris",
-          "IPA",
-          "IPS",
-          "PJOK",
-          "Seni Budaya",
-        ]),
-        fotoProfil: faker.image.avatar(),
-        userId: user.id,
+        email: guru.email,
+        password: hashedPassword,
+        role: "GURU",
+        guruId: guru.id_guru,
       },
     });
 
@@ -55,45 +60,41 @@ async function main() {
   console.log(`✅ ${guruList.length} Guru berhasil dibuat`);
 
   // Kelas
-  const kelasList = [];
-  for (let i = 0; i < 6; i++) {
-    const waliKelas = faker.helpers.arrayElement(guruList);
-    const kelas = await prisma.kelas.create({
-      data: {
-        nama: `Kelas ${faker.helpers.arrayElement([
-          "X",
-          "XI",
-          "XII",
-        ])} ${faker.helpers.arrayElement(["A", "B", "C"])}-${i + 1}`,
-        guruId: waliKelas.id,
-      },
-    });
-    kelasList.push(kelas);
-  }
-  console.log(`✅ ${kelasList.length} Kelas berhasil dibuat`);
+  // const kelasList = [];
+  // for (let i = 0; i < 6; i++) {
+  //   const waliKelas = faker.helpers.arrayElement(guruList);
+  //   const kelas = await prisma.kelas.create({
+  //     data: {
+  //       nama: `Kelas ${faker.helpers.arrayElement([
+  //         "X",
+  //         "XI",
+  //         "XII",
+  //       ])} ${faker.helpers.arrayElement(["A", "B", "C"])}-${i + 1}`,
+  //       guruId: waliKelas.id,
+  //     },
+  //   });
+  //   kelasList.push(kelas);
+  // }
+  // console.log(`✅ ${kelasList.length} Kelas berhasil dibuat`);
 
   // Siswa
-  for (let i = 0; i < 20; i++) {
-    const user = await prisma.user.create({
+  for (let i = 0; i < 3; i++) {
+    const siswa = await prisma.siswa.create({
       data: {
-        email: faker.internet.email().toLowerCase() + `.${i}`, // unik
-        password: hashedPassword,
-        role: "SISWA",
+        nis: `202300${i}`,
+        nama: `Siswa ${i}`,
+        alamat: `Alamat Siswa ${i}`,
+        tanggalLahir: new Date(2007, i, i + 5),
+        jenisKelamin: i % 2 === 0 ? "Perempuan" : "Laki-laki",
       },
     });
 
-    const randomKelas = faker.helpers.arrayElement(kelasList);
-    await prisma.siswa.create({
+    await prisma.user.create({
       data: {
-        nama: faker.person.fullName(),
-        nis: faker.string.numeric({ length: 10 }),
-        alamat: `${faker.location.streetAddress(
-          true
-        )}, ${faker.location.city()}, ${faker.location.state()}`,
-        tanggalLahir: faker.date.birthdate({ min: 10, max: 18, mode: "age" }),
-        fotoProfil: faker.image.avatar(),
-        userId: user.id,
-        kelasId: randomKelas.id,
+        email: `siswa${i}@sekolah.com`,
+        password: hashedPassword,
+        role: "SISWA",
+        siswaId: siswa.id_siswa,
       },
     });
   }
