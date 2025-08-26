@@ -1,8 +1,21 @@
 import prisma from "../models/prisma.js";
 
 export const getAllGuru = async (req, res) => {
-  const guru = await prisma.guru.findMany({ orderBy: { id: "asc" } });
-  res.json(guru);
+  try {
+    const guru = await prisma.guru.findMany({
+      orderBy: { id_guru: "asc" },
+      include: { user: { select: { email: true, role: true } } },
+    });
+
+    res.status(200).json({ success: true, data: guru });
+  } catch (error) {
+    console.log("Error getAllGuru: ", error);
+    res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
+      error: error.message,
+    });
+  }
 };
 
 export const getGuruById = async (req, res) => {
@@ -10,9 +23,8 @@ export const getGuruById = async (req, res) => {
     const { id } = req.params;
 
     const guru = await prisma.guru.findUnique({
-      where: { id: parseInt(id) },
+      where: { id_guru: parseInt(id) },
       include: {
-        waliKelas: true,
         user: {
           select: { email: true, role: true },
         },
@@ -26,7 +38,7 @@ export const getGuruById = async (req, res) => {
       });
     }
 
-    res.json({
+    res.status(200).json({
       success: true,
       data: guru,
     });

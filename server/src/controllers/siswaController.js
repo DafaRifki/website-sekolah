@@ -4,8 +4,22 @@ import prisma from "../models/prisma.js";
 import bcrypt from "bcrypt";
 
 export const getAllSiswa = async (req, res) => {
-  const siswa = await prisma.siswa.findMany({ orderBy: { id: "asc" } });
-  res.json(siswa);
+  try {
+    const siswa = await prisma.siswa.findMany({
+      orderBy: { id_siswa: "asc" },
+      include: {
+        user: { select: { email: true, role: true } },
+        kelas: true,
+      },
+    });
+
+    res.status(200).json({ success: true, data: siswa });
+  } catch (err) {
+    console.log("Error getAllSiswa: ", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Terjadi kesalahan server" });
+  }
 };
 
 export const getSiswaById = async (req, res) => {
@@ -13,7 +27,7 @@ export const getSiswaById = async (req, res) => {
     const { id } = req.params;
 
     const siswa = await prisma.siswa.findUnique({
-      where: { id: parseInt(id) },
+      where: { id_siswa: parseInt(id) },
       include: {
         kelas: true,
         user: {
@@ -29,7 +43,7 @@ export const getSiswaById = async (req, res) => {
       });
     }
 
-    res.json({
+    res.status(200).json({
       success: true,
       data: siswa,
     });
@@ -45,8 +59,16 @@ export const getSiswaById = async (req, res) => {
 
 export const createSiswa = async (req, res) => {
   try {
-    const { email, password, nama, nis, alamat, tanggalLahir, kelasId } =
-      req.body;
+    const {
+      email,
+      password,
+      nama,
+      nis,
+      alamat,
+      tanggalLahir,
+      kelasId,
+      jenisKelamin,
+    } = req.body;
 
     // cek email yang unik
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -54,6 +76,15 @@ export const createSiswa = async (req, res) => {
       res.status(400).json({
         success: false,
         message: "Email sudah digunakan",
+      });
+    }
+
+    // Cek NIS unik
+    const existingSiswa = await prisma.siswa.findUnique({ where: { nis } });
+    if (existingSiswa) {
+      return res.status(400).json({
+        success: false,
+        message: "NIS sudah digunakan",
       });
     }
 
@@ -75,10 +106,16 @@ export const createSiswa = async (req, res) => {
         nis,
         alamat,
         tanggalLahir: new Date(tanggalLahir),
+        jenisKelamin,
         fotoProfil: fotoUrl,
-        userId: user.id,
-        kelasId: parseInt(kelasId),
+        kelasId: kelasId ? parseInt(kelasId) : null,
       },
+    });
+
+    // update user agar punya relasi ke siswa
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { siswaId: siswa.id_siswa },
     });
 
     res.status(201).json({
@@ -99,10 +136,10 @@ export const createSiswa = async (req, res) => {
 export const updateSiswa = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nama, nis, alamat, tanggalLahir, kelasId } = req.body;
+    const { nama, nis, alamat, tanggalLahir, kelasId, jenisKelamin } = req.body;
 
     const oldData = await prisma.siswa.findUnique({
-      where: { id: parseInt(id) },
+      where: { id_siswa: parseInt(id) },
     });
 
     let fotoProfilUrl = undefined;
@@ -117,12 +154,13 @@ export const updateSiswa = async (req, res) => {
     }
 
     const updateSiswa = await prisma.siswa.update({
-      where: { id: parseInt(id) },
+      where: { id_siswa: parseInt(id) },
       data: {
         ...(nama && { nama }),
         ...(nis && { nis }),
         ...(alamat && { alamat }),
         ...(tanggalLahir && { tanggalLahir: new Date(tanggalLahir) }),
+        ...(jenisKelamin && { jenisKelamin }),
         ...(fotoProfilUrl && { fotoProfil: fotoProfilUrl }),
         ...(kelasId && { kelasId: parseInt(kelasId) }),
       },
@@ -147,7 +185,7 @@ export const deleteSiswa = async (req, res) => {
     const { id } = req.params;
 
     const siswa = await prisma.siswa.findUnique({
-      where: { id: parseInt(id) },
+      where: { id_siswa: parseInt(id) },
     });
 
     if (!siswa) {
@@ -164,8 +202,14 @@ export const deleteSiswa = async (req, res) => {
       }
     }
 
+    // hapus relasi user
+    await prisma.user.updateMany({
+      where: { siswaId: siswa.id_siswa },
+      data: { siswaId: null },
+    });
+
     await prisma.siswa.delete({
-      where: { id: parseInt(id) },
+      where: { id_siswa: parseInt(id) },
     });
 
     res.json({ success: true, message: "Data siswa berhasil dihapus" });

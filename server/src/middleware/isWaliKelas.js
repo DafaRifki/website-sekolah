@@ -6,10 +6,10 @@ export const isWaliKelas = async (req, res, next) => {
     const body = req.body || {};
     let kelasId = body.kelasId;
 
-    // Kalau tidak ada di body dan ada params.id (untuk DELETE/PATCH)
+    // Kalau tidak ada di body, cek dari params.id (misalnya update/delete siswa)
     if (!kelasId && req.params.id) {
       const siswa = await prisma.siswa.findUnique({
-        where: { id: parseInt(req.params.id) },
+        where: { id_siswa: parseInt(req.params.id) },
       });
       if (!siswa) {
         return res.status(404).json({
@@ -43,17 +43,9 @@ export const isWaliKelas = async (req, res, next) => {
       });
     }
 
-    const userId = req.user.userId || req.user.id;
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "ID pengguna tidak ditemukan di token",
-      });
-    }
-
-    // Ambil data guru
-    const guru = await prisma.guru.findUnique({
-      where: { userId },
+    // Cari data guru berdasarkan user login
+    const guru = await prisma.guru.findFirst({
+      where: { user: { id: req.user.id } },
     });
 
     if (!guru) {
@@ -63,9 +55,9 @@ export const isWaliKelas = async (req, res, next) => {
       });
     }
 
-    // Ambil data kelas
+    // Cari data kelas
     const kelas = await prisma.kelas.findUnique({
-      where: { id: parseInt(kelasId) },
+      where: { id_kelas: parseInt(kelasId) },
     });
 
     if (!kelas) {
@@ -75,14 +67,15 @@ export const isWaliKelas = async (req, res, next) => {
       });
     }
 
-    // Cek wali kelas
-    if (kelas.guruId !== guru.id) {
+    // Cek apakah guru login adalah wali dari kelas ini
+    if (kelas.waliId !== guru.id_guru) {
       return res.status(403).json({
         success: false,
         message: "Anda bukan wali kelas dari kelas ini",
       });
     }
 
+    // Lolos validasi
     req.guru = guru;
     req.kelas = kelas;
     next();

@@ -14,7 +14,7 @@ import delay from "@/lib/delay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Await, Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import z from "zod";
 
@@ -56,8 +56,8 @@ const SignUpPage = () => {
     setLoading(true);
     try {
       await delay(500);
-     const {data} = await apiClient.post('auth/register', values)
-     console.log(data)
+      const { data } = await apiClient.post("/auth/register", values);
+      // console.log(data);
       toast.success("Register Berhasil", {
         onAutoClose: () => {
           setLoading(false);
@@ -71,7 +71,7 @@ const SignUpPage = () => {
         },
       });
     }
-    console.log(values);
+    // console.log(values);
   };
 
   return (
@@ -79,9 +79,7 @@ const SignUpPage = () => {
       <div className="bg-white/90 p-10 rounded-2xl shadow-xl max-w-md w-full border border-green-100">
         {/* Judul */}
         <div className="text-center space-y-2 mb-6">
-          <h1 className="text-3xl font-extrabold text-green-600">
-            Buat Akun
-          </h1>
+          <h1 className="text-3xl font-extrabold text-green-600">Buat Akun</h1>
           <p className="text-gray-500 text-sm">
             Silahkan isi form di bawah ini untuk mendaftar
           </p>
@@ -91,8 +89,7 @@ const SignUpPage = () => {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSignUp)}
-            className="space-y-4"
-          >
+            className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -158,7 +155,9 @@ const SignUpPage = () => {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">Konfirmasi Password</FormLabel>
+                  <FormLabel className="text-gray-700">
+                    Konfirmasi Password
+                  </FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -178,10 +177,9 @@ const SignUpPage = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-green-500 hover:bg-green-600 text-white rounded-lg shadow-md transition-all"
-              >
+                className="w-full bg-green-500 hover:bg-green-600 text-white rounded-lg shadow-md transition-all">
                 {loading && <Loading />}
-                Daftar 
+                Daftar
               </Button>
             </div>
 
@@ -191,8 +189,7 @@ const SignUpPage = () => {
                 Sudah punya akun?{" "}
                 <Link
                   to={"/login"}
-                  className="text-green-600 font-medium hover:underline"
-                >
+                  className="text-green-600 font-medium hover:underline">
                   Login di sini
                 </Link>
               </p>

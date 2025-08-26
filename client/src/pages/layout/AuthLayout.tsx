@@ -1,24 +1,45 @@
-import { AppSidebar } from "@/components/app-sidebar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+import { AppSidebar } from "@/components/app-sidebar";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { Outlet } from "react-router-dom"
+} from "@/components/ui/sidebar";
+import isLoggedIn from "@/hooks/useAuth";
+import { useEffect, useState } from "react";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+
+interface User {
+  name: string;
+  email: string;
+  role: "ADMIN" | "GURU" | "SISWA";
+}
 
 export default function AuthLayout() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [loggedIn, setLoggedIn] = useState<boolean>(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const checkLogin = async () => {
+      const user = await isLoggedIn();
+      setLoggedIn(!!user);
+      setUser(user || null);
+      setLoading(false);
+    };
+    checkLogin();
+  }, []);
+
+  if (loading) return null;
+
+  if (!loggedIn) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar user={user} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
@@ -30,10 +51,9 @@ export default function AuthLayout() {
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-         <Outlet/>
-          <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
+          <Outlet />
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

@@ -18,41 +18,94 @@ model User {
   id       Int    @id @default(autoincrement())
   email    String @unique
   password String
-  role     Role
-  guru     Guru?
-  siswa    Siswa?
+  role     Role   @default(SISWA)
+
+  guruId Int?  @unique
+  guru   Guru? @relation(fields: [guruId], references: [id_guru])
+
+  siswaId Int?   @unique
+  siswa   Siswa? @relation(fields: [siswaId], references: [id_siswa])
 }
 
 model Guru {
-  id            Int     @id @default(autoincrement())
-  nama          String
-  nip           String  @unique
-  mataPelajaran String
-  fotoProfil    String?
-  userId        Int     @unique
-  user          User    @relation(fields: [userId], references: [id])
-  waliKelas     Kelas[]
+  id_guru      Int     @id @default(autoincrement())
+  nip          String  @unique
+  nama         String
+  jenisKelamin String?
+  alamat       String?
+  noHP         String
+  email        String?
+  jabatan      String?
+  fotoProfil   String?
+  user         User?
+
+  waliKelas Kelas[]
 }
 
 model Siswa {
-  id           Int      @id @default(autoincrement())
+  id_siswa     Int       @id @default(autoincrement())
+  nis          String    @unique
   nama         String
-  nis          String   @unique
-  alamat       String
-  tanggalLahir DateTime
+  alamat       String?
+  tanggalLahir DateTime?
+  jenisKelamin String?
   fotoProfil   String?
-  userId       Int      @unique
-  user         User     @relation(fields: [userId], references: [id])
-  kelasId      Int?
-  kelas        Kelas?   @relation(fields: [kelasId], references: [id])
+  user         User?
+
+  kelasId Int?
+  kelas   Kelas? @relation(fields: [kelasId], references: [id_kelas])
+
+  nilaiRapor     NilaiRapor[]
+  Siswa_Orangtua Siswa_Orangtua[]
+}
+
+model OrangTua {
+  id_orangtua Int    @id @default(autoincrement())
+  nama        String
+  hubungan    String
+  pekerjaan   String
+  alamat      String
+  noHp        String
+
+  siswa Siswa_Orangtua[]
+}
+
+model Siswa_Orangtua {
+  id_siswa    Int
+  id_orangtua Int
+  status      String
+
+  siswa    Siswa    @relation(fields: [id_siswa], references: [id_siswa])
+  orangtua OrangTua @relation(fields: [id_orangtua], references: [id_orangtua])
+
+  @@id([id_siswa, id_orangtua])
 }
 
 model Kelas {
-  id     Int     @id @default(autoincrement())
-  nama   String  @unique
-  guruId Int
-  guru   Guru    @relation(fields: [guruId], references: [id])
-  siswa  Siswa[]
+  id_kelas  Int     @id @default(autoincrement())
+  namaKelas String
+  tingkat   String
+  waliId    Int?
+  guru      Guru?   @relation(fields: [waliId], references: [id_guru])
+  siswa     Siswa[]
+}
+
+model MataPelajaran {
+  id_mapel      Int          @id @default(autoincrement())
+  namaMapel     String
+  kelompokMapel String?
+  nilai         NilaiRapor[]
+}
+
+model NilaiRapor {
+  id_nilai Int    @id @default(autoincrement())
+  id_siswa Int
+  id_mapel Int
+  semester String
+  nilai    Int
+
+  siswa Siswa         @relation(fields: [id_siswa], references: [id_siswa])
+  mapel MataPelajaran @relation(fields: [id_mapel], references: [id_mapel])
 }
 
 enum Role {

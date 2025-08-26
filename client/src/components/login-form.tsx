@@ -17,7 +17,7 @@ import Loading from "./Loading";
 import delay from "@/lib/delay";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
-// import apiClient from "@/config/axios";
+import apiClient from "@/config/axios";
 
 // ----------------- VALIDASI -----------------
 const formSchema = z.object({
@@ -36,7 +36,7 @@ export function LoginForm({
 }: React.ComponentProps<"form">) {
   const [loading, setLoading] = useState<boolean>(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -47,38 +47,40 @@ export function LoginForm({
   });
 
   // --------- Handle Tilt Effect ----------
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const card = cardRef.current;
-    if (!card) return;
+  // const handleMouseMove = (e: React.MouseEvent) => {
+  //   const card = cardRef.current;
+  //   if (!card) return;
 
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+  //   const rect = card.getBoundingClientRect();
+  //   const x = e.clientX - rect.left;
+  //   const y = e.clientY - rect.top;
 
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
+  //   const centerX = rect.width / 2;
+  //   const centerY = rect.height / 2;
 
-    const rotateX = ((y - centerY) / 20) * -1;
-    const rotateY = (x - centerX) / 20;
+  //   const rotateX = ((y - centerY) / 20) * -1;
+  //   const rotateY = (x - centerX) / 20;
 
-    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
-  };
+  //   card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+  // };
 
-  const handleMouseLeave = () => {
-    const card = cardRef.current;
-    if (!card) return;
-    card.style.transform = "perspective(1000px) rotateX(0) rotateY(0) scale(1)";
-  };
+  // const handleMouseLeave = () => {
+  //   const card = cardRef.current;
+  //   if (!card) return;
+  //   card.style.transform = "perspective(1000px) rotateX(0) rotateY(0) scale(1)";
+  // };
 
   // --------- Handle Login ----------
   const handleLogin = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
     try {
       await delay(500);
-      // const { data } = await apiClient.post("/auth/login", values);
+      const { data } = await apiClient.post("/auth/login", values);
+      // console.log(data);
+
       toast.success("Login berhasil", {
         onAutoClose: () => {
-          // navigate("/dashboard");
+          navigate("/dashboard");
           setLoading(false);
         },
       });
@@ -88,19 +90,18 @@ export function LoginForm({
         onAutoClose: () => setLoading(false),
       });
     }
-    console.log(values);
+    // console.log(values);
   };
 
   return (
     <div
       ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      // onMouseMove={handleMouseMove}
+      // onMouseLeave={handleMouseLeave}
       className={cn(
         "flex flex-col gap-7 rounded-2xl bg-white/90 p-8 shadow-xl backdrop-blur-md border border-gray-200 transition-transform duration-300 ease-out",
         className
-      )}
-    >
+      )}>
       {/* Header */}
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-3xl font-extrabold text-green-700">Login</h1>
@@ -155,8 +156,7 @@ export function LoginForm({
             <Button
               type="submit"
               className="w-full rounded-xl bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 transition-all shadow-md"
-              disabled={loading}
-            >
+              disabled={loading}>
               {loading && <Loading />}
               Login
             </Button>
@@ -169,8 +169,7 @@ export function LoginForm({
         Belum punya akun?{" "}
         <Link
           to="/signup"
-          className="text-green-600 font-semibold hover:underline"
-        >
+          className="text-green-600 font-semibold hover:underline">
           Daftar sekarang
         </Link>
       </div>

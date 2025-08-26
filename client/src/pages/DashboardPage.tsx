@@ -8,14 +8,18 @@ const DashboardPage: React.FC = () => {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-green-700">Dashboard Sekolah</h1>
-        <p className="text-gray-500">Selamat datang di sistem informasi sekolah</p>
+        <p className="text-gray-500">
+          Selamat datang di sistem informasi sekolah
+        </p>
       </div>
 
       {/* Cards Statistik */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <Card className="hover:shadow-lg transition-all">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Siswa</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Siswa
+            </CardTitle>
             <Users className="text-green-600" />
           </CardHeader>
           <CardContent>
@@ -26,7 +30,9 @@ const DashboardPage: React.FC = () => {
 
         <Card className="hover:shadow-lg transition-all">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Guru</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Guru
+            </CardTitle>
             <BookOpen className="text-yellow-600" />
           </CardHeader>
           <CardContent>
@@ -37,7 +43,9 @@ const DashboardPage: React.FC = () => {
 
         <Card className="hover:shadow-lg transition-all">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Kelas</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Kelas
+            </CardTitle>
             <Calendar className="text-green-500" />
           </CardHeader>
           <CardContent>
@@ -48,7 +56,9 @@ const DashboardPage: React.FC = () => {
 
         <Card className="hover:shadow-lg transition-all">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Pengumuman</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Pengumuman
+            </CardTitle>
             <Bell className="text-red-500" />
           </CardHeader>
           <CardContent>
@@ -63,7 +73,9 @@ const DashboardPage: React.FC = () => {
         {/* Pengumuman */}
         <Card className="hover:shadow-lg transition-all">
           <CardHeader>
-            <CardTitle className="text-lg font-bold text-green-700">Pengumuman Terbaru</CardTitle>
+            <CardTitle className="text-lg font-bold text-green-700">
+              Pengumuman Terbaru
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-3 text-gray-600">
@@ -77,7 +89,9 @@ const DashboardPage: React.FC = () => {
         {/* Jadwal */}
         <Card className="hover:shadow-lg transition-all">
           <CardHeader>
-            <CardTitle className="text-lg font-bold text-green-700">Jadwal Kegiatan</CardTitle>
+            <CardTitle className="text-lg font-bold text-green-700">
+              Jadwal Kegiatan
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-3 text-gray-600">
