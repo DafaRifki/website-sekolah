@@ -39,6 +39,7 @@ export default function AuthLayout() {
 
   return (
     <SidebarProvider>
+      {/* Sidebar sudah dapat user */}
       <AppSidebar user={user} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
@@ -50,8 +51,10 @@ export default function AuthLayout() {
             />
           </div>
         </header>
+
+        {/* Outlet passing context user */}
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <Outlet />
+          <Outlet context={{ user }} />
         </div>
       </SidebarInset>
     </SidebarProvider>
