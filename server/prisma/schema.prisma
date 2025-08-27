@@ -44,7 +44,7 @@ model Guru {
 
 model Siswa {
   id_siswa     Int       @id @default(autoincrement())
-  nis          String    @unique
+  nis          String?   @unique
   nama         String
   alamat       String?
   tanggalLahir DateTime?

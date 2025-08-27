@@ -17,13 +17,13 @@ import {
 } from "@/components/ui/form";
 import z from "zod";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import delay from "@/lib/delay";
 import Loading from "@/components/Loading";
 import apiClient from "@/config/axios";
+import { zodResolver } from "@hookform/resolvers/zod/src/zod.js";
 
 interface User {
   id: number;
@@ -50,7 +50,7 @@ const PasswordPage = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       currentPassword: "",
@@ -89,8 +89,7 @@ const PasswordPage = () => {
       toast.success("Password berhasil diubah");
       form.reset();
     } catch (error: any) {
-      const msg =
-        error.response?.data?.message || "Gagal update password user";
+      const msg = error.response?.data?.message || "Gagal update password user";
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -110,15 +109,15 @@ const PasswordPage = () => {
           <CardHeader>
             <CardTitle>Update password</CardTitle>
             <CardDescription>
-              Ensure your account is using a long, random password to stay secure
+              Ensure your account is using a long, random password to stay
+              secure
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(handlePasswordUpdate)}
-                className="space-y-4"
-              >
+                className="space-y-4">
                 <FormField
                   control={form.control}
                   name="currentPassword"
@@ -126,7 +125,11 @@ const PasswordPage = () => {
                     <FormItem>
                       <FormLabel>Current password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Current password" {...field} />
+                        <Input
+                          type="password"
+                          placeholder="Current password"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -140,7 +143,11 @@ const PasswordPage = () => {
                     <FormItem>
                       <FormLabel>New password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="New password" {...field} />
+                        <Input
+                          type="password"
+                          placeholder="New password"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -154,7 +161,11 @@ const PasswordPage = () => {
                     <FormItem>
                       <FormLabel>Confirm password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Confirm password" {...field} />
+                        <Input
+                          type="password"
+                          placeholder="Confirm password"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
