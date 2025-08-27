@@ -1,107 +1,157 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, Calendar, Bell } from "lucide-react";
+import { useOutletContext } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Users,
+  BookOpen,
+  Calendar,
+  Bell,
+  PieChart,
+} from "lucide-react";
+
+type User = {
+  name: string;
+  email: string;
+  role: "ADMIN" | "GURU" | "SISWA";
+};
+
+function useAuthUser() {
+  return useOutletContext<{ user: User | null }>().user;
+}
 
 const DashboardPage: React.FC = () => {
+  const user = useAuthUser();
+  const role = user?.role || "SISWA";
+
   return (
-    <div className="p-6 bg-gradient-to-br from-green-50 via-yellow-50 to-white min-h-screen">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-green-700">Dashboard Sekolah</h1>
-        <p className="text-gray-500">
-          Selamat datang di sistem informasi sekolah
-        </p>
-      </div>
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {/* --- ADMIN DASHBOARD --- */}
+      {role === "ADMIN" && (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Manajemen User
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Kelola data guru, siswa, dan admin.</p>
+            </CardContent>
+          </Card>
 
-      {/* Cards Statistik */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <Card className="hover:shadow-lg transition-all">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Siswa
-            </CardTitle>
-            <Users className="text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-green-700">1.250</p>
-            <p className="text-xs text-gray-500">Total siswa aktif</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PieChart className="h-5 w-5" />
+                Laporan
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Lihat laporan kehadiran, nilai, dan aktivitas.</p>
+            </CardContent>
+          </Card>
 
-        <Card className="hover:shadow-lg transition-all">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Guru
-            </CardTitle>
-            <BookOpen className="text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-yellow-600">85</p>
-            <p className="text-xs text-gray-500">Total guru aktif</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Notifikasi
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Kelola pengumuman untuk semua pengguna.</p>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
-        <Card className="hover:shadow-lg transition-all">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Kelas
-            </CardTitle>
-            <Calendar className="text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-green-500">32</p>
-            <p className="text-xs text-gray-500">Jumlah kelas aktif</p>
-          </CardContent>
-        </Card>
+      {/* --- GURU DASHBOARD --- */}
+      {role === "GURU" && (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Mata Pelajaran
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Kelola materi dan nilai siswa.</p>
+            </CardContent>
+          </Card>
 
-        <Card className="hover:shadow-lg transition-all">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Pengumuman
-            </CardTitle>
-            <Bell className="text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-red-500">5</p>
-            <p className="text-xs text-gray-500">Pengumuman baru</p>
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Jadwal Mengajar
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Lihat dan atur jadwal mengajar Anda.</p>
+            </CardContent>
+          </Card>
 
-      {/* Seksi Bawah - Pengumuman & Jadwal */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pengumuman */}
-        <Card className="hover:shadow-lg transition-all">
-          <CardHeader>
-            <CardTitle className="text-lg font-bold text-green-700">
-              Pengumuman Terbaru
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3 text-gray-600">
-              <li>📌 Ujian Tengah Semester dimulai tanggal 12 September</li>
-              <li>📌 Pendaftaran ekstrakurikuler dibuka hingga 30 Agustus</li>
-              <li>📌 Libur nasional: 17 Agustus</li>
-            </ul>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Data Siswa
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Lihat daftar siswa yang Anda ajar.</p>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
-        {/* Jadwal */}
-        <Card className="hover:shadow-lg transition-all">
-          <CardHeader>
-            <CardTitle className="text-lg font-bold text-green-700">
-              Jadwal Kegiatan
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3 text-gray-600">
-              <li>📅 Senin - Upacara Bendera</li>
-              <li>📅 Rabu - Rapat Guru</li>
-              <li>📅 Jumat - Ekstrakurikuler Pramuka</li>
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
+      {/* --- SISWA DASHBOARD --- */}
+      {role === "SISWA" && (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Materi Pelajaran
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Akses materi dan tugas yang diberikan guru.</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Jadwal Kelas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Lihat jadwal pelajaran Anda.</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Pengumuman
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Lihat pengumuman terbaru dari sekolah.</p>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 };
