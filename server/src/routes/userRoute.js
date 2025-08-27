@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/authMiddleware.js";
+import { authenticate, authorizeRoles } from "../middleware/authMiddleware.js";
 import {
   createUser,
   deleteUser,
@@ -13,7 +13,7 @@ const router = Router();
 router.get("/", authenticate, getAllUser);
 router.get("/:id", authenticate, getUserById);
 router.post("/", authenticate, createUser);
-router.patch("/:id", authenticate, updateUser);
+router.patch("/:id", authorizeRoles("ADMIN", "SISWA", "GURU"), updateUser);
 router.delete("/:id", authenticate, deleteUser);
 
 export default router;

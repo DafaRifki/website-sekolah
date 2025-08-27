@@ -4,37 +4,50 @@ import jwt from "jsonwebtoken";
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { nama, email, password } = req.body;
 
     // cek email sudah ada
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
     if (existingUser) {
       return res.status(400).json({ message: "Email sudah digunakan" });
     }
 
+    // hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // role default = SISWA
+    // buat user + siswa
     const newUser = await prisma.user.create({
       data: {
-        name,
         email,
         password: hashedPassword,
         role: "SISWA",
+        siswa: {
+          create: {
+            nama,
+          },
+        },
+      },
+      include: {
+        siswa: true,
       },
     });
 
     res.status(201).json({
       message: "Register berhasil",
-      user: {
-        name: newUser.name,
+      data: {
+        id: newUser.id,
         email: newUser.email,
         role: newUser.role,
-        siswa: newUser.siswa,
+        siswa: {
+          id_siswa: newUser.siswa.id_siswa,
+          nama: newUser.siswa.nama,
+        },
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Register error:", error);
     res.status(500).json({ error: error.message });
   }
 };

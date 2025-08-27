@@ -20,7 +20,7 @@ import z from "zod";
 
 const formSchema = z
   .object({
-    name: z.string().min(1, { message: "Name is required" }),
+    nama: z.string().min(1, { message: "Name is required" }),
     email: z.string().email().min(1, { message: "Email is required" }),
     password: z
       .string()
@@ -45,7 +45,7 @@ const SignUpPage = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      nama: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -92,7 +92,7 @@ const SignUpPage = () => {
             className="space-y-4">
             <FormField
               control={form.control}
-              name="name"
+              name="nama"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-gray-700">Nama Lengkap</FormLabel>
