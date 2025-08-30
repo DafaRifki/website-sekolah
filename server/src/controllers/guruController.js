@@ -1,115 +1,56 @@
-import prisma from "../models/prisma.js";
-import bcrypt from "bcrypt";
+import {
+  createGuruService,
+  deleteGuruService,
+  getAllGuruService,
+  getGuruByIdService,
+  updateGuruService,
+} from "../services/guruService.js";
+
+// response error
+const errorResponse = (res, status, message, error = null) => {
+  return res.status(status).json({
+    success: false,
+    message,
+    ...(error && { error }),
+  });
+};
+
+// parse ID
+const parseId = (id) => {
+  const parsed = parseInt(id, 10);
+  return isNaN(parsed) ? null : parsed;
+};
 
 export const getAllGuru = async (req, res) => {
   try {
-    const guru = await prisma.guru.findMany({
-      orderBy: { id_guru: "asc" },
-      include: { user: { select: { email: true, role: true } } },
-    });
+    const guru = await getAllGuruService();
 
     res.status(200).json({ success: true, data: guru });
   } catch (error) {
     console.log("Error getAllGuru: ", error);
-    res.status(500).json({
-      success: false,
-      message: "Terjadi kesalahan server",
-      error: error.message,
-    });
+    return errorResponse(res, 500, "Terjadi kesalahan server", error.message);
   }
 };
 
 export const getGuruById = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseId(req.params.id);
+    if (!id) return errorResponse(res, 400, "ID Guru tidak valid");
 
-    const guru = await prisma.guru.findUnique({
-      where: { id_guru: parseInt(id) },
-      include: {
-        user: {
-          select: { email: true, role: true },
-        },
-      },
-    });
+    const guru = await getGuruByIdService(id);
 
-    if (!guru) {
-      return res.status(404).json({
-        success: false,
-        message: "Guru tidak ditemukan",
-      });
-    }
+    if (!guru) return errorResponse(res, 404, "Guru tidak ditemukan");
 
-    res.status(200).json({
-      success: true,
-      data: guru,
-    });
+    res.status(200).json({ success: true, data: guru });
   } catch (error) {
     console.log("Error getGuruById: ", error);
-    res.status(500).json({
-      success: false,
-      message: "Terjadi kesalahan server",
-      error: error.message,
-    });
+    return errorResponse(res, 500, "Terjadi kesalahan server", error.message);
   }
 };
 
 export const createGuru = async (req, res) => {
   try {
-    const { email, password, nama, nip, noHP, jenisKelamin, alamat, jabatan } =
-      req.body;
-
-    if (!email || !password || !nama || !nip || !noHP) {
-      return res.status(400).json({
-        success: false,
-        message: "Email, password, nama, nip, dan noHP wajib diisi",
-      });
-    }
-
-    const existingGuru = await prisma.user.findUnique({ where: { email } });
-    if (existingGuru) {
-      return res.status(400).json({
-        success: false,
-        message: "Email sudah digunakan",
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newGuru = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        role: "GURU",
-        guru: {
-          create: {
-            email,
-            nama,
-            nip,
-            noHP,
-            jenisKelamin,
-            alamat,
-            jabatan,
-          },
-        },
-      },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        guru: {
-          select: {
-            id_guru: true,
-            email: true,
-            nama: true,
-            nip: true,
-            noHP: true,
-            jenisKelamin: true,
-            alamat: true,
-            jabatan: true,
-          },
-        },
-      },
-    });
+    const newGuru = await createGuruService(req.body);
 
     res.status(201).json({
       success: true,
@@ -118,9 +59,43 @@ export const createGuru = async (req, res) => {
     });
   } catch (error) {
     console.error("CreateGuru Error: ", error);
-    res.status(500).json({
-      success: false,
-      message: "Gagal membuat guru",
+    return errorResponse(res, 400, "Gagal membuat guru", error.message);
+  }
+};
+
+export const updateGuru = async (req, res) => {
+  try {
+    const id = parseId(req.params.id);
+
+    const updateGuru = await updateGuruService(id, req.body, req.file);
+
+    res.status(200).json({
+      success: true,
+      message: "Data guru berhasil diupdate",
+      data: updateGuru,
     });
+  } catch (error) {
+    return errorResponse(
+      res,
+      400,
+      "Gagal memperbarui data guru",
+      error.message
+    );
+  }
+};
+
+export const deleteGuru = async (req, res) => {
+  try {
+    const id = parseId(req.params.id);
+    const deletedGuru = await deleteGuruService(id);
+
+    res.status(200).json({
+      success: true,
+      message: "Guru berhasil dihapus",
+      data: deletedGuru,
+    });
+  } catch (error) {
+    console.error("DeleteGuru Error: ", error);
+    return errorResponse(res, 400, "Gagal menghapus data guru", error.message);
   }
 };
