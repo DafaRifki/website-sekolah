@@ -8,6 +8,7 @@ import guruRoutes from "./routes/guruRoute.js";
 import authRoutes from "./routes/authRoute.js";
 import userRoutes from "./routes/userRoute.js";
 import { authenticate, authorizeRoles } from "./middleware/authMiddleware.js";
+import { fileURLToPath } from "url";
 
 const app = express();
 app.use(cookieParser());
@@ -22,7 +23,10 @@ app.use(
 
 app.get("/api", (req, res) => res.json({ ok: true, message: "API siap" }));
 
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 app.use("/api/auth", authRoutes);
 
