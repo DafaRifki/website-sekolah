@@ -12,11 +12,12 @@ import PublicRoute from "./routes/PublicRoute.tsx";
 import ProfilePage from "./pages/settings/ProfilePage.tsx";
 import PasswordPage from "./pages/settings/PasswordPage.tsx";
 import NotFoundPage from "./pages/NotFoundPage.tsx";
+import LandingPage from "./pages/landingPage/LandingPage.tsx";
 
 const root = document.getElementById("root") as HTMLElement;
 
 const publicRoute = [
-  { path: "/", element: <App /> },
+  { path: "/", element: <LandingPage /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/signup", element: <SignUpPage /> },
 ];
