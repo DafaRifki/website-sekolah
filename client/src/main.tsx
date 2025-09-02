@@ -36,6 +36,11 @@ ReactDOM.createRoot(root).render(
         />
       ))}
       <Route path="/signup" element={<SignUpPage />} />
+
+      <Route path="/profil-sekolah" element={<ProfileSekolah />} />
+      <Route path="/kepala-sekolah" element={<KepalaSekolah />} />
+      <Route path="/fasilitas" element={<Fasilitas />} />
+      <Route path="/struktur-organisasi" element={<StrukturOrganisasi />} />
       <Route element={<AuthLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/siswa" element={<DataSiswaPage />} />
