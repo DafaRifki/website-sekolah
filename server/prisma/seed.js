@@ -5,35 +5,37 @@ import bcrypt from "bcrypt";
 async function main() {
   const hashedPassword = await bcrypt.hash("password123", 10);
 
-  // Admin
-  const admin = await prisma.user.createMany({
-    data: [
-      {
-        email: "admin1@example.com",
-        password: hashedPassword,
-        role: "ADMIN",
-      },
-    ],
-    data: [
-      {
-        email: "admin2@example.com",
-        password: hashedPassword,
-        role: "ADMIN",
-      },
-    ],
-    data: [
-      {
-        email: "admin3@example.com",
-        password: hashedPassword,
-        role: "ADMIN",
-      },
-    ],
+  // ==========================
+  // Admin (disimpan di tabel Guru)
+  // ==========================
+  const adminGuru = await prisma.guru.create({
+    data: {
+      nip: "1980000",
+      nama: "Admin Guru",
+      jenisKelamin: "Laki-laki",
+      alamat: "Alamat Admin",
+      noHP: "081234567890",
+      email: "admin@guru.com",
+      jabatan: "Admin Sekolah",
+    },
   });
-  console.log(`✅ Admin dibuat: ${admin.email}`);
 
+  await prisma.user.create({
+    data: {
+      email: adminGuru.email,
+      password: hashedPassword,
+      role: "ADMIN",
+      guruId: adminGuru.id_guru,
+    },
+  });
+
+  console.log("✅ Admin dibuat di tabel Guru");
+
+  // ==========================
   // Guru
+  // ==========================
   const guruList = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 1; i <= 5; i++) {
     const guru = await prisma.guru.create({
       data: {
         nip: `198000${i}`,
@@ -59,26 +61,32 @@ async function main() {
   }
   console.log(`✅ ${guruList.length} Guru berhasil dibuat`);
 
+  // ==========================
   // Kelas
-  // const kelasList = [];
-  // for (let i = 0; i < 6; i++) {
-  //   const waliKelas = faker.helpers.arrayElement(guruList);
-  //   const kelas = await prisma.kelas.create({
-  //     data: {
-  //       nama: `Kelas ${faker.helpers.arrayElement([
-  //         "X",
-  //         "XI",
-  //         "XII",
-  //       ])} ${faker.helpers.arrayElement(["A", "B", "C"])}-${i + 1}`,
-  //       guruId: waliKelas.id,
-  //     },
-  //   });
-  //   kelasList.push(kelas);
-  // }
-  // console.log(`✅ ${kelasList.length} Kelas berhasil dibuat`);
+  // ==========================
+  const kelasList = [];
+  const tingkatArr = ["X", "XI", "XII"];
+  const namaHuruf = ["A", "B", "C", "D", "E"];
 
+  for (let i = 0; i < 5; i++) {
+    const waliKelas = guruList[i % guruList.length];
+    const kelas = await prisma.kelas.create({
+      data: {
+        namaKelas: `Kelas ${tingkatArr[i % tingkatArr.length]} ${namaHuruf[i]}`,
+        tingkat: tingkatArr[i % tingkatArr.length],
+        waliId: waliKelas.id_guru,
+      },
+    });
+    kelasList.push(kelas);
+  }
+  console.log(`✅ ${kelasList.length} Kelas berhasil dibuat`);
+
+  // ==========================
   // Siswa
-  for (let i = 0; i < 3; i++) {
+  // ==========================
+  const siswaList = [];
+  for (let i = 0; i < 5; i++) {
+    const kelas = kelasList[i % kelasList.length];
     const siswa = await prisma.siswa.create({
       data: {
         nis: `202300${i}`,
@@ -86,6 +94,7 @@ async function main() {
         alamat: `Alamat Siswa ${i}`,
         tanggalLahir: new Date(2007, i, i + 5),
         jenisKelamin: i % 2 === 0 ? "Perempuan" : "Laki-laki",
+        kelasId: kelas.id_kelas,
       },
     });
 
@@ -97,8 +106,32 @@ async function main() {
         siswaId: siswa.id_siswa,
       },
     });
+
+    siswaList.push(siswa);
   }
-  console.log("✅ 20 Siswa berhasil dibuat");
+  console.log(`✅ ${siswaList.length} Siswa berhasil dibuat`);
+
+  // ==========================
+  // OrangTua
+  // ==========================
+  for (let i = 0; i < 5; i++) {
+    const orangtua = await prisma.orangTua.create({
+      data: {
+        nama: `Orangtua ${i}`,
+        hubungan: "Ayah/Ibu",
+        pekerjaan: "Pekerjaan Orangtua",
+        alamat: `Alamat Orangtua ${i}`,
+        noHp: `0812345678${i}`,
+        siswa: {
+          create: {
+            id_siswa: siswaList[i].id_siswa,
+            status: "Aktif",
+          },
+        },
+      },
+    });
+  }
+  console.log("✅ 5 OrangTua berhasil dibuat");
 }
 
 main()

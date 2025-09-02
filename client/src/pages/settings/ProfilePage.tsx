@@ -96,6 +96,8 @@ const ProfilePage = () => {
           setLoading(false);
         },
       });
+    } finally {
+      setLoading(false);
     }
     // console.log(values);
   };

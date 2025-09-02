@@ -1,9 +1,33 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
+import isLoggedIn from "../hooks/useAuth"; // path sesuai punyamu
 
 export default function NotFoundPage() {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const authUser = await isLoggedIn();
+      setUser(authUser);
+      setLoading(false);
+    };
+    checkAuth();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  const redirectPath = user ? "/dashboard" : "/";
+
   return (
     <div className="flex h-screen w-full items-center justify-center bg-muted/30">
       <Card className="w-[420px] shadow-lg rounded-2xl">
@@ -15,7 +39,9 @@ export default function NotFoundPage() {
           </p>
 
           <Button asChild className="mt-6 w-full">
-            <Link to="/dashboard">Kembali ke Dashboard</Link>
+            <Link to={redirectPath}>
+              {user ? "Kembali ke Dashboard" : "Kembali ke Beranda"}
+            </Link>
           </Button>
         </CardContent>
       </Card>

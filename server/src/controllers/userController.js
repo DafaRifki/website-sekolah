@@ -1,7 +1,3 @@
-import prisma from "../models/prisma.js";
-import bcrypt from "bcrypt";
-import path from "path";
-import fs from "fs";
 import {
   createUserService,
   deleteUserService,

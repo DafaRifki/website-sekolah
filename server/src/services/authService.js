@@ -50,7 +50,7 @@ export const whoamiService = async (userId) => {
   let name = null;
   let avatarFilename = null;
 
-  if (user.role === "GURU" && user.guru) {
+  if ((user.role === "GURU" || user.role === "ADMIN") && user.guru) {
     name = user.guru.nama;
     avatarFilename = user.guru.fotoProfil;
   } else if (user.role === "SISWA" && user.siswa) {

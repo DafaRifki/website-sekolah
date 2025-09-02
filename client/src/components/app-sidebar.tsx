@@ -4,9 +4,8 @@ import {
   Users,
   BookOpen,
   PieChart,
-  GalleryVerticalEnd,
-  AudioWaveform,
-  Command,
+  Bell,
+  Archive,
 } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
@@ -21,84 +20,115 @@ import {
 import { NavLinks } from "./nav-links";
 import { TeamSwitcher } from "./team-switcher";
 
+type Role = "ADMIN" | "GURU" | "SISWA";
+
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   user: {
     name: string;
     email: string;
-    role: "ADMIN" | "GURU" | "SISWA";
+    role: Role;
   } | null;
 };
 
-const menuItems = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
+type MenuSection = {
+  type: "link" | "main";
+  title: string;
+  links?: { name: string; url: string; icon: React.ElementType }[];
+  items?: {
+    title: string;
+    url: string;
+    icon: React.ElementType;
+    items?: { title: string; url: string }[];
+  }[];
+};
+
+const menuItems: Record<Role, MenuSection[]> = {
   ADMIN: [
     {
+      type: "link",
       title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutDashboard,
+      links: [
+        {
+          name: "Dashboard",
+          url: "/dashboard",
+          icon: LayoutDashboard,
+        },
+      ],
     },
     {
+      type: "main",
       title: "Kelola Data",
-      url: "#",
-      icon: Users,
       items: [
-        { title: "Guru", url: "/guru" },
-        { title: "Siswa", url: "/siswa" },
-        { title: "Kelas", url: "/kelas" },
+        {
+          title: "Kelola Data",
+          url: "#",
+          icon: Users,
+          items: [
+            { title: "Guru", url: "/guru" },
+            { title: "Siswa", url: "/siswa" },
+            { title: "Kelas", url: "/kelas" },
+          ],
+        },
       ],
+    },
+    {
+      type: "link",
+      title: "Pengumuman",
+      links: [{ name: "Pengumuman", url: "/pengumuman", icon: Bell }],
+    },
+    {
+      type: "link",
+      title: "Laporan",
+      links: [{ name: "Laporan Data", url: "/laporan-data", icon: Archive }],
     },
   ],
   GURU: [
     {
+      type: "link",
       title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutDashboard,
+      links: [{ name: "Dashboard", url: "/dashboard", icon: LayoutDashboard }],
     },
     {
+      type: "main",
       title: "Akademik",
-      url: "#",
-      icon: BookOpen,
       items: [
-        { title: "Input Nilai", url: "/nilai" },
-        { title: "Absensi", url: "/absensi" },
+        {
+          title: "Akademik",
+          url: "#",
+          icon: BookOpen,
+          items: [
+            { title: "Input Nilai", url: "/nilai" },
+            { title: "Absensi", url: "/absensi" },
+          ],
+        },
       ],
     },
   ],
   SISWA: [
     {
+      type: "link",
       title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutDashboard,
+      links: [{ name: "Dashboard", url: "/dashboard", icon: LayoutDashboard }],
     },
     {
+      type: "main",
       title: "Menu Siswa",
-      url: "#",
-      icon: PieChart,
       items: [
-        { title: "Nilai Saya", url: "/nilai" },
-        { title: "Jadwal", url: "/jadwal" },
+        {
+          title: "Menu Siswa",
+          url: "#",
+          icon: PieChart,
+          items: [
+            { title: "Nilai Saya", url: "/nilai" },
+            { title: "Jadwal", url: "/jadwal" },
+          ],
+        },
       ],
+    },
+    {
+      type: "link",
+      title: "Tugas",
+      links: [{ name: "Tugas", url: "/tugas", icon: BookOpen }],
     },
   ],
 };
@@ -106,11 +136,6 @@ const menuItems = {
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const role = user?.role || "SISWA";
   const items = menuItems[role];
-
-  // pisahkan dashboard menu di setiap role
-  const dashboardLink = items.find((item) => item.title === "Dashboard");
-  const roleMenus = items.filter((item) => item.title !== "Dashboard");
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -135,20 +160,14 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         </div> */}
       </SidebarHeader>
       <SidebarContent>
-        {dashboardLink && (
-          <NavLinks
-            title="Dashboard"
-            links={[
-              {
-                name: dashboardLink.title,
-                url: dashboardLink.url,
-                icon: dashboardLink.icon,
-              },
-            ]}
-          />
+        {items.map((section, idx) =>
+          section.type === "link" && section.links ? (
+            <NavLinks key={idx} title={section.title} links={section.links} />
+          ) : section.type === "main" && section.items ? (
+            <NavMain key={idx} items={section.items} />
+          ) : null
         )}
 
-        {roleMenus.length > 0 && <NavMain items={roleMenus} />}
         {/* <NavLinks
           title="Dashboard"
           links={[
