@@ -98,10 +98,13 @@ export const updatedUserService = async (id, data) => {
   });
 
   if (name) {
-    if (updateUser.role === "GURU" && updateUser.guruId) {
+    if (
+      (updateUser.role === "GURU" || updateUser.role === "ADMIN") &&
+      updateUser.guruId
+    ) {
       await prisma.guru.update({
         where: { id_guru: updateUser.guruId },
-        data: { nama: name },
+        data: { nama: name, email },
       });
     }
 

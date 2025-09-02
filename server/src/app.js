@@ -7,6 +7,8 @@ import siswaRoutes from "./routes/siswaRoute.js";
 import guruRoutes from "./routes/guruRoute.js";
 import authRoutes from "./routes/authRoute.js";
 import userRoutes from "./routes/userRoute.js";
+import kelasRoutes from "./routes/kelasRoute.js";
+import dashboardRoutes from "./routes/dashboardRoute.js";
 import { authenticate, authorizeRoles } from "./middleware/authMiddleware.js";
 import { fileURLToPath } from "url";
 
@@ -43,6 +45,14 @@ app.use(
   authorizeRoles("ADMIN", "SISWA", "GURU"),
   siswaRoutes
 );
+
+app.use(
+  "/api/kelas",
+  authenticate,
+  authorizeRoles("ADMIN", "GURU"),
+  kelasRoutes
+);
 app.use("/api/guru", authenticate, authorizeRoles("ADMIN", "GURU"), guruRoutes);
+app.use("/api/dashboard", authenticate, dashboardRoutes);
 
 export default app;

@@ -15,12 +15,17 @@ const router = Router();
 
 router.get("/", authenticate, getAllSiswa);
 router.get("/:id", authenticate, getSiswaById);
-router.post("/", upload.single("fotoProfil"), isWaliKelas, createSiswa);
+router.post("/", authorizeRoles("ADMIN", "GURU"), createSiswa);
 router.patch(
   "/:id",
   upload.fields([{ name: "fotoProfil", maxCount: 1 }]),
   updateSiswa
 );
-router.delete("/:id", authenticate, isWaliKelas, deleteSiswa);
+router.delete(
+  "/:id",
+  authenticate,
+  authorizeRoles("ADMIN", "GURU"),
+  deleteSiswa
+);
 
 export default router;

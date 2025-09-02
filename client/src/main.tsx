@@ -1,10 +1,8 @@
-import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import LoginPage from "./pages/LoginPage.tsx";
 import { Toaster } from "sonner";
-import App from "./App.tsx";
 import SignUpPage from "./pages/SignUpPage.tsx";
 import AuthLayout from "./pages/layout/AuthLayout.tsx";
 import DashboardPage from "./pages/DashboardPage.tsx";
@@ -13,6 +11,10 @@ import ProfilePage from "./pages/settings/ProfilePage.tsx";
 import PasswordPage from "./pages/settings/PasswordPage.tsx";
 import NotFoundPage from "./pages/NotFoundPage.tsx";
 import LandingPage from "./pages/landingPage/LandingPage.tsx";
+import DataSiswaPage from "./pages/admin/siswa/DataSiswaPage.tsx";
+import EditSiswaPage from "./pages/admin/siswa/EditSiswaPage.tsx";
+import DataGuruPage from "./pages/admin/guru/DataGuruPage.tsx";
+// import TambahSiswaModal from "./pages/admin/siswa/TambahSiswaModal.tsx";
 
 const root = document.getElementById("root") as HTMLElement;
 
@@ -36,6 +38,9 @@ ReactDOM.createRoot(root).render(
       <Route path="/signup" element={<SignUpPage />} />
       <Route element={<AuthLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/siswa" element={<DataSiswaPage />} />
+        <Route path="/siswa/:id/edit" element={<EditSiswaPage />} />
+        <Route path="/guru" element={<DataGuruPage />} />
         <Route path="/settings/profile" element={<ProfilePage />} />
         <Route path="/settings/password" element={<PasswordPage />} />
       </Route>
