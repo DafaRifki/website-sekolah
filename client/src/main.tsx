@@ -13,6 +13,11 @@ import ProfilePage from "./pages/settings/ProfilePage.tsx";
 import PasswordPage from "./pages/settings/PasswordPage.tsx";
 import NotFoundPage from "./pages/NotFoundPage.tsx";
 import LandingPage from "./pages/landingPage/LandingPage.tsx";
+import ProfileSekolah from "./pages/landingPage/components/ProfileSekolah.tsx";
+import KepalaSekolah from "./pages/landingPage/guru/KepalaSekolah.tsx";
+import Fasilitas from "./pages/landingPage/fasilitas/Fasilitas.tsx";
+import StrukturOrganisasi from "./pages/landingPage/guru/StrukturOrganisasi.tsx";
+
 
 const root = document.getElementById("root") as HTMLElement;
 
@@ -34,6 +39,11 @@ ReactDOM.createRoot(root).render(
         />
       ))}
       <Route path="/signup" element={<SignUpPage />} />
+
+      <Route path="/profil-sekolah" element={<ProfileSekolah />} />
+      <Route path="/kepala-sekolah" element={<KepalaSekolah />} />
+      <Route path="/fasilitas" element={<Fasilitas/>}/>
+      <Route path="/struktur-organisasi" element={<StrukturOrganisasi/>}/>
       <Route element={<AuthLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/settings/profile" element={<ProfilePage />} />
