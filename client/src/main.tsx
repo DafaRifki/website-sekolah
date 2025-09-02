@@ -14,6 +14,10 @@ import LandingPage from "./pages/landingPage/LandingPage.tsx";
 import DataSiswaPage from "./pages/admin/siswa/DataSiswaPage.tsx";
 import EditSiswaPage from "./pages/admin/siswa/EditSiswaPage.tsx";
 import DataGuruPage from "./pages/admin/guru/DataGuruPage.tsx";
+import ProfileSekolah from "./pages/landingPage/components/ProfileSekolah.tsx";
+import KepalaSekolah from "./pages/landingPage/guru/KepalaSekolah.tsx";
+import Fasilitas from "./pages/landingPage/fasilitas/Fasilitas.tsx";
+import StrukturOrganisasi from "./pages/landingPage/guru/StrukturOrganisasi.tsx";
 // import TambahSiswaModal from "./pages/admin/siswa/TambahSiswaModal.tsx";
 
 const root = document.getElementById("root") as HTMLElement;
