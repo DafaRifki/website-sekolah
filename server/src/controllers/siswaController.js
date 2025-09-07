@@ -2,39 +2,33 @@ import fs from "fs";
 import path from "path";
 import prisma from "../models/prisma.js";
 import bcrypt from "bcrypt";
+import {
+  createSiswaService,
+  deleteSiswaService,
+  getAllSiswaService,
+  getSiswaByIdService,
+  updateSiswaService,
+} from "../services/siswaService.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 export const getAllSiswa = async (req, res) => {
   try {
-    const siswa = await prisma.siswa.findMany({
-      orderBy: { id_siswa: "asc" },
-      include: {
-        user: { select: { email: true, role: true } },
-        kelas: true,
-      },
-    });
-
-    res.status(200).json({ success: true, data: siswa });
+    const siswa = await getAllSiswaService();
+    // res.status(200).json({ success: true, data: siswa });
+    return successResponse(res, 200, "Data siswa berhasil diambil", siswa);
   } catch (err) {
     console.log("Error getAllSiswa: ", err);
-    res
-      .status(500)
-      .json({ success: false, message: "Terjadi kesalahan server" });
+    //   res
+    //     .status(500)
+    //     .json({ success: false, message: "Terjadi kesalahan server" });
+    // }
+    return errorResponse(res, 500, "Terjadi kesalahan server", err.message);
   }
 };
 
 export const getSiswaById = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const siswa = await prisma.siswa.findUnique({
-      where: { id_siswa: parseInt(id) },
-      include: {
-        kelas: true,
-        user: {
-          select: { email: true, role: true },
-        },
-      },
-    });
+    const siswa = await getSiswaByIdService(req.params.id);
 
     if (!siswa) {
       return res.status(404).json({
@@ -57,77 +51,74 @@ export const getSiswaById = async (req, res) => {
   }
 };
 
+export const getLaporanSiswa = async (req, res) => {
+  try {
+    const id_siswa = parseInt(req.params.id); // Huruf kecil
+    const { semester } = req.query;
+
+    if (isNaN(id_siswa)) {
+      return res.status(400).json({ message: "id_siswa tidak valid" });
+    }
+
+    const laporan = await prisma.siswa.findUnique({
+      where: { id_siswa },
+      include: {
+        kelas: {
+          include: { guru: true },
+        },
+        Siswa_Orangtua: {
+          include: { orangtua: true },
+        },
+        nilaiRapor: {
+          where: { semester }, // filter semester ganjil/genap
+          include: { mapel: true },
+          take: 10,
+          skip: 0,
+        },
+      },
+    });
+
+    res.json(laporan);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 export const createSiswa = async (req, res) => {
   try {
-    const {
-      email,
-      password,
-      nama,
-      nis,
-      alamat,
-      tanggalLahir,
-      kelasId,
-      jenisKelamin,
-    } = req.body;
+    const { email, password, nama, nis } = req.body;
 
-    // cek email yang unik
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      res.status(400).json({
-        success: false,
-        message: "Email sudah digunakan",
-      });
-    }
-
-    // Cek NIS unik
-    const existingSiswa = await prisma.siswa.findUnique({ where: { nis } });
-    if (existingSiswa) {
+    if (!email || !password || !nama || !nis) {
       return res.status(400).json({
         success: false,
-        message: "NIS sudah digunakan",
+        message: "Email, password, nama, dan NIS wajib diisi",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const siswa = await createSiswaService(req.body, req.file);
 
-    const fotoUrl = req.file ? `/uploads/${req.file.filename}` : null;
-
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        role: "SISWA",
-      },
-    });
-
-    const siswa = await prisma.siswa.create({
-      data: {
-        nama,
-        nis,
-        alamat,
-        tanggalLahir: new Date(tanggalLahir),
-        jenisKelamin,
-        fotoProfil: fotoUrl,
-        kelasId: kelasId ? parseInt(kelasId) : null,
-      },
-    });
-
-    // update user agar punya relasi ke siswa
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { siswaId: siswa.id_siswa },
-    });
-
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Siswa berhasil ditambahkan",
       data: siswa,
     });
   } catch (error) {
-    console.log("Error createSiswa: ", error);
-    res.status(500).json({
+    console.error("Error createSiswa:", error);
+
+    if (
+      error.message.includes("Email sudah digunakan") ||
+      error.message.includes("NIS sudah digunakan")
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: "Terjadi kesalahan server",
+      message: "Terjadi kesalahan pada server",
       error: error.message,
     });
   }
@@ -136,62 +127,18 @@ export const createSiswa = async (req, res) => {
 export const updateSiswa = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nama, nis, alamat, tanggalLahir, kelasId, jenisKelamin, email } =
-      req.body;
+    const siswa = await updateSiswaService(id, req.body, req.file);
 
-    const oldData = await prisma.siswa.findUnique({
-      where: { id_siswa: parseInt(id) },
-      include: { user: true }, // 🔑 ambil juga data user terkait
-    });
-
-    if (!oldData) {
-      return res.status(404).json({ message: "Siswa tidak ditemukan" });
-    }
-
-    let fotoProfilUrl = undefined;
-    if (req.files && req.files.fotoProfil) {
-      if (oldData.fotoProfil) {
-        const oldPath = path.join(process.cwd(), oldData.fotoProfil);
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
-        }
-      }
-      fotoProfilUrl = `/uploads/${req.files.fotoProfil[0].filename}`;
-    }
-
-    // 🔑 Update Siswa
-    const updateSiswa = await prisma.siswa.update({
-      where: { id_siswa: parseInt(id) },
-      data: {
-        ...(nama && { nama }),
-        ...(nis && { nis }),
-        ...(alamat && { alamat }),
-        ...(tanggalLahir && { tanggalLahir: new Date(tanggalLahir) }),
-        ...(jenisKelamin && { jenisKelamin }),
-        ...(fotoProfilUrl && { fotoProfil: fotoProfilUrl }),
-        ...(kelasId && { kelasId: parseInt(kelasId) }),
-      },
-      include: { user: true },
-    });
-
-    // 🔑 Update email di tabel User kalau dikirim
-    if (email && oldData.user) {
-      await prisma.user.update({
-        where: { id: oldData.user.id },
-        data: { email },
-      });
-    }
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Data siswa berhasil diupdate",
-      data: updateSiswa,
+      data: siswa,
     });
   } catch (error) {
     console.error("Error updateSiswa:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Terjadi kesalahan server",
+      message: "Terjadi kesalahan pada server",
       error: error.message,
     });
   }
@@ -200,46 +147,18 @@ export const updateSiswa = async (req, res) => {
 export const deleteSiswa = async (req, res) => {
   try {
     const { id } = req.params;
-
     if (req.user.role !== "ADMIN" && req.user.role !== "GURU") {
-      return res.status(403).json({ message: "Akses ditolak" });
+      return errorResponse(res, 403, "Akses ditolak");
     }
 
-    const siswaId = parseInt(id);
-
-    const siswa = await prisma.siswa.findUnique({
-      where: { id_siswa: siswaId },
-    });
-
-    if (!siswa) {
-      return res.status(404).json({ message: "Siswa tidak ditemukan" });
-    }
-
-    // 🔑 Hapus user yang terhubung dulu
-    await prisma.user.deleteMany({
-      where: { siswaId: siswaId },
-    });
-
-    // Hapus relasi siswa-orangtua
-    await prisma.siswa_Orangtua.deleteMany({
-      where: { id_siswa: siswaId },
-    });
-
-    // Hapus nilai rapor
-    await prisma.nilaiRapor.deleteMany({
-      where: { id_siswa: siswaId },
-    });
-
-    // Terakhir hapus siswa
-    await prisma.siswa.delete({
-      where: { id_siswa: siswaId },
-    });
-
-    res.json({ message: "Siswa dan akun user terkait berhasil dihapus" });
-  } catch (error) {
-    console.error("Error deleteSiswa:", error);
-    res
-      .status(500)
-      .json({ message: "Gagal menghapus siswa", error: error.message });
+    await deleteSiswaService(id);
+    return successResponse(
+      res,
+      200,
+      "Siswa dan akun user terkait berhasil dihapus"
+    );
+  } catch (err) {
+    console.error("Error deleteSiswa:", err);
+    return errorResponse(res, 500, "Gagal menghapus siswa", err.message);
   }
 };

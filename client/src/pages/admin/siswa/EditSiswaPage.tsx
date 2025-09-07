@@ -25,7 +25,7 @@ import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 
 interface Kelas {
-  id_kelas: string;
+  id_kelas: number;
   namaKelas: string;
 }
 
@@ -40,13 +40,32 @@ export default function EditSiswaPage() {
     nama: "",
     nis: "",
     email: "",
-    password: "", // opsional
+    password: "",
     alamat: "",
     tanggalLahir: "",
     jenisKelamin: "",
     kelasId: "",
   });
 
+  const [orangtua, setOrangtua] = useState<{
+    id_orangtua?: number;
+    nama: string;
+    hubungan: string;
+    pekerjaan: string;
+    alamat: string;
+    noHp: string;
+  }>({
+    id_orangtua: undefined,
+    nama: "",
+    hubungan: "",
+    pekerjaan: "",
+    alamat: "",
+    noHp: "",
+  });
+
+  // -----------------------
+  // Fetch data siswa & kelas
+  // -----------------------
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -54,7 +73,9 @@ export default function EditSiswaPage() {
           apiClient.get(`/siswa/${id}`),
           apiClient.get(`/kelas`),
         ]);
+
         const siswaData = resSiswa.data.data;
+
         setSiswa({
           nama: siswaData.nama || "",
           nis: siswaData.nis || "",
@@ -65,8 +86,21 @@ export default function EditSiswaPage() {
             ? siswaData.tanggalLahir.split("T")[0]
             : "",
           jenisKelamin: siswaData.jenisKelamin || "",
-          kelasId: siswaData.kelasId || "",
+          kelasId: siswaData.kelasId?.toString() || "",
         });
+
+        if (siswaData.Siswa_Orangtua?.length > 0) {
+          const ortu = siswaData.Siswa_Orangtua[0].orangtua;
+          setOrangtua({
+            id_orangtua: ortu.id_orangtua,
+            nama: ortu.nama || "",
+            hubungan: ortu.hubungan || "",
+            pekerjaan: ortu.pekerjaan || "",
+            alamat: ortu.alamat || "",
+            noHp: ortu.noHp || "",
+          });
+        }
+
         setKelasList(resKelas.data.data);
       } catch (error: any) {
         console.error(error.response?.data || error.message);
@@ -84,10 +118,20 @@ export default function EditSiswaPage() {
     setSiswa({ ...siswa, [e.target.name]: e.target.value });
   };
 
+  const handleChangeOrangtua = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    setOrangtua({ ...orangtua, [e.target.name]: e.target.value });
+  };
+
+  // -----------------------
+  // Submit update
+  // -----------------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     await delay(500);
+
     try {
       const payload: any = {
         nama: siswa.nama || undefined,
@@ -96,18 +140,30 @@ export default function EditSiswaPage() {
         tanggalLahir: siswa.tanggalLahir || undefined,
         jenisKelamin: siswa.jenisKelamin || undefined,
         kelasId: siswa.kelasId ? parseInt(siswa.kelasId) : undefined,
+        email: siswa.email || undefined,
+        password: siswa.password || undefined,
       };
 
-      // Email update kalau diizinkan
-      if (siswa.email) payload.email = siswa.email;
-      // Password hanya dikirim kalau diisi
-      if (siswa.password) payload.password = siswa.password;
+      // kirim data orangtua jika ada
+      if (
+        orangtua.nama ||
+        orangtua.hubungan ||
+        orangtua.pekerjaan ||
+        orangtua.alamat ||
+        orangtua.noHp
+      ) {
+        payload.orangtuaId = orangtua.id_orangtua;
+        payload.orangtuaNama = orangtua.nama || undefined;
+        payload.orangtuaHubungan = orangtua.hubungan || undefined;
+        payload.orangtuaPekerjaan = orangtua.pekerjaan || undefined;
+        payload.orangtuaAlamat = orangtua.alamat || undefined;
+        payload.orangtuaNoHp = orangtua.noHp || undefined;
+      }
 
       await apiClient.patch(`/siswa/${id}`, payload);
+
       toast.success("Data siswa berhasil diupdate", {
-        onAutoClose: () => {
-          navigate("/siswa");
-        },
+        onAutoClose: () => navigate("/siswa"),
       });
     } catch (error: any) {
       console.error(error.response?.data || error.message);
@@ -127,149 +183,207 @@ export default function EditSiswaPage() {
 
   return (
     <div className="flex justify-center mt-10">
-      <Card className="w-full max-w-lg shadow-lg">
+      <Card className="w-full max-w-2xl shadow-lg">
         <CardHeader>
-          <CardTitle>Edit Data Siswa</CardTitle>
+          <CardTitle className="text-2xl flex items-center justify-center">
+            Edit Data Siswa
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label className="mb-2">Nama Siswa</Label>
-              <Input
-                name="nama"
-                value={siswa.nama}
-                onChange={handleChange}
-                placeholder="Masukkan nama siswa..."
-              />
-            </div>
-            <div>
-              <Label className="mb-2">NIS</Label>
-              <Input
-                name="nis"
-                value={siswa.nis}
-                onChange={handleChange}
-                placeholder="Masukkan NIS"
-              />
-            </div>
-            <div>
-              <Label className="mb-2">Email</Label>
-              <Input
-                type="email"
-                name="email"
-                value={siswa.email}
-                onChange={handleChange}
-                placeholder="Masukkan email siswa"
-              />
-            </div>
-            <div>
-              <Label className="mb-2">Password (opsional)</Label>
-              <Input
-                type="password"
-                name="password"
-                value={siswa.password}
-                onChange={handleChange}
-                placeholder="Kosongkan jika tidak ingin diubah"
-              />
-            </div>
-            <div>
-              <Label className="mb-2">Alamat</Label>
-              <Input
-                name="alamat"
-                value={siswa.alamat}
-                onChange={handleChange}
-                placeholder="Masukkan alamat siswa"
-              />
-            </div>
-            <div>
-              <Label className="mb-2">Tanggal Lahir</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal">
-                    {siswa.tanggalLahir
-                      ? format(new Date(siswa.tanggalLahir), "dd MMMM yyyy")
-                      : "Pilih tanggal lahir"}
-                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    captionLayout="dropdown" // ✅ dropdown bulan & tahun
-                    fromYear={1950} // ✅ batas tahun awal
-                    toYear={new Date().getFullYear()} // ✅ batas tahun akhir
-                    selected={
-                      siswa.tanggalLahir
-                        ? new Date(siswa.tanggalLahir)
-                        : undefined
-                    }
-                    onSelect={(date) =>
-                      setSiswa({
-                        ...siswa,
-                        tanggalLahir: date
-                          ? date.toISOString().split("T")[0]
-                          : "",
-                      })
-                    }
-                    initialFocus
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Data Siswa */}
+            <div className="space-y-4 border-b pb-4">
+              <h3 className="text-lg font-semibold">Data Siswa</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="mb-2">Nama Siswa</Label>
+                  <Input
+                    name="nama"
+                    value={siswa.nama}
+                    onChange={handleChange}
                   />
-                </PopoverContent>
-              </Popover>
+                </div>
+                <div>
+                  <Label className="mb-2">NIS</Label>
+                  <Input name="nis" value={siswa.nis} onChange={handleChange} />
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-2">Alamat</Label>
+                <Input
+                  name="alamat"
+                  value={siswa.alamat}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="mb-2">Tanggal Lahir</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal">
+                        {siswa.tanggalLahir
+                          ? format(new Date(siswa.tanggalLahir), "dd MMMM yyyy")
+                          : "Pilih tanggal lahir"}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={
+                          siswa.tanggalLahir
+                            ? new Date(siswa.tanggalLahir)
+                            : undefined
+                        }
+                        onSelect={(date) =>
+                          setSiswa({
+                            ...siswa,
+                            tanggalLahir: date
+                              ? date.toISOString().split("T")[0]
+                              : "",
+                          })
+                        }
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div>
+                  <Label className="mb-2">Jenis Kelamin</Label>
+                  <Select
+                    value={siswa.jenisKelamin}
+                    onValueChange={(value) =>
+                      setSiswa({ ...siswa, jenisKelamin: value })
+                    }>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih jenis kelamin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Laki-laki">Laki-laki</SelectItem>
+                      <SelectItem value="Perempuan">Perempuan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-2">Kelas</Label>
+                <Select
+                  value={siswa.kelasId?.toString()}
+                  onValueChange={(value) =>
+                    setSiswa({ ...siswa, kelasId: value })
+                  }>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Pilih kelas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {kelasList.map((k) => (
+                      <SelectItem
+                        key={k.id_kelas}
+                        value={k.id_kelas.toString()}>
+                        {k.namaKelas}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div>
-              <Label className="mb-2">Jenis Kelamin</Label>
-              <Select
-                value={siswa.jenisKelamin}
-                onValueChange={(value) =>
-                  setSiswa({ ...siswa, jenisKelamin: value })
-                }>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih jenis kelamin" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Laki-laki">Laki-laki</SelectItem>
-                  <SelectItem value="Perempuan">Perempuan</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Akun User */}
+            <div className="space-y-4 border-b pb-4">
+              <h3 className="text-lg font-semibold">Akun User</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="mb-2">Email</Label>
+                  <Input
+                    type="email"
+                    name="email"
+                    value={siswa.email}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <Label className="mb-2">Password (Opsional)</Label>
+                  <Input
+                    type="password"
+                    name="password"
+                    value={siswa.password}
+                    onChange={handleChange}
+                    placeholder="Kosongkan jika tidak ingin diubah"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div>
-              <Label className="mb-2">Kelas</Label>
-              <Select
-                value={siswa.kelasId?.toString()}
-                onValueChange={(value) =>
-                  setSiswa({ ...siswa, kelasId: value })
-                }>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih kelas" />
-                </SelectTrigger>
-                <SelectContent>
-                  {kelasList.map((k) => (
-                    <SelectItem key={k.id_kelas} value={k.id_kelas.toString()}>
-                      {k.namaKelas}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Data Orang Tua */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Data Orang Tua</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="mb-2">Nama Orang Tua</Label>
+                  <Input
+                    name="nama"
+                    placeholder="Nama Orang Tua"
+                    value={orangtua.nama}
+                    onChange={handleChangeOrangtua}
+                  />
+                </div>
+                <div>
+                  <Label className="mb-2">Hubungan</Label>
+                  <Input
+                    name="hubungan"
+                    placeholder="Ayah / Ibu / Wali"
+                    value={orangtua.hubungan}
+                    onChange={handleChangeOrangtua}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="mb-2">Pekerjaan</Label>
+                  <Input
+                    name="pekerjaan"
+                    placeholder="Pekerjaan Orang Tua"
+                    value={orangtua.pekerjaan}
+                    onChange={handleChangeOrangtua}
+                  />
+                </div>
+                <div>
+                  <Label className="mb-2">No HP</Label>
+                  <Input
+                    name="noHp"
+                    placeholder="08xxxxxxxx"
+                    value={orangtua.noHp}
+                    onChange={handleChangeOrangtua}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="mb-2">Alamat</Label>
+                <Input
+                  name="alamat"
+                  placeholder="Alamat Orang tua"
+                  value={orangtua.alamat}
+                  onChange={handleChangeOrangtua}
+                />
+              </div>
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => navigate("/siswa")}>
                 Batal
               </Button>
+
               <Button type="submit" disabled={saving}>
-                {saving ? (
-                  <>
-                    <Loading /> Menyimpan...
-                  </>
-                ) : (
-                  "Simpan"
-                )}
+                {saving ? <>Menyimpan...</> : "Simpan"}
               </Button>
             </div>
           </form>

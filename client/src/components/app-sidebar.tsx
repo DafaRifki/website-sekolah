@@ -6,6 +6,7 @@ import {
   PieChart,
   Bell,
   Archive,
+  Notebook,
 } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
@@ -79,7 +80,7 @@ const menuItems: Record<Role, MenuSection[]> = {
     {
       type: "link",
       title: "Laporan",
-      links: [{ name: "Laporan Data", url: "/laporan-data", icon: Archive }],
+      links: [{ name: "Laporan Data", url: "/buku-induk", icon: Notebook }],
     },
   ],
   GURU: [

@@ -19,6 +19,13 @@ interface CardStatProps {
   color: string;
 }
 
+const colorMap: Record<string, string> = {
+  green: "hover:bg-green-100 active:bg-green-200 text-green-600",
+  yellow: "hover:bg-yellow-100 active:bg-yellow-200 text-yellow-600",
+  red: "hover:bg-red-100 active:bg-red-200 text-red-600",
+  blue: "hover:bg-blue-100 active:bg-blue-200 text-blue-600",
+};
+
 const CardStat: React.FC<CardStatProps> = ({
   title,
   value,
@@ -27,9 +34,7 @@ const CardStat: React.FC<CardStatProps> = ({
   color,
 }) => (
   <Card
-    className={`cursor-pointer transition-all duration-200 
-      hover:bg-${color}-100 hover:shadow-md 
-      active:scale-95 active:bg-${color}-200`}>
+    className={`cursor-pointer transition-all duration-200 hover:shadow-md active:scale-95 ${colorMap[color]}`}>
     <CardHeader className="flex flex-row items-center justify-between pb-2">
       <CardTitle className="text-sm font-medium text-gray-600">
         {title}
@@ -37,7 +42,9 @@ const CardStat: React.FC<CardStatProps> = ({
       {icon}
     </CardHeader>
     <CardContent>
-      <p className={`text-2xl font-bold text-${color}-600`}>{value}</p>
+      <p className={`text-2xl font-bold ${colorMap[color].split(" ")[2]}`}>
+        {value}
+      </p>
       <p className="text-xs text-gray-500">{description}</p>
     </CardContent>
   </Card>
@@ -67,28 +74,28 @@ const DashboardPage: React.FC = () => {
         value: totalSiswa !== null ? totalSiswa : "-",
         description: "Data siswa aktif",
         icon: <Users className="text-green-600" />,
-        color: "green",
+        color: "green" as const,
       },
       {
         title: "Guru",
         value: totalGuru !== null ? totalGuru : "-",
         description: "Data guru aktif",
         icon: <BookOpen className="text-yellow-600" />,
-        color: "yellow",
+        color: "yellow" as const,
       },
       {
         title: "Kelas",
         value: totalKelas !== null ? totalKelas : "-",
         description: "Jumlah kelas",
         icon: <Calendar className="text-green-500" />,
-        color: "green",
+        color: "green" as const,
       },
       {
         title: "Pengumuman",
         value: "5",
         description: "Pengumuman baru",
         icon: <Bell className="text-red-500" />,
-        color: "red",
+        color: "red" as const,
       },
     ],
     GURU: [
@@ -97,21 +104,21 @@ const DashboardPage: React.FC = () => {
         value: "6",
         description: "Mapel yang diampu",
         icon: <BookOpen className="text-green-600" />,
-        color: "green",
+        color: "green" as const,
       },
       {
         title: "Jadwal Mengajar",
         value: "12",
         description: "Pertemuan minggu ini",
         icon: <Calendar className="text-blue-600" />,
-        color: "blue",
+        color: "blue" as const,
       },
       {
         title: "Tugas Siswa",
         value: "24",
         description: "Menunggu penilaian",
         icon: <FileText className="text-red-500" />,
-        color: "red",
+        color: "red" as const,
       },
     ],
     SISWA: [
@@ -120,21 +127,21 @@ const DashboardPage: React.FC = () => {
         value: "87",
         description: "Semester ini",
         icon: <Award className="text-yellow-500" />,
-        color: "yellow",
+        color: "yellow" as const,
       },
       {
         title: "Kehadiran",
         value: "95%",
         description: "Tingkat kehadiran",
         icon: <Calendar className="text-green-500" />,
-        color: "green",
+        color: "green" as const,
       },
       {
         title: "Tugas",
         value: "3",
         description: "Tugas belum dikerjakan",
         icon: <FileText className="text-blue-500" />,
-        color: "blue",
+        color: "blue" as const,
       },
     ],
   };
