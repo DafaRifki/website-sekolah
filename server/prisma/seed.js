@@ -6,7 +6,7 @@ async function main() {
   const hashedPassword = await bcrypt.hash("password123", 10);
 
   // ==========================
-  // Admin (disimpan di tabel Guru)
+  // Admin (Guru dengan role ADMIN)
   // ==========================
   const adminGuru = await prisma.guru.create({
     data: {
@@ -28,11 +28,10 @@ async function main() {
       guruId: adminGuru.id_guru,
     },
   });
-
-  console.log("✅ Admin dibuat di tabel Guru");
+  console.log("✅ Admin Guru dibuat");
 
   // ==========================
-  // Guru
+  // Guru (role: GURU)
   // ==========================
   const guruList = [];
   for (let i = 1; i <= 5; i++) {
@@ -59,7 +58,7 @@ async function main() {
 
     guruList.push(guru);
   }
-  console.log(`✅ ${guruList.length} Guru berhasil dibuat`);
+  console.log(`✅ ${guruList.length} Guru dibuat`);
 
   // ==========================
   // Kelas
@@ -79,20 +78,20 @@ async function main() {
     });
     kelasList.push(kelas);
   }
-  console.log(`✅ ${kelasList.length} Kelas berhasil dibuat`);
+  console.log(`✅ ${kelasList.length} Kelas dibuat`);
 
   // ==========================
-  // Siswa
+  // Siswa (role: SISWA)
   // ==========================
   const siswaList = [];
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 10; i++) {
     const kelas = kelasList[i % kelasList.length];
     const siswa = await prisma.siswa.create({
       data: {
-        nis: `202300${i}`,
+        nis: `20230${i}`,
         nama: `Siswa ${i}`,
         alamat: `Alamat Siswa ${i}`,
-        tanggalLahir: new Date(2007, i, i + 5),
+        tanggalLahir: new Date(2007, i % 12, (i % 28) + 1),
         jenisKelamin: i % 2 === 0 ? "Perempuan" : "Laki-laki",
         kelasId: kelas.id_kelas,
       },
@@ -109,16 +108,16 @@ async function main() {
 
     siswaList.push(siswa);
   }
-  console.log(`✅ ${siswaList.length} Siswa berhasil dibuat`);
+  console.log(`✅ ${siswaList.length} Siswa dibuat`);
 
   // ==========================
-  // OrangTua
+  // OrangTua + Relasi (Siswa_Orangtua)
   // ==========================
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < siswaList.length; i++) {
     const orangtua = await prisma.orangTua.create({
       data: {
         nama: `Orangtua ${i}`,
-        hubungan: "Ayah/Ibu",
+        hubungan: i % 2 === 0 ? "Ayah" : "Ibu",
         pekerjaan: "Pekerjaan Orangtua",
         alamat: `Alamat Orangtua ${i}`,
         noHp: `0812345678${i}`,
@@ -131,7 +130,53 @@ async function main() {
       },
     });
   }
-  console.log("✅ 5 OrangTua berhasil dibuat");
+  console.log(`✅ ${siswaList.length} OrangTua dibuat`);
+
+  // ==========================
+  // MataPelajaran
+  // ==========================
+  const mapelList = [];
+  const daftarMapel = [
+    "Matematika",
+    "Bahasa Indonesia",
+    "Bahasa Inggris",
+    "Fisika",
+    "Kimia",
+    "Biologi",
+    "Sejarah",
+    "Geografi",
+  ];
+
+  for (const nama of daftarMapel) {
+    const mapel = await prisma.mataPelajaran.create({
+      data: {
+        namaMapel: nama,
+        kelompokMapel: "Umum",
+      },
+    });
+    mapelList.push(mapel);
+  }
+  console.log(`✅ ${mapelList.length} Mata Pelajaran dibuat`);
+
+  // ==========================
+  // NilaiRapor
+  // ==========================
+  const semesterArr = ["Ganjil", "Genap"];
+  for (const siswa of siswaList) {
+    for (const mapel of mapelList) {
+      for (const semester of semesterArr) {
+        await prisma.nilaiRapor.create({
+          data: {
+            id_siswa: siswa.id_siswa,
+            id_mapel: mapel.id_mapel,
+            semester,
+            nilai: Math.floor(Math.random() * 41) + 60, // 60-100
+          },
+        });
+      }
+    }
+  }
+  console.log("✅ Nilai Rapor dibuat untuk semua siswa");
 }
 
 main()

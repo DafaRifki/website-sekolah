@@ -18,11 +18,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import apiClient from "@/config/axios";
-import { UserPlus } from "lucide-react";
+import { Check, ChevronsUpDown, Search, UserPlus } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import TambahSiswaModal from "./TambahSiswaModal";
 import Swal from "sweetalert2";
+import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
 
 interface Siswa {
   id_siswa: number;
@@ -35,25 +48,52 @@ interface Siswa {
     email: string;
   };
   kelas?: {
+    id_kelas: number;
     namaKelas: string;
+    guru?: {
+      nama: string;
+    };
   };
+}
+
+interface Kelas {
+  id_kelas: number;
+  namaKelas: string;
 }
 
 const DataSiswaPage: React.FC = () => {
   const [siswa, setSiswa] = useState<Siswa[]>([]);
+  const [kelas, setKelas] = useState<Kelas[]>([]);
   const [search, setSearch] = useState("");
+  const [kelasFilter, setKelasFilter] = useState<number | null>(null);
   const [selectedSiswa, setSelectedSiswa] = useState<Siswa | null>(null);
   const [isAddOpenModal, setIsAddOpenModal] = useState(false);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   useEffect(() => {
     apiClient
       .get("/siswa")
       .then((res) => setSiswa(res.data.data))
       .catch((err) => console.error(err));
+    apiClient
+      .get("/kelas")
+      .then((res) => setKelas(res.data.data))
+      .catch((err) => console.error(err));
   }, []);
 
-  const filteredSiswa = siswa.filter((s) =>
-    s.nama.toLowerCase().includes(search.toLowerCase())
+  const filteredSiswa = siswa.filter((s) => {
+    const matchesSearch = s.nama.toLowerCase().includes(search.toLowerCase());
+    const matchesKelas = kelasFilter ? s.kelas?.id_kelas === kelasFilter : true;
+    return matchesSearch && matchesKelas;
+  });
+
+  const totalPages = Math.ceil(filteredSiswa.length / pageSize);
+  const currentData = filteredSiswa.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
   );
 
   const handleDelete = async (id: number) => {
@@ -81,7 +121,6 @@ const DataSiswaPage: React.FC = () => {
       });
 
       await apiClient.delete(`/siswa/${id}`, { withCredentials: true });
-
       setSiswa((prev) => prev.filter((s) => s.id_siswa !== id));
 
       Swal.fire({
@@ -108,12 +147,75 @@ const DataSiswaPage: React.FC = () => {
           <CardTitle className="text-xl">Data Siswa</CardTitle>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Input
-              placeholder="Cari data siswa..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full sm:w-64"
-            />
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Cari data siswa..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1); // reset page saat search
+                }}
+                className="w-full sm:w-64 pl-9"
+              />
+            </div>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="checkbox"
+                  className={cn(
+                    "w-full sm:w-48 justify-between",
+                    !kelasFilter && "text-muted-foreground"
+                  )}>
+                  {kelasFilter
+                    ? kelas.find((k) => k.id_kelas === kelasFilter)?.namaKelas
+                    : "Filter Kelas"}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-0">
+                <Command>
+                  <CommandInput placeholder="Cari kelas..." />
+                  <CommandEmpty>Tidak ada kelas</CommandEmpty>
+                  <CommandGroup>
+                    <CommandItem
+                      onSelect={() => {
+                        setKelasFilter(null);
+                        setCurrentPage(1);
+                      }}>
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          !kelasFilter ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      Semua Kelas
+                    </CommandItem>
+                    {kelas.map((k) => (
+                      <CommandItem
+                        key={k.id_kelas}
+                        onSelect={() => {
+                          setKelasFilter(k.id_kelas);
+                          setCurrentPage(1);
+                        }}>
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            kelasFilter === k.id_kelas
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                        {k.namaKelas}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+
             <Button
               variant="default"
               className="w-full sm:w-auto"
@@ -123,6 +225,7 @@ const DataSiswaPage: React.FC = () => {
             </Button>
           </div>
         </CardHeader>
+
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
@@ -142,9 +245,11 @@ const DataSiswaPage: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSiswa.map((s, idx) => (
+                {currentData.map((s, idx) => (
                   <TableRow key={s.id_siswa ?? idx}>
-                    <TableCell>{idx + 1}</TableCell>
+                    <TableCell>
+                      {(currentPage - 1) * pageSize + idx + 1}
+                    </TableCell>
                     <TableCell>{s.nama}</TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {s.user?.email}
@@ -178,6 +283,33 @@ const DataSiswaPage: React.FC = () => {
                 ))}
               </TableBody>
             </Table>
+
+            {/* Pagination */}
+            <div className="flex justify-center gap-2 mt-4">
+              <Button
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => prev - 1)}>
+                Prev
+              </Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <Button
+                    key={page}
+                    size="sm"
+                    variant={page === currentPage ? "default" : "outline"}
+                    onClick={() => setCurrentPage(page)}>
+                    {page}
+                  </Button>
+                )
+              )}
+              <Button
+                size="sm"
+                disabled={currentPage === totalPages || totalPages === 0}
+                onClick={() => setCurrentPage((prev) => prev + 1)}>
+                Next
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -227,7 +359,7 @@ const DataSiswaPage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="flex flex-col sm:col-span-2">
+              <div className="flex flex-col">
                 <span className="text-sm text-gray-500">Alamat</span>
                 <span className="font-medium text-gray-900">
                   {selectedSiswa.alamat ?? "-"}
@@ -247,6 +379,13 @@ const DataSiswaPage: React.FC = () => {
                         }
                       )
                     : "-"}
+                </span>
+              </div>
+
+              <div className="flex flex-col">
+                <span className="text-sm text-gray-500">Wali Kelas</span>
+                <span className="font-medium text-gray-900">
+                  {selectedSiswa.kelas?.guru?.nama ?? "-"}
                 </span>
               </div>
 

@@ -26,6 +26,11 @@ interface Kelas {
   namaKelas: string;
 }
 
+interface Orangtua {
+  id_orangtua: number;
+  nama: string;
+}
+
 interface TambahSiswaModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -39,6 +44,8 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
+  // const [orangtuaList, setOrangtuaList] = useState<Orangtua[]>([]);
+
   const [formData, setFormData] = useState({
     nama: "",
     nis: "",
@@ -48,21 +55,39 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
     tanggalLahir: "",
     jenisKelamin: "",
     kelasId: "",
+    orangtuaNama: "",
+    orangtuaHubungan: "",
+    orangtuaPekerjaan: "",
+    orangtuaAlamat: "",
+    orangtuaNoHp: "",
   });
+
+  const [fotoProfil, setFotoProfil] = useState<File | null>(null);
 
   // ambil daftar kelas dari backend
   const fetchKelas = async () => {
     try {
       const { data } = await apiClient.get("/kelas");
-      setKelasList(data.data); // asumsi API return { data: [...] }
+      setKelasList(data.data);
     } catch (error) {
       console.error(error);
     }
   };
 
+  // ambil daftar orangtua dari backend
+  // const fetchOrangtua = async () => {
+  //   try {
+  //     const { data } = await apiClient.get("/orangtua");
+  //     setOrangtuaList(data.data);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
   useEffect(() => {
     if (isOpen) {
       fetchKelas();
+      // fetchOrangtua();
     }
   }, [isOpen]);
 
@@ -73,23 +98,33 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const payload = {
-        nama: formData.nama,
-        nis: formData.nis,
-        email: formData.email,
-        password: formData.password,
-        alamat: formData.alamat,
-        tanggalLahir: formData.tanggalLahir,
-        jenisKelamin: formData.jenisKelamin,
-        kelasId: formData.kelasId ? parseInt(formData.kelasId) : null,
-      };
+      const payload = new FormData();
+      payload.append("nama", formData.nama);
+      payload.append("nis", formData.nis);
+      payload.append("email", formData.email);
+      payload.append("password", formData.password);
+      payload.append("alamat", formData.alamat);
+      payload.append("tanggalLahir", formData.tanggalLahir);
+      payload.append("jenisKelamin", formData.jenisKelamin);
+      if (formData.kelasId) payload.append("kelasId", formData.kelasId);
+      if (formData.orangtuaNama)
+        payload.append("orangtuaNama", formData.orangtuaNama);
+      if (formData.orangtuaHubungan)
+        payload.append("orangtuaHubungan", formData.orangtuaHubungan);
+      if (formData.orangtuaNoHp)
+        payload.append("orangtuaNoHp", formData.orangtuaNoHp);
+
+      if (fotoProfil) payload.append("fotoProfil", fotoProfil); // ✅ samakan dengan BE
 
       const { data } = await apiClient.post("/siswa", payload, {
         withCredentials: true,
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       toast.success("Siswa berhasil ditambahkan");
-      onAdded(data.data); // karena di controller return `data: siswa`
+      onAdded(data.data);
+
+      // ✅ reset sesuai state awal
       setFormData({
         nama: "",
         nis: "",
@@ -99,7 +134,13 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
         tanggalLahir: "",
         jenisKelamin: "",
         kelasId: "",
+        orangtuaNama: "",
+        orangtuaHubungan: "",
+        orangtuaPekerjaan: "",
+        orangtuaAlamat: "",
+        orangtuaNoHp: "",
       });
+      setFotoProfil(null);
       onClose();
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Gagal menambahkan siswa");
@@ -112,89 +153,176 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogOverlay className="fixed inset-0 bg-black/10 backdrop-blur-sm" />
-      <DialogContent className="bg-white rounded-2xl max-w-md mx-auto p-6">
-        <DialogHeader>
+      <DialogContent className="bg-white rounded-2xl max-w-2xl mx-auto p-6">
+        <DialogHeader className="pb-4 border-b">
           <DialogTitle>Tambah Siswa</DialogTitle>
           <DialogDescription>
             Silahkan isi dengan data yang benar
           </DialogDescription>
         </DialogHeader>
+
         <div className="space-y-4 mt-4">
-          <Label className="mb-2">Nama siswa</Label>
-          <Input
-            placeholder="Nama"
-            name="nama"
-            value={formData.nama}
-            onChange={handleChange}
-          />
-          <Label className="mb-2">NIS</Label>
-          <Input
-            placeholder="NIS"
-            name="nis"
-            value={formData.nis}
-            onChange={handleChange}
-          />
-          <Label className="mb-2">Email siswa</Label>
-          <Input
-            placeholder="Email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-          />
-          <Label className="mb-2">Alamat siswa</Label>
-          <Input
-            placeholder="Alamat"
-            name="alamat"
-            value={formData.alamat}
-            onChange={handleChange}
-          />
+          {/* Nama & NIS */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="mb-2">Nama siswa</Label>
+              <Input
+                placeholder="Nama"
+                name="nama"
+                value={formData.nama}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <Label className="mb-2">NIS</Label>
+              <Input
+                placeholder="NIS"
+                name="nis"
+                value={formData.nis}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
 
-          <Label className="mb-2">Password</Label>
-          <Input
-            type="password"
-            placeholder="Password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-          />
+          {/* Email & Password */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="mb-2">Email siswa</Label>
+              <Input
+                placeholder="Email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <Label className="mb-2">Password</Label>
+              <Input
+                type="password"
+                placeholder="Password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
 
-          {/* 🔥 Ganti dengan DateOfBirthPicker */}
-          <DateOfBirthPicker
-            value={formData.tanggalLahir}
-            onChange={(val) => setFormData({ ...formData, tanggalLahir: val })}
-          />
+          {/* Alamat */}
+          <div>
+            <Label className="mb-2">Alamat siswa</Label>
+            <Input
+              placeholder="Alamat"
+              name="alamat"
+              value={formData.alamat}
+              onChange={handleChange}
+            />
+          </div>
 
-          <Label className="mb-2">Jenis Kelamin</Label>
-          <Select
-            value={formData.jenisKelamin}
-            onValueChange={(val) =>
-              setFormData({ ...formData, jenisKelamin: val })
-            }>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Pilih Jenis Kelamin" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Laki-laki">Laki-laki</SelectItem>
-              <SelectItem value="Perempuan">Perempuan</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Tanggal Lahir & Jenis Kelamin */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <DateOfBirthPicker
+                value={formData.tanggalLahir}
+                onChange={(val) =>
+                  setFormData({ ...formData, tanggalLahir: val })
+                }
+              />
+            </div>
+            <div>
+              <Label className="mb-2">Jenis Kelamin</Label>
+              <Select
+                value={formData.jenisKelamin}
+                onValueChange={(val) =>
+                  setFormData({ ...formData, jenisKelamin: val })
+                }>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih Jenis Kelamin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Laki-laki">Laki-laki</SelectItem>
+                  <SelectItem value="Perempuan">Perempuan</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-          {/* Dropdown Kelas */}
-          <Label className="mb-2">Kelas siswa</Label>
-          <Select
-            value={formData.kelasId}
-            onValueChange={(val) => setFormData({ ...formData, kelasId: val })}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Pilih Kelas" />
-            </SelectTrigger>
-            <SelectContent>
-              {kelasList.map((k) => (
-                <SelectItem key={k.id_kelas} value={String(k.id_kelas)}>
-                  {k.namaKelas}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Kelas & Orangtua */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="mb-2">Kelas siswa</Label>
+              <Select
+                value={formData.kelasId}
+                onValueChange={(val) =>
+                  setFormData({ ...formData, kelasId: val })
+                }>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih Kelas" />
+                </SelectTrigger>
+                <SelectContent>
+                  {kelasList.map((k) => (
+                    <SelectItem key={k.id_kelas} value={String(k.id_kelas)}>
+                      {k.namaKelas}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="mb-2">Nama Orang Tua</Label>
+              <Input
+                placeholder="Nama Orang Tua"
+                name="orangtuaNama"
+                value={formData.orangtuaNama}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <Label className="mb-2">Hubungan</Label>
+              <Input
+                placeholder="Ayah / Ibu / Wali"
+                name="orangtuaHubungan"
+                value={formData.orangtuaHubungan}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <Label className="mb-2">Pekerjaan</Label>
+              <Input
+                placeholder="Pekerjaan Orang Tua"
+                name="orangtuaPekerjaan"
+                value={formData.orangtuaPekerjaan}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <Label className="mb-2">Alamat Orang Tua</Label>
+              <Input
+                placeholder="Alamat Orang Tua"
+                name="orangtuaAlamat"
+                value={formData.orangtuaAlamat}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <Label className="mb-2">No. HP</Label>
+              <Input
+                placeholder="08xxxxxxxx"
+                name="orangtuaNoHp"
+                value={formData.orangtuaNoHp}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          {/* Upload Foto */}
+          <div>
+            <Label className="mb-2">Foto Profil</Label>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setFotoProfil(e.target.files?.[0] || null)}
+            />
+          </div>
 
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="secondary" onClick={onClose}>

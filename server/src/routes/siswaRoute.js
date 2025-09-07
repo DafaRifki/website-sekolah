@@ -4,6 +4,7 @@ import {
   createSiswa,
   deleteSiswa,
   getAllSiswa,
+  getLaporanSiswa,
   getSiswaById,
   updateSiswa,
 } from "../controllers/siswaController.js";
@@ -15,10 +16,17 @@ const router = Router();
 
 router.get("/", authenticate, getAllSiswa);
 router.get("/:id", authenticate, getSiswaById);
-router.post("/", authorizeRoles("ADMIN", "GURU"), createSiswa);
+router.get("/laporan/:id", getLaporanSiswa);
+router.post(
+  "/",
+  authorizeRoles("ADMIN", "GURU"),
+  upload.single("foto"),
+  createSiswa
+);
 router.patch(
   "/:id",
-  upload.fields([{ name: "fotoProfil", maxCount: 1 }]),
+  authorizeRoles("ADMIN", "GURU"),
+  upload.single("foto"),
   updateSiswa
 );
 router.delete(
