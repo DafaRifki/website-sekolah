@@ -27,13 +27,25 @@ export const getGuruByIdService = async (id) => {
           role: true,
         },
       },
+      waliKelas: {
+        select: { id_kelas: true, namaKelas: true, tingkat: true },
+      },
     },
   });
 };
 
 export const createGuruService = async (data) => {
-  const { email, password, nama, nip, noHP, jenisKelamin, alamat, jabatan } =
-    data;
+  const {
+    email,
+    password,
+    nama,
+    nip,
+    noHP,
+    jenisKelamin,
+    alamat,
+    jabatan,
+    fotoProfil,
+  } = data;
 
   const existingGuru = await prisma.user.findUnique({ where: { email } });
   if (existingGuru) throw new Error("Email sudah digunakan");
@@ -44,7 +56,7 @@ export const createGuruService = async (data) => {
     data: {
       email,
       password: hashedPassword,
-      role: "GURU",
+      role: role || "GURU",
       guru: {
         create: {
           email,
@@ -54,6 +66,7 @@ export const createGuruService = async (data) => {
           jenisKelamin,
           alamat,
           jabatan,
+          fotoProfil,
         },
       },
     },
@@ -71,6 +84,7 @@ export const createGuruService = async (data) => {
           jenisKelamin: true,
           alamat: true,
           jabatan: true,
+          fotoProfil: true,
         },
       },
     },
@@ -78,25 +92,34 @@ export const createGuruService = async (data) => {
 };
 
 export const updateGuruService = async (id, data, file) => {
-  const { email, password, nama, nip, noHP, jenisKelamin, alamat, jabatan } =
-    data;
+  const {
+    email,
+    password,
+    nama,
+    nip,
+    noHP,
+    jenisKelamin,
+    alamat,
+    jabatan,
+    role,
+  } = data;
 
   const existingGuru = await prisma.guru.findUnique({
     where: { id_guru: parseInt(id) },
+    include: { user: true }, // ✅ ambil data user juga
   });
   if (!existingGuru) throw new Error("Guru tidak ditemukan");
 
-  let updatedData = {
+  let updatedGuruData = {
     ...(nama && { nama }),
     ...(nip && { nip }),
-    ...(password && { password }),
     ...(alamat && { alamat }),
-    ...(email && { email }),
     ...(jabatan && { jabatan }),
     ...(jenisKelamin && { jenisKelamin }),
     ...(noHP && { noHP }),
   };
 
+  // handle foto profil
   if (file) {
     const uploadDir = path.join(process.cwd(), "uploads");
 
@@ -107,12 +130,31 @@ export const updateGuruService = async (id, data, file) => {
       }
     }
 
-    updatedData.fotoProfil = file.filename;
+    updatedGuruData.fotoProfil = file.filename;
   }
 
-  return await prisma.guru.update({
-    where: { id_guru: parseInt(id) },
-    data: updatedData,
+  // update user
+  let updatedUserData = {};
+  if (email) updatedUserData.email = email;
+  if (password) {
+    updatedUserData.password = await bcrypt.hash(password, 10);
+  }
+  if (role) updatedUserData.role = role;
+
+  // jalankan transaksi supaya aman
+  return await prisma.$transaction(async (tx) => {
+    const updatedGuru = await tx.guru.update({
+      where: { id_guru: parseInt(id) },
+      data: {
+        ...updatedGuruData,
+        user: Object.keys(updatedUserData).length
+          ? { update: updatedUserData }
+          : undefined,
+      },
+      include: { user: true },
+    });
+
+    return updatedGuru;
   });
 };
 

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import DateOfBirthPicker from "@/components/DateOfBirthPicker";
+import { Eye, EyeOff } from "lucide-react";
 
 interface Kelas {
   id_kelas: number;
@@ -63,6 +64,7 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
   });
 
   const [fotoProfil, setFotoProfil] = useState<File | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // ambil daftar kelas dari backend
   const fetchKelas = async () => {
@@ -197,13 +199,25 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
             </div>
             <div>
               <Label className="mb-2">Password</Label>
-              <Input
-                type="password"
-                placeholder="Password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700">
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
