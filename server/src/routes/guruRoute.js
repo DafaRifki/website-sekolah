@@ -13,7 +13,12 @@ const router = Router();
 
 router.get("/", getAllGuru);
 router.get("/:id", getGuruById);
-router.post("/", authorizeRoles("ADMIN"), createGuru);
+router.post(
+  "/",
+  authorizeRoles("ADMIN"),
+  upload.single("fotoProfil"),
+  createGuru
+);
 router.patch("/:id", upload.single("fotoProfil"), updateGuru);
 router.delete("/:id", authorizeRoles("ADMIN"), deleteGuru);
 

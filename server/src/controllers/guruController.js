@@ -50,7 +50,13 @@ export const getGuruById = async (req, res) => {
 
 export const createGuru = async (req, res) => {
   try {
-    const newGuru = await createGuruService(req.body);
+    const { file } = req;
+    const data = {
+      ...req.body,
+      fotoProfil: file ? `${file.filename}` : null,
+    };
+
+    const newGuru = await createGuruService(data);
 
     res.status(201).json({
       success: true,
