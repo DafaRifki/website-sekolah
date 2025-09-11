@@ -15,7 +15,7 @@ router.get("/", getAllGuru);
 router.get("/:id", getGuruById);
 router.post(
   "/",
-  authorizeRoles("ADMIN"),
+  authorizeRoles("ADMIN", "GURU"),
   upload.single("fotoProfil"),
   createGuru
 );

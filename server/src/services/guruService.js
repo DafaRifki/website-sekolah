@@ -45,6 +45,7 @@ export const createGuruService = async (data) => {
     alamat,
     jabatan,
     fotoProfil,
+    role, // <--- tambahkan ini
   } = data;
 
   const existingGuru = await prisma.user.findUnique({ where: { email } });
@@ -56,7 +57,7 @@ export const createGuruService = async (data) => {
     data: {
       email,
       password: hashedPassword,
-      role: role || "GURU",
+      role: role || "GURU", // aman sekarang
       guru: {
         create: {
           email,
