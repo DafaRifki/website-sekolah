@@ -31,7 +31,7 @@ export default function SiswaTable({ siswaList, onDetail }: Props) {
           <TableHead>Foto</TableHead>
           <TableHead>NIS</TableHead>
           <TableHead>Nama</TableHead>
-          <TableHead>JK</TableHead>
+          <TableHead>Jenis Kelamin</TableHead>
           <TableHead>Kelas</TableHead>
           <TableHead>Aksi</TableHead>
         </TableRow>

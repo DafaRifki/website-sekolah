@@ -79,8 +79,8 @@ const menuItems: Record<Role, MenuSection[]> = {
     },
     {
       type: "link",
-      title: "Laporan",
-      links: [{ name: "Laporan Data", url: "/buku-induk", icon: Notebook }],
+      title: "Laporan Data",
+      links: [{ name: "Buku Induk Siswa", url: "/buku-induk", icon: Notebook }],
     },
   ],
   GURU: [
