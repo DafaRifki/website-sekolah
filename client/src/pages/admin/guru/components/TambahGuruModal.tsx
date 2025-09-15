@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/select";
 import Swal from "sweetalert2";
 import apiClient from "@/config/axios";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, UserPlus, Camera, Plus } from "lucide-react";
+import defaultAvatar from "../../../../assets/avatar.png";
 
 interface Props {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
     fotoProfil: null as File | null,
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string>(defaultAvatar);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -50,8 +52,32 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setForm({ ...form, fotoProfil: e.target.files[0] });
+      const file = e.target.files[0];
+      setForm({ ...form, fotoProfil: file });
+
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPreviewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const resetForm = () => {
+    setForm({
+      email: "",
+      password: "",
+      nama: "",
+      nip: "",
+      noHP: "",
+      jenisKelamin: "",
+      alamat: "",
+      jabatan: "",
+      fotoProfil: null,
+    });
+    setPreviewImage(defaultAvatar);
+    setShowPassword(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,6 +98,8 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
       });
       Swal.close();
       Swal.fire("Berhasil!", "Data guru berhasil ditambahkan.", "success");
+
+      resetForm();
       onAdded();
       onClose();
     } catch (error: any) {
@@ -84,130 +112,204 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
     }
   };
 
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const FormField = ({
+    label,
+    children,
+    required = false,
+  }: {
+    label: string;
+    children: React.ReactNode;
+    required?: boolean;
+  }) => (
+    <div className="space-y-2">
+      <Label className="text-sm font-medium text-gray-700">
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </Label>
+      {children}
+    </div>
+  );
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg w-full">
-        <DialogHeader>
-          <DialogTitle>Tambah Guru</DialogTitle>
-          <DialogDescription>Isi data guru dengan lengkap.</DialogDescription>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-4 border-b">
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <UserPlus className="w-5 h-5" />
+                Tambah Guru Baru
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 mt-1">
+                Lengkapi form di bawah untuk menambahkan data guru baru
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <form className="grid gap-4 py-4" onSubmit={handleSubmit}>
-          <div className="grid gap-2">
-            <Label>Email</Label>
-            <Input
-              type="email"
-              placeholder="Email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Password</Label>
+        <form className="py-4 space-y-6" onSubmit={handleSubmit}>
+          {/* Photo Upload Section */}
+          <div className="flex items-center gap-6 p-4 bg-gray-50 rounded-lg">
             <div className="relative">
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                required
+              <img
+                src={previewImage}
+                alt="Preview"
+                className="w-20 h-20 rounded-full border-2 border-gray-200 object-cover"
+                onError={(e) => (e.currentTarget.src = defaultAvatar)}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700">
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </button>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                <Camera className="w-3 h-3 text-white" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                Foto Profil
+              </Label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="text-sm"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Format: JPG, PNG. Maksimal 2MB
+              </p>
             </div>
           </div>
 
-          <div className="grid gap-2">
-            <Label>Nama</Label>
-            <Input
-              type="text"
-              placeholder="Nama"
-              name="nama"
-              value={form.nama}
-              onChange={handleChange}
-              required
-            />
+          {/* Account Information */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-gray-900 border-b pb-2">
+              Informasi Akun
+            </h4>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Email" required>
+                <Input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="contoh@sekolah.com"
+                  required
+                />
+              </FormField>
+
+              <FormField label="Password" required>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    placeholder="Minimal 6 karakter"
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600">
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </FormField>
+            </div>
           </div>
 
-          <div className="grid gap-2">
-            <Label>NIP</Label>
-            <Input
-              type="text"
-              placeholder="NIP"
-              name="nip"
-              value={form.nip}
-              onChange={handleChange}
-            />
+          {/* Personal Information */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-gray-900 border-b pb-2">
+              Informasi Pribadi
+            </h4>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Nama Lengkap" required>
+                <Input
+                  type="text"
+                  name="nama"
+                  value={form.nama}
+                  onChange={handleChange}
+                  placeholder="Masukkan nama lengkap"
+                  required
+                />
+              </FormField>
+
+              <FormField label="NIP">
+                <Input
+                  type="text"
+                  name="nip"
+                  value={form.nip}
+                  onChange={handleChange}
+                  placeholder="Nomor Induk Pegawai"
+                />
+              </FormField>
+
+              <FormField label="No. Handphone">
+                <Input
+                  type="text"
+                  name="noHP"
+                  value={form.noHP}
+                  onChange={handleChange}
+                  placeholder="08xxxxxxxxxx"
+                />
+              </FormField>
+
+              <FormField label="Jenis Kelamin">
+                <Select
+                  onValueChange={handleSelectGender}
+                  value={form.jenisKelamin}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih jenis kelamin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Laki-laki">Laki-laki</SelectItem>
+                    <SelectItem value="Perempuan">Perempuan</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormField>
+            </div>
+
+            <FormField label="Jabatan">
+              <Input
+                type="text"
+                name="jabatan"
+                value={form.jabatan}
+                onChange={handleChange}
+                placeholder="Contoh: Guru Matematika, Kepala Sekolah"
+              />
+            </FormField>
+
+            <FormField label="Alamat">
+              <Input
+                type="text"
+                name="alamat"
+                value={form.alamat}
+                onChange={handleChange}
+                placeholder="Alamat lengkap"
+              />
+            </FormField>
           </div>
 
-          <div className="grid gap-2">
-            <Label>No HP</Label>
-            <Input
-              type="text"
-              placeholder="08xxxxxxxxx"
-              name="noHP"
-              value={form.noHP}
-              onChange={handleChange}
-            />
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button type="button" variant="outline" onClick={handleClose}>
+              Batal
+            </Button>
+            <Button type="submit" className="gap-2">
+              <Plus className="w-4 h-4" />
+              Simpan Data
+            </Button>
           </div>
-
-          <div className="grid gap-2">
-            <Label>Jenis Kelamin</Label>
-            <Select
-              onValueChange={handleSelectGender}
-              value={form.jenisKelamin}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pilih Jenis Kelamin" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Laki-laki">Laki-laki</SelectItem>
-                <SelectItem value="Perempuan">Perempuan</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Alamat</Label>
-            <Input
-              type="text"
-              placeholder="Alamat"
-              name="alamat"
-              value={form.alamat}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Jabatan</Label>
-            <Input
-              type="text"
-              placeholder="Guru Mapel / Staff Sekolah"
-              name="jabatan"
-              value={form.jabatan}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Foto Profil</Label>
-            <Input type="file" accept="image/*" onChange={handleFileChange} />
-          </div>
-
-          <Button type="submit" className="mt-4">
-            Simpan
-          </Button>
         </form>
       </DialogContent>
     </Dialog>

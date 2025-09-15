@@ -49,6 +49,14 @@ export const getSiswaByIdService = async (id) => {
           guru: {
             select: { nama: true },
           },
+          // Tambahkan tahunRel agar bisa menampilkan tahun ajaran
+          tahunRel: {
+            include: {
+              tahunAjaran: {
+                select: { id_tahun: true, namaTahun: true },
+              },
+            },
+          },
         },
       },
       nilaiRapor: {
@@ -224,7 +232,7 @@ export const updateSiswaService = async (id, data, file) => {
   if (tanggalLahir) updateData.tanggalLahir = new Date(tanggalLahir);
   if (jenisKelamin) updateData.jenisKelamin = jenisKelamin;
   if (kelasId) updateData.kelas = { connect: { id_kelas: parseInt(kelasId) } };
-  if (file) updateData.fotoProfil = `/uploads/${file.filename}`;
+  if (file) updateData.fotoProfil = `${file.filename}`;
 
   // -----------------------
   // Update akun user
