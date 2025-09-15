@@ -1,9 +1,22 @@
 import prisma from "../src/models/prisma.js";
-// import { faker } from "@faker-js/faker/locale/id_ID";
 import bcrypt from "bcrypt";
 
 async function main() {
   const hashedPassword = await bcrypt.hash("password123", 10);
+
+  // ==========================
+  // Tahun Ajaran
+  // ==========================
+  const tahunAjaranList = [];
+  const daftarTahun = ["2022/2023", "2023/2024", "2024/2025"];
+
+  for (const t of daftarTahun) {
+    const tahun = await prisma.tahunAjaran.create({
+      data: { namaTahun: t },
+    });
+    tahunAjaranList.push(tahun);
+  }
+  console.log(`✅ ${tahunAjaranList.length} Tahun Ajaran dibuat`);
 
   // ==========================
   // Admin (Guru dengan role ADMIN)
@@ -61,30 +74,60 @@ async function main() {
   console.log(`✅ ${guruList.length} Guru dibuat`);
 
   // ==========================
-  // Kelas
+  // Kelas + Relasi TahunAjaran
   // ==========================
   const kelasList = [];
   const tingkatArr = ["X", "XI", "XII"];
-  const namaHuruf = ["A", "B", "C", "D", "E"];
+  const namaHuruf = ["A", "B", "C"];
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 6; i++) {
     const waliKelas = guruList[i % guruList.length];
+    const tingkat = tingkatArr[i % tingkatArr.length];
+
     const kelas = await prisma.kelas.create({
       data: {
-        namaKelas: `Kelas ${tingkatArr[i % tingkatArr.length]} ${namaHuruf[i]}`,
-        tingkat: tingkatArr[i % tingkatArr.length],
+        namaKelas: `${tingkat} ${namaHuruf[i % namaHuruf.length]}`,
+        tingkat,
         waliId: waliKelas.id_guru,
       },
     });
+
+    // Tentukan tahun ajaran aktif berdasarkan tingkat
+    let activeTahunId;
+    if (tingkat === "X") {
+      activeTahunId = tahunAjaranList.find(
+        (t) => t.namaTahun === "2024/2025"
+      ).id_tahun;
+    } else if (tingkat === "XI") {
+      activeTahunId = tahunAjaranList.find(
+        (t) => t.namaTahun === "2023/2024"
+      ).id_tahun;
+    } else if (tingkat === "XII") {
+      activeTahunId = tahunAjaranList.find(
+        (t) => t.namaTahun === "2022/2023"
+      ).id_tahun;
+    }
+
+    // Buat relasi kelas ke semua tahun ajaran, hanya satu yang aktif
+    for (const t of tahunAjaranList) {
+      await prisma.kelasTahunAjaran.create({
+        data: {
+          kelasId: kelas.id_kelas,
+          tahunAjaranId: t.id_tahun,
+          isActive: t.id_tahun === activeTahunId,
+        },
+      });
+    }
+
     kelasList.push(kelas);
   }
-  console.log(`✅ ${kelasList.length} Kelas dibuat`);
+  console.log(`✅ ${kelasList.length} Kelas dibuat dengan Tahun Ajaran relasi`);
 
   // ==========================
   // Siswa (role: SISWA)
   // ==========================
   const siswaList = [];
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 20; i++) {
     const kelas = kelasList[i % kelasList.length];
     const siswa = await prisma.siswa.create({
       data: {
@@ -111,10 +154,10 @@ async function main() {
   console.log(`✅ ${siswaList.length} Siswa dibuat`);
 
   // ==========================
-  // OrangTua + Relasi (Siswa_Orangtua)
+  // OrangTua + Relasi
   // ==========================
   for (let i = 0; i < siswaList.length; i++) {
-    const orangtua = await prisma.orangTua.create({
+    await prisma.orangTua.create({
       data: {
         nama: `Orangtua ${i}`,
         hubungan: i % 2 === 0 ? "Ayah" : "Ibu",
@@ -133,7 +176,7 @@ async function main() {
   console.log(`✅ ${siswaList.length} OrangTua dibuat`);
 
   // ==========================
-  // MataPelajaran
+  // Mata Pelajaran
   // ==========================
   const mapelList = [];
   const daftarMapel = [
@@ -159,7 +202,7 @@ async function main() {
   console.log(`✅ ${mapelList.length} Mata Pelajaran dibuat`);
 
   // ==========================
-  // NilaiRapor
+  // Nilai Rapor
   // ==========================
   const semesterArr = ["Ganjil", "Genap"];
   for (const siswa of siswaList) {
@@ -170,13 +213,38 @@ async function main() {
             id_siswa: siswa.id_siswa,
             id_mapel: mapel.id_mapel,
             semester,
-            nilai: Math.floor(Math.random() * 41) + 60, // 60-100
+            nilai: Math.floor(Math.random() * 41) + 60,
           },
         });
       }
     }
   }
   console.log("✅ Nilai Rapor dibuat untuk semua siswa");
+
+  // ==========================
+  // Absensi
+  // ==========================
+  const statusAbsensi = ["HADIR", "SAKIT", "IZIN", "TIDAK_HADIR"];
+  const today = new Date();
+
+  for (const siswa of siswaList) {
+    for (let d = 0; d < 5; d++) {
+      const tanggal = new Date(today);
+      tanggal.setDate(today.getDate() - d);
+
+      await prisma.absensi.create({
+        data: {
+          tanggal,
+          status:
+            statusAbsensi[Math.floor(Math.random() * statusAbsensi.length)],
+          keterangan: "Catatan tambahan",
+          id_siswa: siswa.id_siswa,
+          id_tahun: tahunAjaranList[1].id_tahun, // contoh: semua absensi masuk tahun 2023/2024
+        },
+      });
+    }
+  }
+  console.log("✅ Absensi dibuat untuk semua siswa");
 }
 
 main()

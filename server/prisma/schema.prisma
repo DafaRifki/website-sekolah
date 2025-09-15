@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   // output   = "../src/generated/prisma"
@@ -57,6 +54,7 @@ model Siswa {
 
   nilaiRapor     NilaiRapor[]
   Siswa_Orangtua Siswa_Orangtua[]
+  absensi        Absensi[]
 }
 
 model OrangTua {
@@ -82,12 +80,25 @@ model Siswa_Orangtua {
 }
 
 model Kelas {
-  id_kelas  Int     @id @default(autoincrement())
+  id_kelas  Int                @id @default(autoincrement())
   namaKelas String
   tingkat   String
   waliId    Int?
-  guru      Guru?   @relation(fields: [waliId], references: [id_guru])
+  guru      Guru?              @relation(fields: [waliId], references: [id_guru])
   siswa     Siswa[]
+  tahunRel  KelasTahunAjaran[] // pivot ke tahun ajaran
+}
+
+model KelasTahunAjaran {
+  id_kelas_tahun Int     @id @default(autoincrement())
+  kelasId        Int
+  tahunAjaranId  Int
+  isActive       Boolean @default(false)
+
+  kelas       Kelas       @relation(fields: [kelasId], references: [id_kelas])
+  tahunAjaran TahunAjaran @relation(fields: [tahunAjaranId], references: [id_tahun])
+
+  @@unique([kelasId, tahunAjaranId]) // satu pasangan unik
 }
 
 model MataPelajaran {
@@ -108,8 +119,35 @@ model NilaiRapor {
   mapel MataPelajaran @relation(fields: [id_mapel], references: [id_mapel])
 }
 
+model TahunAjaran {
+  id_tahun  Int                @id @default(autoincrement())
+  namaTahun String // contoh: "2024/2025"
+  absensi   Absensi[]
+  kelasRel  KelasTahunAjaran[] // relasi ke kelas lewat pivot
+}
+
+model Absensi {
+  id_absensi Int           @id @default(autoincrement())
+  tanggal    DateTime      @default(now())
+  status     StatusAbsensi
+  keterangan String?
+
+  id_siswa Int
+  id_tahun Int
+
+  siswa       Siswa       @relation(fields: [id_siswa], references: [id_siswa])
+  tahunAjaran TahunAjaran @relation(fields: [id_tahun], references: [id_tahun])
+}
+
 enum Role {
   ADMIN
   GURU
   SISWA
+}
+
+enum StatusAbsensi {
+  HADIR
+  SAKIT
+  IZIN
+  TIDAK_HADIR
 }

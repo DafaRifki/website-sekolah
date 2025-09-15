@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import DateOfBirthPicker from "@/components/DateOfBirthPicker";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Camera, X, Upload } from "lucide-react";
 
 interface Kelas {
   id_kelas: number;
@@ -45,7 +45,8 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
-  // const [orangtuaList, setOrangtuaList] = useState<Orangtua[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
 
   const [formData, setFormData] = useState({
     nama: "",
@@ -76,25 +77,61 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
     }
   };
 
-  // ambil daftar orangtua dari backend
-  // const fetchOrangtua = async () => {
-  //   try {
-  //     const { data } = await apiClient.get("/orangtua");
-  //     setOrangtuaList(data.data);
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
-
   useEffect(() => {
     if (isOpen) {
       fetchKelas();
-      // fetchOrangtua();
     }
   }, [isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validasi tipe file
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(
+          "Hanya file gambar yang diperbolehkan (JPG, JPEG, PNG, GIF)"
+        );
+        return;
+      }
+
+      // Validasi ukuran file (max 5MB)
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error("Ukuran file maksimal 5MB");
+        return;
+      }
+
+      setFotoProfil(file);
+
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewUrl(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setFotoProfil(null);
+    setPreviewUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   const handleSubmit = async () => {
@@ -113,10 +150,14 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
         payload.append("orangtuaNama", formData.orangtuaNama);
       if (formData.orangtuaHubungan)
         payload.append("orangtuaHubungan", formData.orangtuaHubungan);
+      if (formData.orangtuaPekerjaan)
+        payload.append("orangtuaPekerjaan", formData.orangtuaPekerjaan);
+      if (formData.orangtuaAlamat)
+        payload.append("orangtuaAlamat", formData.orangtuaAlamat);
       if (formData.orangtuaNoHp)
         payload.append("orangtuaNoHp", formData.orangtuaNoHp);
 
-      if (fotoProfil) payload.append("fotoProfil", fotoProfil); // ✅ samakan dengan BE
+      if (fotoProfil) payload.append("fotoProfil", fotoProfil);
 
       const { data } = await apiClient.post("/siswa", payload, {
         withCredentials: true,
@@ -126,7 +167,7 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
       toast.success("Siswa berhasil ditambahkan");
       onAdded(data.data);
 
-      // ✅ reset sesuai state awal
+      // Reset form
       setFormData({
         nama: "",
         nis: "",
@@ -143,6 +184,7 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
         orangtuaNoHp: "",
       });
       setFotoProfil(null);
+      setPreviewUrl("");
       onClose();
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Gagal menambahkan siswa");
@@ -154,196 +196,317 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogOverlay className="fixed inset-0 bg-black/10 backdrop-blur-sm" />
-      <DialogContent className="bg-white rounded-2xl max-w-2xl mx-auto p-6">
-        <DialogHeader className="pb-4 border-b">
-          <DialogTitle>Tambah Siswa</DialogTitle>
-          <DialogDescription>
-            Silahkan isi dengan data yang benar
+      <DialogOverlay className="fixed inset-0 bg-black/20 backdrop-blur-sm" />
+      <DialogContent className="bg-white rounded-xl max-w-4xl mx-auto p-0 max-h-[90vh] overflow-hidden">
+        <DialogHeader className="p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+          <DialogTitle className="text-2xl font-bold text-gray-800">
+            Tambah Siswa Baru
+          </DialogTitle>
+          <DialogDescription className="text-gray-600 mt-1">
+            Lengkapi formulir di bawah ini untuk menambahkan siswa baru
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-4">
-          {/* Nama & NIS */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="mb-2">Nama siswa</Label>
-              <Input
-                placeholder="Nama"
-                name="nama"
-                value={formData.nama}
-                onChange={handleChange}
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          {/* Foto Profil Section */}
+          <div className="mb-8 p-4 border rounded-lg bg-gray-50">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">
+              Foto Profil
+            </h3>
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors">
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full">
+                    <Camera className="w-8 h-8 text-gray-400" />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={triggerFileInput}
+                  className="flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  {previewUrl ? "Ubah Foto" : "Pilih Foto"}
+                </Button>
+
+                {previewUrl && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRemovePhoto}
+                    className="flex items-center gap-2 text-red-600 hover:text-red-700">
+                    <X className="w-4 h-4" />
+                    Hapus
+                  </Button>
+                )}
+              </div>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept="image/jpeg,image/jpg,image/png,image/gif"
+                className="hidden"
               />
-            </div>
-            <div>
-              <Label className="mb-2">NIS</Label>
-              <Input
-                placeholder="NIS"
-                name="nis"
-                value={formData.nis}
-                onChange={handleChange}
-              />
+
+              <p className="text-xs text-gray-500 text-center">
+                Format: JPG, JPEG, PNG, GIF (Maks. 5MB)
+              </p>
             </div>
           </div>
 
-          {/* Email & Password */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="mb-2">Email siswa</Label>
-              <Input
-                placeholder="Email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <Label className="mb-2">Password</Label>
-              <div className="relative">
+          {/* Data Siswa Section */}
+          <div className="mb-6 p-4 border rounded-lg">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">
+              Data Siswa
+            </h3>
+            <div className="space-y-4">
+              {/* Nama & NIS */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2">
+                    Nama Lengkap *
+                  </Label>
+                  <Input
+                    placeholder="Masukkan nama lengkap"
+                    name="nama"
+                    value={formData.nama}
+                    onChange={handleChange}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2">
+                    NIS *
+                  </Label>
+                  <Input
+                    placeholder="Nomor Induk Siswa"
+                    name="nis"
+                    value={formData.nis}
+                    onChange={handleChange}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Email & Password */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2">
+                    Email *
+                  </Label>
+                  <Input
+                    type="email"
+                    placeholder="email@example.com"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2">
+                    Password *
+                  </Label>
+                  <div className="relative mt-1">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Masukkan password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Alamat */}
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2">
+                  Alamat
+                </Label>
                 <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Password"
-                  name="password"
-                  value={formData.password}
+                  placeholder="Alamat lengkap siswa"
+                  name="alamat"
+                  value={formData.alamat}
                   onChange={handleChange}
+                  className="mt-1"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700">
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
+              </div>
+
+              {/* Tanggal Lahir & Jenis Kelamin */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <DateOfBirthPicker
+                    value={formData.tanggalLahir}
+                    onChange={(val) =>
+                      setFormData({ ...formData, tanggalLahir: val })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2">
+                    Jenis Kelamin *
+                  </Label>
+                  <Select
+                    value={formData.jenisKelamin}
+                    onValueChange={(val) =>
+                      setFormData({ ...formData, jenisKelamin: val })
+                    }>
+                    <SelectTrigger className="w-full mt-1">
+                      <SelectValue placeholder="Pilih jenis kelamin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Laki-laki">Laki-laki</SelectItem>
+                      <SelectItem value="Perempuan">Perempuan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Kelas */}
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2">
+                  Kelas
+                </Label>
+                <Select
+                  value={formData.kelasId}
+                  onValueChange={(val) =>
+                    setFormData({ ...formData, kelasId: val })
+                  }>
+                  <SelectTrigger className="w-full mt-1">
+                    <SelectValue placeholder="Pilih kelas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {kelasList.map((k) => (
+                      <SelectItem key={k.id_kelas} value={String(k.id_kelas)}>
+                        {k.namaKelas}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
 
-          {/* Alamat */}
-          <div>
-            <Label className="mb-2">Alamat siswa</Label>
-            <Input
-              placeholder="Alamat"
-              name="alamat"
-              value={formData.alamat}
-              onChange={handleChange}
-            />
-          </div>
+          {/* Data Orang Tua Section */}
+          <div className="mb-6 p-4 border rounded-lg">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">
+              Data Orang Tua/Wali
+            </h3>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2">
+                    Nama Orang Tua/Wali
+                  </Label>
+                  <Input
+                    placeholder="Nama lengkap orang tua/wali"
+                    name="orangtuaNama"
+                    value={formData.orangtuaNama}
+                    onChange={handleChange}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2">
+                    Hubungan
+                  </Label>
+                  <Input
+                    placeholder="Ayah / Ibu / Wali"
+                    name="orangtuaHubungan"
+                    value={formData.orangtuaHubungan}
+                    onChange={handleChange}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
 
-          {/* Tanggal Lahir & Jenis Kelamin */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <DateOfBirthPicker
-                value={formData.tanggalLahir}
-                onChange={(val) =>
-                  setFormData({ ...formData, tanggalLahir: val })
-                }
-              />
-            </div>
-            <div>
-              <Label className="mb-2">Jenis Kelamin</Label>
-              <Select
-                value={formData.jenisKelamin}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, jenisKelamin: val })
-                }>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih Jenis Kelamin" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Laki-laki">Laki-laki</SelectItem>
-                  <SelectItem value="Perempuan">Perempuan</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2">
+                    Pekerjaan
+                  </Label>
+                  <Input
+                    placeholder="Pekerjaan orang tua/wali"
+                    name="orangtuaPekerjaan"
+                    value={formData.orangtuaPekerjaan}
+                    onChange={handleChange}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2">
+                    No. HP
+                  </Label>
+                  <Input
+                    placeholder="08xxxxxxxxxx"
+                    name="orangtuaNoHp"
+                    value={formData.orangtuaNoHp}
+                    onChange={handleChange}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
 
-          {/* Kelas & Orangtua */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="mb-2">Kelas siswa</Label>
-              <Select
-                value={formData.kelasId}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, kelasId: val })
-                }>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih Kelas" />
-                </SelectTrigger>
-                <SelectContent>
-                  {kelasList.map((k) => (
-                    <SelectItem key={k.id_kelas} value={String(k.id_kelas)}>
-                      {k.namaKelas}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="mb-2">Nama Orang Tua</Label>
-              <Input
-                placeholder="Nama Orang Tua"
-                name="orangtuaNama"
-                value={formData.orangtuaNama}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <Label className="mb-2">Hubungan</Label>
-              <Input
-                placeholder="Ayah / Ibu / Wali"
-                name="orangtuaHubungan"
-                value={formData.orangtuaHubungan}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <Label className="mb-2">Pekerjaan</Label>
-              <Input
-                placeholder="Pekerjaan Orang Tua"
-                name="orangtuaPekerjaan"
-                value={formData.orangtuaPekerjaan}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <Label className="mb-2">Alamat Orang Tua</Label>
-              <Input
-                placeholder="Alamat Orang Tua"
-                name="orangtuaAlamat"
-                value={formData.orangtuaAlamat}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <Label className="mb-2">No. HP</Label>
-              <Input
-                placeholder="08xxxxxxxx"
-                name="orangtuaNoHp"
-                value={formData.orangtuaNoHp}
-                onChange={handleChange}
-              />
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2">
+                  Alamat Orang Tua
+                </Label>
+                <Input
+                  placeholder="Alamat orang tua/wali"
+                  name="orangtuaAlamat"
+                  value={formData.orangtuaAlamat}
+                  onChange={handleChange}
+                  className="mt-1"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Upload Foto */}
-          <div>
-            <Label className="mb-2">Foto Profil</Label>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setFotoProfil(e.target.files?.[0] || null)}
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="secondary" onClick={onClose}>
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-6 border-t">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="px-6"
+              disabled={loading}>
               Batal
             </Button>
-            <Button onClick={handleSubmit} disabled={loading}>
-              {loading ? "Menyimpan..." : "Simpan"}
+            <Button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="px-6 bg-blue-600 hover:bg-blue-700">
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Menyimpan...
+                </>
+              ) : (
+                "Simpan Data"
+              )}
             </Button>
           </div>
         </div>

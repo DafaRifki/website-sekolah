@@ -15,6 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
 import apiClient from "@/config/axios";
 import Swal from "sweetalert2";
@@ -24,11 +26,21 @@ interface Guru {
   nama: string;
 }
 
+interface TahunAjaran {
+  id_tahun: number;
+  namaTahun: string;
+  isActive: boolean;
+}
+
 interface Kelas {
   id_kelas: number;
   namaKelas: string;
   tingkat: string;
   guru?: Guru | null;
+  tahunRel?: {
+    tahunAjaran: TahunAjaran;
+    isActive: boolean;
+  }[];
 }
 
 interface EditKelasModalProps {
@@ -48,23 +60,38 @@ export default function EditKelasModal({
   const [tingkat, setTingkat] = useState("");
   const [waliId, setWaliId] = useState<string>("none");
   const [guruList, setGuruList] = useState<Guru[]>([]);
+  const [tahunAjaranId, setTahunAjaranId] = useState<string>("none");
+  const [tahunAjaranList, setTahunAjaranList] = useState<TahunAjaran[]>([]);
+  const [setActive, setSetActive] = useState(false);
 
-  // Sync state dengan kelas yang dipilih
   useEffect(() => {
     if (kelas) {
       setNamaKelas(kelas.namaKelas);
       setTingkat(kelas.tingkat);
       setWaliId(kelas.guru ? kelas.guru.id_guru.toString() : "none");
+
+      if (kelas.tahunRel && kelas.tahunRel.length > 0) {
+        const activeTahun = kelas.tahunRel[0].tahunAjaran;
+        setTahunAjaranId(activeTahun.id_tahun.toString());
+      } else {
+        setTahunAjaranId("none");
+      }
+
+      setSetActive(false);
     }
   }, [kelas]);
 
-  // Fetch guru hanya ketika modal dibuka
   useEffect(() => {
     if (isOpen) {
       apiClient
         .get("/guru")
         .then((res) => setGuruList(res.data.data))
         .catch((err) => console.error("Gagal fetch guru:", err));
+
+      apiClient
+        .get("/tahun-ajaran")
+        .then((res) => setTahunAjaranList(res.data.data))
+        .catch((err) => console.error("Gagal fetch tahun ajaran:", err));
     }
   }, [isOpen]);
 
@@ -72,8 +99,12 @@ export default function EditKelasModal({
     if (!kelas) return;
 
     try {
-      if (!namaKelas || !tingkat) {
-        Swal.fire("Error", "Nama kelas dan tingkat wajib diisi", "error");
+      if (!namaKelas || !tingkat || tahunAjaranId === "none") {
+        Swal.fire(
+          "Error",
+          "Nama kelas, tingkat, dan tahun ajaran wajib diisi",
+          "error"
+        );
         return;
       }
 
@@ -81,6 +112,8 @@ export default function EditKelasModal({
         namaKelas,
         tingkat,
         waliId: waliId === "none" ? null : parseInt(waliId),
+        tahunAjaranId: parseInt(tahunAjaranId),
+        isActive: setActive,
       });
 
       Swal.fire("Berhasil", "Kelas berhasil diperbarui", "success");
@@ -97,36 +130,38 @@ export default function EditKelasModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit Kelas</DialogTitle>
-          <DialogDescription>
-            Ubah data kelas di bawah, lalu simpan untuk memperbarui.
-          </DialogDescription>
+          <DialogDescription>Perbarui informasi kelas</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 py-4">
           {/* Nama Kelas */}
-          <div>
-            <label className="block text-sm font-medium">Nama Kelas</label>
+          <div className="space-y-2">
+            <Label htmlFor="namaKelas">Nama Kelas</Label>
             <Input
+              id="namaKelas"
               value={namaKelas}
               onChange={(e) => setNamaKelas(e.target.value)}
+              placeholder="Masukkan nama kelas"
             />
           </div>
 
           {/* Tingkat */}
-          <div>
-            <label className="block text-sm font-medium">Tingkat</label>
+          <div className="space-y-2">
+            <Label htmlFor="tingkat">Tingkat</Label>
             <Input
+              id="tingkat"
               value={tingkat}
               onChange={(e) => setTingkat(e.target.value)}
+              placeholder="Masukkan tingkat"
             />
           </div>
 
           {/* Wali Kelas */}
-          <div>
-            <label className="block text-sm font-medium">Wali Kelas</label>
+          <div className="space-y-2">
+            <Label>Wali Kelas</Label>
             <Select value={waliId} onValueChange={setWaliId}>
               <SelectTrigger>
                 <SelectValue placeholder="Pilih wali kelas" />
@@ -141,13 +176,43 @@ export default function EditKelasModal({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Tahun Ajaran */}
+          <div className="space-y-2">
+            <Label>Tahun Ajaran</Label>
+            <Select value={tahunAjaranId} onValueChange={setTahunAjaranId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih tahun ajaran" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Belum ada tahun ajaran</SelectItem>
+                {tahunAjaranList.map((t) => (
+                  <SelectItem key={t.id_tahun} value={t.id_tahun.toString()}>
+                    {t.namaTahun} {t.isActive && "(aktif)"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Checkbox Aktif */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="setActive"
+              checked={setActive}
+              onCheckedChange={setSetActive}
+            />
+            <Label htmlFor="setActive" className="text-sm">
+              Jadikan tahun ajaran ini aktif
+            </Label>
+          </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Batal
           </Button>
-          <Button onClick={handleSubmit}>Simpan Perubahan</Button>
+          <Button onClick={handleSubmit}>Simpan</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
