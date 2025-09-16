@@ -21,6 +21,7 @@ import StrukturOrganisasi from "./pages/landingPage/guru/StrukturOrganisasi.tsx"
 import BukuIndukPage from "./pages/admin/buku-induk/BukuIndukPage.tsx";
 import SiswaDetail from "./pages/admin/buku-induk/components/SiswaDetail.tsx";
 import DataKelasPage from "./pages/admin/kelas/DataKelasPage.tsx";
+import DashboardPageIndex from "./pages/dashboard/index.tsx";
 
 const root = document.getElementById("root") as HTMLElement;
 
@@ -48,7 +49,7 @@ ReactDOM.createRoot(root).render(
       <Route path="/fasilitas" element={<Fasilitas />} />
       <Route path="/struktur-organisasi" element={<StrukturOrganisasi />} />
       <Route element={<AuthLayout />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/dashboard" element={<DashboardPageIndex />} />
         {/* Data Siswa */}
         <Route path="/siswa" element={<DataSiswaPage />} />
         <Route path="/siswa/:id/edit" element={<EditSiswaPage />} />

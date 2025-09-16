@@ -40,6 +40,25 @@ interface Props {
   onUpdated: (guru: Guru) => void;
 }
 
+// Pindahkan FormField keluar dari komponen utama
+const FormField = ({
+  label,
+  children,
+  required = false,
+}: {
+  label: string;
+  children: React.ReactNode;
+  required?: boolean;
+}) => (
+  <div className="space-y-2">
+    <Label className="text-sm font-medium text-gray-700">
+      {label}
+      {required && <span className="text-red-500 ml-1">*</span>}
+    </Label>
+    {children}
+  </div>
+);
+
 export default function EditGuruModal({
   guru,
   isOpen,
@@ -154,24 +173,6 @@ export default function EditGuruModal({
       );
     }
   };
-
-  const FormField = ({
-    label,
-    children,
-    required = false,
-  }: {
-    label: string;
-    children: React.ReactNode;
-    required?: boolean;
-  }) => (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium text-gray-700">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </Label>
-      {children}
-    </div>
-  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
