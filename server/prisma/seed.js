@@ -5,21 +5,29 @@ async function main() {
   const hashedPassword = await bcrypt.hash("password123", 10);
 
   // ==========================
-  // Tahun Ajaran
+  // Tahun Ajaran + TarifPembayaran
   // ==========================
   const tahunAjaranList = [];
   const daftarTahun = ["2022/2023", "2023/2024", "2024/2025"];
 
-  for (const t of daftarTahun) {
+  for (let i = 0; i < daftarTahun.length; i++) {
     const tahun = await prisma.tahunAjaran.create({
-      data: { namaTahun: t },
+      data: {
+        namaTahun: daftarTahun[i],
+        tarif: {
+          create: {
+            nominal: 5000000 + i * 500000, // beda tiap tahun
+            keterangan: `Tarif pendaftaran tahun ${daftarTahun[i]}`,
+          },
+        },
+      },
     });
     tahunAjaranList.push(tahun);
   }
-  console.log(`✅ ${tahunAjaranList.length} Tahun Ajaran dibuat`);
+  console.log(`✅ ${tahunAjaranList.length} Tahun Ajaran + Tarif dibuat`);
 
   // ==========================
-  // Admin (Guru dengan role ADMIN)
+  // Admin (Guru role ADMIN)
   // ==========================
   const adminGuru = await prisma.guru.create({
     data: {
@@ -92,23 +100,16 @@ async function main() {
       },
     });
 
-    // Tentukan tahun ajaran aktif berdasarkan tingkat
+    // tentukan tahun ajaran aktif untuk kelas
     let activeTahunId;
     if (tingkat === "X") {
-      activeTahunId = tahunAjaranList.find(
-        (t) => t.namaTahun === "2024/2025"
-      ).id_tahun;
+      activeTahunId = tahunAjaranList[2].id_tahun; // 2024/2025
     } else if (tingkat === "XI") {
-      activeTahunId = tahunAjaranList.find(
-        (t) => t.namaTahun === "2023/2024"
-      ).id_tahun;
-    } else if (tingkat === "XII") {
-      activeTahunId = tahunAjaranList.find(
-        (t) => t.namaTahun === "2022/2023"
-      ).id_tahun;
+      activeTahunId = tahunAjaranList[1].id_tahun; // 2023/2024
+    } else {
+      activeTahunId = tahunAjaranList[0].id_tahun; // 2022/2023
     }
 
-    // Buat relasi kelas ke semua tahun ajaran, hanya satu yang aktif
     for (const t of tahunAjaranList) {
       await prisma.kelasTahunAjaran.create({
         data: {
@@ -121,7 +122,7 @@ async function main() {
 
     kelasList.push(kelas);
   }
-  console.log(`✅ ${kelasList.length} Kelas dibuat dengan Tahun Ajaran relasi`);
+  console.log(`✅ ${kelasList.length} Kelas dibuat dengan relasi Tahun Ajaran`);
 
   // ==========================
   // Siswa (role: SISWA)
@@ -245,6 +246,26 @@ async function main() {
     }
   }
   console.log("✅ Absensi dibuat untuk semua siswa");
+
+  // ==========================
+  // Pendaftaran Siswa Baru
+  // ==========================
+  for (let i = 0; i < 5; i++) {
+    await prisma.pendaftaran.create({
+      data: {
+        nama: `Calon Siswa ${i}`,
+        alamat: `Alamat Calon Siswa ${i}`,
+        tanggalLahir: new Date(2011, i % 12, (i % 28) + 1),
+        jenisKelamin: i % 2 === 0 ? "Laki-laki" : "Perempuan",
+        noHp: `0898765432${i}`,
+        email: `calon${i}@mail.com`,
+        statusDokumen: "BELUM_DITERIMA",
+        statusPembayaran: "BELUM_BAYAR",
+        tahunAjaranId: tahunAjaranList[2].id_tahun, // tahun terbaru
+      },
+    });
+  }
+  console.log("✅ 5 Pendaftaran Siswa Baru dibuat");
 }
 
 main()

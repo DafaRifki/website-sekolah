@@ -1,13 +1,5 @@
 import React, { forwardRef } from "react";
 import AvatarDefault from "../../../../assets/avatar.png";
-// import {
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableHead,
-//   TableHeader,
-//   TableRow,
-// } from "@/components/ui/table";
 
 interface PrintPreviewProps {
   siswa: {
@@ -59,261 +51,321 @@ const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
     });
 
     return (
-      <div
-        ref={ref}
-        className="max-w-4xl mx-auto bg-white text-black"
-        style={{ fontFamily: "Times New Roman, serif" }}>
-        {/* Header Document */}
-        <div className="text-center mb-8 border-b-2 border-black pb-4">
-          <h1 className="text-2xl font-bold uppercase mb-2">
-            Buku Induk Siswa
-          </h1>
-          <h2 className="text-lg font-semibold">SMA Negeri 1 Bogor</h2>
-          <p className="text-sm mt-2">Jl. Ir. H. Juanda No. 16, Bogor 16122</p>
-          <p className="text-sm">
-            Telp: (0251) 8323456 | Email: info@sman1bogor.sch.id
-          </p>
-        </div>
+      <>
+        {/* Print-specific CSS */}
+        <style jsx>{`
+          @page {
+            size: 215mm 330mm; /* F4 size */
+            margin: 15mm;
+          }
 
-        {/* Student Information */}
-        <div className="mb-8">
-          <h3 className="text-lg font-bold mb-4 bg-gray-100 p-2 border">
-            I. DATA PRIBADI SISWA
-          </h3>
+          @media print {
+            .print-container {
+              font-size: 8pt;
+              line-height: 1.2;
+            }
 
-          <div className="grid grid-cols-4 gap-6">
-            {/* Profile Image */}
-            <div className="col-span-1 text-center">
-              <img
-                src={getProfileImageUrl(siswa.fotoProfil)}
-                alt={siswa.nama}
-                className="w-32 h-40 border-2 border-black object-cover mx-auto mb-2"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = AvatarDefault;
-                }}
-              />
-              <p className="text-xs">Foto Siswa</p>
+            .print-header {
+              font-size: 11pt;
+            }
+
+            .print-section-title {
+              font-size: 9pt;
+            }
+
+            .print-table {
+              font-size: 7pt;
+            }
+          }
+
+          .print-container {
+            max-width: none;
+            width: 100%;
+            font-family: "Times New Roman", serif;
+            color: black;
+            background: white;
+            font-size: 8pt;
+            line-height: 1.2;
+          }
+        `}</style>
+
+        <div ref={ref} className="print-container">
+          {/* Header Document - Compact */}
+          <div className="text-center mb-3 border-b-2 border-black pb-2">
+            <h1 className="text-base font-bold uppercase mb-1 print-header">
+              Buku Induk Siswa
+            </h1>
+            <h2 className="text-xs font-semibold">
+              SMA Islam Terpadu As-Sakinah
+            </h2>
+            <p className="text-xs mt-0.5">
+              Jl. Cibening Raya, Kp Cempaka Putih Rt.001/006 Cibening Pamijahan
+              Bogor
+            </p>
+            <p className="text-xs">
+              Telp: +62 814-0062-5336 | Email: assakinahpamijahanbogor@gmail.com
+            </p>
+          </div>
+
+          {/* Main Content - Single Column */}
+          <div className="space-y-2">
+            {/* Student Information */}
+            <div>
+              <h3 className="text-xs font-bold mb-1 bg-gray-100 p-1 border print-section-title">
+                I. DATA PRIBADI SISWA
+              </h3>
+
+              <div className="flex gap-2">
+                {/* Profile Image - Smaller */}
+                <div className="flex-shrink-0 text-center">
+                  <img
+                    src={getProfileImageUrl(siswa.fotoProfil)}
+                    alt={siswa.nama}
+                    className="w-16 h-20 border border-black object-cover mx-auto mb-1"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = AvatarDefault;
+                    }}
+                  />
+                  <p className="text-xs">Foto</p>
+                </div>
+
+                {/* Personal Data - Compact Table */}
+                <div className="flex-1">
+                  <table className="w-full text-xs">
+                    <tbody>
+                      <tr>
+                        <td className="py-0 w-20 font-medium">Nama</td>
+                        <td className="py-0 w-2">:</td>
+                        <td className="py-0 font-medium">{siswa.nama}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-0 font-medium">NIS</td>
+                        <td className="py-0">:</td>
+                        <td className="py-0">{siswa.nis}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-0 font-medium">Kelamin</td>
+                        <td className="py-0">:</td>
+                        <td className="py-0">{siswa.jenisKelamin || "-"}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-0 font-medium">Tgl Lahir</td>
+                        <td className="py-0">:</td>
+                        <td className="py-0">
+                          {siswa.tanggalLahir
+                            ? new Date(siswa.tanggalLahir).toLocaleDateString(
+                                "id-ID"
+                              )
+                            : "-"}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-0 font-medium">Alamat</td>
+                        <td className="py-0">:</td>
+                        <td className="py-0">{siswa.alamat || "-"}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-0 font-medium">Email</td>
+                        <td className="py-0">:</td>
+                        <td className="py-0">{siswa.user?.email || "-"}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
 
-            {/* Personal Data */}
-            <div className="col-span-3">
-              <table className="w-full text-sm">
+            {/* Academic Information */}
+            <div>
+              <h3 className="text-xs font-bold mb-1 bg-gray-100 p-1 border print-section-title">
+                II. DATA AKADEMIK
+              </h3>
+
+              <table className="w-full text-xs">
                 <tbody>
                   <tr>
-                    <td className="py-1 w-40 font-medium">Nama Lengkap</td>
-                    <td className="py-1 w-4">:</td>
-                    <td className="py-1 font-medium">{siswa.nama}</td>
+                    <td className="py-0 w-20 font-medium">Kelas</td>
+                    <td className="py-0 w-2">:</td>
+                    <td className="py-0">{siswa.kelas?.namaKelas || "-"}</td>
                   </tr>
                   <tr>
-                    <td className="py-1 font-medium">NIS</td>
-                    <td className="py-1">:</td>
-                    <td className="py-1">{siswa.nis}</td>
+                    <td className="py-0 font-medium">Wali Kelas</td>
+                    <td className="py-0">:</td>
+                    <td className="py-0">{siswa.kelas?.guru?.nama || "-"}</td>
                   </tr>
                   <tr>
-                    <td className="py-1 font-medium">Jenis Kelamin</td>
-                    <td className="py-1">:</td>
-                    <td className="py-1">{siswa.jenisKelamin || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 font-medium">Tanggal Lahir</td>
-                    <td className="py-1">:</td>
-                    <td className="py-1">
-                      {siswa.tanggalLahir
-                        ? new Date(siswa.tanggalLahir).toLocaleDateString(
-                            "id-ID"
-                          )
+                    <td className="py-0 font-medium">Tahun Ajaran</td>
+                    <td className="py-0">:</td>
+                    <td className="py-0">
+                      {activeTahunAjaran.length
+                        ? activeTahunAjaran
+                            .map((tr) => tr.tahunAjaran.namaTahun)
+                            .join(", ")
                         : "-"}
                     </td>
                   </tr>
                   <tr>
-                    <td className="py-1 font-medium">Alamat</td>
-                    <td className="py-1">:</td>
-                    <td className="py-1">{siswa.alamat || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 font-medium">Email</td>
-                    <td className="py-1">:</td>
-                    <td className="py-1">{siswa.user?.email || "-"}</td>
+                    <td className="py-0 font-medium">Status</td>
+                    <td className="py-0">:</td>
+                    <td className="py-0">{siswa.user?.role || "Siswa"}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
-          </div>
-        </div>
 
-        {/* Academic Information */}
-        <div className="mb-8">
-          <h3 className="text-lg font-bold mb-4 bg-gray-100 p-2 border">
-            II. DATA AKADEMIK
-          </h3>
+            {/* Parent Data - Compact */}
+            <div>
+              <h3 className="text-xs font-bold mb-1 bg-gray-100 p-1 border print-section-title">
+                III. DATA ORANG TUA/WALI
+              </h3>
 
-          <table className="w-full text-sm">
-            <tbody>
-              <tr>
-                <td className="py-1 w-40 font-medium">Kelas</td>
-                <td className="py-1 w-4">:</td>
-                <td className="py-1">{siswa.kelas?.namaKelas || "-"}</td>
-              </tr>
-              <tr>
-                <td className="py-1 font-medium">Wali Kelas</td>
-                <td className="py-1">:</td>
-                <td className="py-1">{siswa.kelas?.guru?.nama || "-"}</td>
-              </tr>
-              <tr>
-                <td className="py-1 font-medium">Tahun Ajaran</td>
-                <td className="py-1">:</td>
-                <td className="py-1">
-                  {activeTahunAjaran.length
-                    ? activeTahunAjaran
-                        .map((tr) => tr.tahunAjaran.namaTahun)
-                        .join(", ")
-                    : "-"}
-                </td>
-              </tr>
-              <tr>
-                <td className="py-1 font-medium">Status</td>
-                <td className="py-1">:</td>
-                <td className="py-1">{siswa.user?.role || "Siswa"}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* Parent Data */}
-        <div className="mb-8">
-          <h3 className="text-lg font-bold mb-4 bg-gray-100 p-2 border">
-            III. DATA ORANG TUA/WALI
-          </h3>
-
-          {siswa.Siswa_Orangtua?.length ? (
-            <table className="w-full border-collapse border border-black text-sm">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border border-black p-2 text-left font-bold">
-                    No
-                  </th>
-                  <th className="border border-black p-2 text-left font-bold">
-                    Nama
-                  </th>
-                  <th className="border border-black p-2 text-left font-bold">
-                    Hubungan
-                  </th>
-                  <th className="border border-black p-2 text-left font-bold">
-                    No. Telepon
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {siswa.Siswa_Orangtua.map((rel, i) => (
-                  <tr key={i}>
-                    <td className="border border-black p-2 text-center">
-                      {i + 1}
-                    </td>
-                    <td className="border border-black p-2">
-                      {rel.orangtua.nama}
-                    </td>
-                    <td className="border border-black p-2">
-                      {rel.orangtua.hubungan}
-                    </td>
-                    <td className="border border-black p-2">
-                      {rel.orangtua.noHp}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-sm italic">
-              Data orang tua/wali belum tersedia.
-            </p>
-          )}
-        </div>
-
-        {/* Academic Grades */}
-        <div className="mb-8">
-          <h3 className="text-lg font-bold mb-4 bg-gray-100 p-2 border">
-            IV. NILAI RAPOR - SEMESTER {semesterFilter.toUpperCase()}
-          </h3>
-
-          {filteredNilaiRapor.length ? (
-            <table className="w-full border-collapse border border-black text-sm">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border border-black p-2 text-left font-bold">
-                    No
-                  </th>
-                  <th className="border border-black p-2 text-left font-bold">
-                    Semester
-                  </th>
-                  <th className="border border-black p-2 text-left font-bold">
-                    Mata Pelajaran
-                  </th>
-                  <th className="border border-black p-2 text-center font-bold">
-                    Nilai
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredNilaiRapor.map((n, i) => (
-                  <tr key={i}>
-                    <td className="border border-black p-2 text-center">
-                      {i + 1}
-                    </td>
-                    <td className="border border-black p-2">{n.semester}</td>
-                    <td className="border border-black p-2">
-                      {n.mapel.namaMapel}
-                    </td>
-                    <td className="border border-black p-2 text-center font-medium">
-                      {n.nilai}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-sm italic">
-              Belum ada nilai untuk semester {semesterFilter.toLowerCase()}.
-            </p>
-          )}
-        </div>
-
-        {/* Footer with Signatures */}
-        <div className="mt-8">
-          <div className="text-right mb-3">
-            <p className="text-xs">Bogor, {currentDate}</p>
-          </div>
-
-          <div className="flex justify-between mt-6">
-            <div className="text-center w-48">
-              <p className="text-xs font-medium mb-1">Mengetahui,</p>
-              <p className="text-xs font-bold">Kepala Sekolah</p>
-              <div className="h-16 my-2"></div>
-              <div className="border-b border-black w-40 mx-auto mb-1"></div>
-              <p className="text-xs">NIP. __________________</p>
+              {siswa.Siswa_Orangtua?.length ? (
+                <table className="w-full border-collapse border border-black text-xs print-table">
+                  <thead>
+                    <tr className="bg-gray-200">
+                      <th className="border border-black p-0.5 text-left font-bold w-4">
+                        No
+                      </th>
+                      <th className="border border-black p-0.5 text-left font-bold">
+                        Nama
+                      </th>
+                      <th className="border border-black p-0.5 text-left font-bold">
+                        Hubungan
+                      </th>
+                      <th className="border border-black p-0.5 text-left font-bold">
+                        No. Telepon
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {siswa.Siswa_Orangtua.slice(0, 3).map((rel, i) => (
+                      <tr key={i}>
+                        <td className="border border-black p-0.5 text-center">
+                          {i + 1}
+                        </td>
+                        <td className="border border-black p-0.5">
+                          {rel.orangtua.nama}
+                        </td>
+                        <td className="border border-black p-0.5">
+                          {rel.orangtua.hubungan}
+                        </td>
+                        <td className="border border-black p-0.5">
+                          {rel.orangtua.noHp}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-xs italic">Data belum tersedia.</p>
+              )}
             </div>
 
-            <div className="text-center w-48">
-              <p className="text-xs font-medium mb-1">Wali Kelas</p>
-              <p className="text-xs font-bold">
-                {siswa.kelas?.namaKelas || "___________"}
-              </p>
-              <div className="h-16 my-2"></div>
-              <div className="border-b border-black w-40 mx-auto mb-1"></div>
-              <p className="text-xs">
-                {siswa.kelas?.guru?.nama || "___________________"}
-              </p>
-              <p className="text-xs">NIP. __________________</p>
+            {/* Grades Section */}
+            <div>
+              <h3 className="text-xs font-bold mb-1 bg-gray-100 p-1 border print-section-title">
+                IV. NILAI RAPOR - SEMESTER {semesterFilter.toUpperCase()}
+              </h3>
+
+              {filteredNilaiRapor.length ? (
+                <table className="w-full border-collapse border border-black text-xs print-table">
+                  <thead>
+                    <tr className="bg-gray-200">
+                      <th className="border border-black p-0.5 text-center font-bold w-4">
+                        No
+                      </th>
+                      <th className="border border-black p-0.5 text-left font-bold">
+                        Mata Pelajaran
+                      </th>
+                      <th className="border border-black p-0.5 text-center font-bold w-8">
+                        Semester
+                      </th>
+                      <th className="border border-black p-0.5 text-center font-bold w-8">
+                        Nilai
+                      </th>
+                      <th className="border border-black p-0.5 text-center font-bold w-6">
+                        Predikat
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredNilaiRapor.map((n, i) => {
+                      let predikat = "D";
+                      if (n.nilai >= 90) predikat = "A";
+                      else if (n.nilai >= 80) predikat = "B";
+                      else if (n.nilai >= 70) predikat = "C";
+
+                      return (
+                        <tr key={i}>
+                          <td className="border border-black p-0.5 text-center">
+                            {i + 1}
+                          </td>
+                          <td className="border border-black p-0.5">
+                            {n.mapel.namaMapel}
+                          </td>
+                          <td className="border border-black p-0.5 text-center">
+                            {n.semester}
+                          </td>
+                          <td className="border border-black p-0.5 text-center font-medium">
+                            {n.nilai}
+                          </td>
+                          <td className="border border-black p-0.5 text-center font-medium">
+                            {predikat}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="border border-dashed border-gray-300 p-2 text-center">
+                  <p className="text-xs italic text-gray-600">
+                    Belum ada nilai untuk semester{" "}
+                    {semesterFilter.toLowerCase()}.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
-        </div>
 
-        {/* Document Footer */}
-        <div className="text-center mt-6 pt-2 border-t border-gray-300">
-          <p className="text-xs text-gray-600">
-            Dokumen ini dicetak pada {currentDate}
-          </p>
+          {/* Footer - Compact Signatures */}
+          <div className="mt-4">
+            <div className="text-right mb-1">
+              <p className="text-xs">Bogor, {currentDate}</p>
+            </div>
+
+            <div className="flex justify-between mt-2">
+              <div className="text-center w-32">
+                <p className="text-xs font-medium mb-0.5">Mengetahui,</p>
+                <p className="text-xs font-bold">Kepala Sekolah</p>
+                <div className="h-8 my-1"></div>
+                <div className="border-b border-black w-24 mx-auto mb-0.5"></div>
+                <p className="text-xs">NIP. ______________</p>
+              </div>
+
+              <div className="text-center w-32">
+                <p className="text-xs font-medium mb-0.5">Wali Kelas</p>
+                <p className="text-xs font-bold">
+                  {siswa.kelas?.namaKelas || "________"}
+                </p>
+                <div className="h-8 my-1"></div>
+                <div className="border-b border-black w-24 mx-auto mb-0.5"></div>
+                <p className="text-xs">
+                  {siswa.kelas?.guru?.nama || "_____________"}
+                </p>
+                <p className="text-xs">NIP. ______________</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Document Footer */}
+          <div className="text-center mt-2 pt-1 border-t border-gray-300">
+            <p className="text-xs text-gray-600">
+              Dokumen ini dicetak pada {currentDate}
+            </p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 );
