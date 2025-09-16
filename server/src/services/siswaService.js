@@ -5,31 +5,62 @@ export const getAllSiswaService = async () => {
   return await prisma.siswa.findMany({
     orderBy: { id_siswa: "asc" },
     include: {
-      user: { select: { email: true, role: true } },
+      user: {
+        select: { id: true, email: true, role: true },
+      },
       kelas: {
-        include: {
+        select: {
+          id_kelas: true,
+          namaKelas: true,
+          tingkat: true,
           guru: {
-            select: { nama: true },
+            select: { id_guru: true, nama: true, nip: true },
           },
         },
       },
       nilaiRapor: {
-        include: {
+        select: {
+          id_nilai: true,
+          semester: true,
+          nilai: true,
           mapel: {
-            select: { namaMapel: true },
+            select: { id_mapel: true, namaMapel: true, kelompokMapel: true },
           },
         },
       },
       Siswa_Orangtua: {
-        include: {
+        select: {
+          status: true,
           orangtua: {
             select: {
+              id_orangtua: true,
               nama: true,
-              pekerjaan: true,
               hubungan: true,
+              pekerjaan: true,
               alamat: true,
               noHp: true,
             },
+          },
+        },
+      },
+      absensi: {
+        select: {
+          id_absensi: true,
+          tanggal: true,
+          status: true,
+          keterangan: true,
+          tahunAjaran: {
+            select: { id_tahun: true, namaTahun: true },
+          },
+        },
+      },
+      pendaftaran: {
+        select: {
+          id_pendaftaran: true,
+          statusDokumen: true,
+          statusPembayaran: true,
+          tahunAjaran: {
+            select: { id_tahun: true, namaTahun: true },
           },
         },
       },
@@ -48,6 +79,14 @@ export const getSiswaByIdService = async (id) => {
         include: {
           guru: {
             select: { nama: true },
+          },
+          // Tambahkan tahunRel agar bisa menampilkan tahun ajaran
+          tahunRel: {
+            include: {
+              tahunAjaran: {
+                select: { id_tahun: true, namaTahun: true },
+              },
+            },
           },
         },
       },
@@ -224,7 +263,7 @@ export const updateSiswaService = async (id, data, file) => {
   if (tanggalLahir) updateData.tanggalLahir = new Date(tanggalLahir);
   if (jenisKelamin) updateData.jenisKelamin = jenisKelamin;
   if (kelasId) updateData.kelas = { connect: { id_kelas: parseInt(kelasId) } };
-  if (file) updateData.fotoProfil = `/uploads/${file.filename}`;
+  if (file) updateData.fotoProfil = `${file.filename}`;
 
   // -----------------------
   // Update akun user

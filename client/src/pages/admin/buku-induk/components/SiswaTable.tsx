@@ -41,9 +41,20 @@ export default function SiswaTable({ siswaList, onDetail }: Props) {
           <TableRow key={siswa.id_siswa}>
             <TableCell>
               <img
-                src={siswa.fotoProfil || avatarDefault}
+                src={
+                  siswa.fotoProfil
+                    ? `${
+                        import.meta.env.VITE_API_BASE_URL ||
+                        "http://localhost:3000/uploads/"
+                      }${siswa.fotoProfil}`
+                    : avatarDefault
+                }
                 alt={siswa.nama}
-                className="w-10 h-10 rounded-full"
+                className="w-10 h-10 rounded-full object-cover"
+                onError={(e) => {
+                  // Fallback ke avatar default jika gambar gagal dimuat
+                  (e.target as HTMLImageElement).src = avatarDefault;
+                }}
               />
             </TableCell>
             <TableCell>{siswa.nis}</TableCell>

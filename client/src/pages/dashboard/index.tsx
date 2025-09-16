@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useOutletContext } from "react-router-dom";
+import CardStat from "./components/CardStat";
+import { getDashboardSummary } from "./services/dashboardService";
 import {
   Users,
   BookOpen,
@@ -13,60 +15,10 @@ import {
   FolderOpen,
   UserCircle,
 } from "lucide-react";
-import { useOutletContext } from "react-router-dom";
-import apiClient from "@/config/axios";
+import type { CardStatProps, User } from "./types";
 
-interface User {
-  name: string;
-  email: string;
-  role: "ADMIN" | "GURU" | "SISWA";
-  statusPendaftaran?: "PENDING_VERIFIKASI" | "DITERIMA"; // khusus siswa
-  isWaliKelas?: boolean; // khusus guru
-}
-
-interface CardStatProps {
-  title: string;
-  value: string | number;
-  description: string;
-  icon: React.ReactNode;
-  color: string;
-}
-
-const colorMap: Record<string, string> = {
-  green: "hover:bg-green-100 active:bg-green-200 text-green-600",
-  yellow: "hover:bg-yellow-100 active:bg-yellow-200 text-yellow-600",
-  red: "hover:bg-red-100 active:bg-red-200 text-red-600",
-  blue: "hover:bg-blue-100 active:bg-blue-200 text-blue-600",
-};
-
-const CardStat: React.FC<CardStatProps> = ({
-  title,
-  value,
-  description,
-  icon,
-  color,
-}) => (
-  <Card
-    className={`cursor-pointer transition-all duration-200 hover:shadow-md active:scale-95 ${colorMap[color]}`}>
-    <CardHeader className="flex flex-row items-center justify-between pb-2">
-      <CardTitle className="text-sm font-medium text-gray-600">
-        {title}
-      </CardTitle>
-      {icon}
-    </CardHeader>
-    <CardContent>
-      <p className={`text-2xl font-bold ${colorMap[color].split(" ")[2]}`}>
-        {value}
-      </p>
-      <p className="text-xs text-gray-500">{description}</p>
-    </CardContent>
-  </Card>
-);
-
-const DashboardPage: React.FC = () => {
+const DashboardPageIndex: React.FC = () => {
   const { user } = useOutletContext<{ user: User }>();
-
-  // Statistik global untuk admin
   const [summary, setSummary] = useState<any>({
     totalSiswa: null,
     totalGuru: null,
@@ -78,79 +30,74 @@ const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     if (user?.role === "ADMIN") {
-      apiClient
-        .get("/dashboard/summary")
-        .then((res) => {
-          setSummary(res.data);
-        })
+      getDashboardSummary()
+        .then((data) => setSummary(data))
         .catch((err) => console.error(err));
     }
   }, [user]);
 
+  // Hardcode sementara untuk guru & siswa
   const dataSiswa = summary.siswaData || {};
 
-  // Data card per role
-  const data = {
+  const data: Record<string, CardStatProps[]> = {
     ADMIN: [
       {
         title: "Pendaftar Baru",
         value: summary.totalPendaftarBaru ?? "-",
         description: "Menunggu verifikasi",
         icon: <ClipboardList className="text-blue-600" />,
-        color: "blue" as const,
+        color: "blue",
       },
       {
         title: "Total Siswa Aktif",
         value: summary.totalSiswa ?? "-",
         description: "Data siswa aktif",
         icon: <Users className="text-green-600" />,
-        color: "green" as const,
+        color: "green",
       },
       {
         title: "Total Guru",
         value: summary.totalGuru ?? "-",
         description: "Data guru aktif",
         icon: <BookOpen className="text-yellow-600" />,
-        color: "yellow" as const,
+        color: "yellow",
       },
       {
         title: "Total Kelas",
         value: summary.totalKelas ?? "-",
         description: "Jumlah kelas",
         icon: <Calendar className="text-green-500" />,
-        color: "green" as const,
+        color: "green",
       },
       {
         title: "Tahun Ajaran Aktif",
         value: summary.tahunAjaran ?? "-",
         description: "Informasi tahun ajaran",
         icon: <Calendar className="text-blue-500" />,
-        color: "blue" as const,
+        color: "blue",
       },
       {
         title: "Tarif Tahunan",
         value: "Rp 5.000.000",
         description: "Dapat diubah tiap tahun",
         icon: <DollarSign className="text-red-500" />,
-        color: "red" as const,
+        color: "red",
       },
       {
         title: "Pengumuman",
         value: "5",
         description: "Pengumuman terbaru",
         icon: <Bell className="text-green-600" />,
-        color: "green" as const,
+        color: "green",
       },
       {
         title: "Laporan",
         value: "→",
         description: "Rekap absensi, nilai, data siswa",
         icon: <FileText className="text-yellow-500" />,
-        color: "yellow" as const,
+        color: "yellow",
       },
     ],
-
-    // hardcode sementara untuk guru & siswa
     GURU: [
       {
         title: "Kelas yang Diampu",
@@ -213,7 +160,6 @@ const DashboardPage: React.FC = () => {
           ]
         : []),
     ],
-
     SISWA_PENDING: [
       {
         title: "Status Pendaftaran",
@@ -237,7 +183,6 @@ const DashboardPage: React.FC = () => {
         color: "blue",
       },
     ],
-
     SISWA_DITERIMA: [
       {
         title: "Biodata",
@@ -284,7 +229,7 @@ const DashboardPage: React.FC = () => {
     ],
   };
 
-  let cardsToShow: any[] = [];
+  let cardsToShow: CardStatProps[] = [];
   if (user?.role === "ADMIN") cardsToShow = data.ADMIN;
   else if (user?.role === "GURU") cardsToShow = data.GURU;
   else if (user?.role === "SISWA")
@@ -317,4 +262,4 @@ const DashboardPage: React.FC = () => {
   );
 };
 
-export default DashboardPage;
+export default DashboardPageIndex;

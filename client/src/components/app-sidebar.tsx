@@ -68,6 +68,7 @@ const menuItems: Record<Role, MenuSection[]> = {
             { title: "Guru", url: "/guru" },
             { title: "Siswa", url: "/siswa" },
             { title: "Kelas", url: "/kelas" },
+            { title: "Tahun Ajaran", url: "/tahun-ajaran" },
           ],
         },
       ],

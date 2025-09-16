@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import apiClient from "@/config/axios";
 import delay from "@/lib/delay";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -21,7 +21,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Camera, X } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 
 interface Kelas {
@@ -32,9 +32,13 @@ interface Kelas {
 export default function EditSiswaPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [currentFotoUrl, setCurrentFotoUrl] = useState<string>("");
 
   const [siswa, setSiswa] = useState({
     nama: "",
@@ -89,6 +93,15 @@ export default function EditSiswaPage() {
           kelasId: siswaData.kelasId?.toString() || "",
         });
 
+        // Set foto profil saat ini
+        if (siswaData.fotoProfil) {
+          const baseUrl =
+            import.meta.env.VITE_API_BASE_URL ||
+            "http://localhost:3000/uploads/";
+          setCurrentFotoUrl(`${baseUrl}${siswaData.fotoProfil}`);
+          setPreviewUrl(`${baseUrl}${siswaData.fotoProfil}`);
+        }
+
         if (siswaData.Siswa_Orangtua?.length > 0) {
           const ortu = siswaData.Siswa_Orangtua[0].orangtua;
           setOrangtua({
@@ -125,6 +138,56 @@ export default function EditSiswaPage() {
   };
 
   // -----------------------
+  // Handle foto profil
+  // -----------------------
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validasi tipe file
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(
+          "Hanya file gambar yang diperbolehkan (JPG, JPEG, PNG, GIF)"
+        );
+        return;
+      }
+
+      // Validasi ukuran file (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        toast.error("Ukuran file maksimal 5MB");
+        return;
+      }
+
+      setSelectedFile(file);
+
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewUrl(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setSelectedFile(null);
+    setPreviewUrl(currentFotoUrl || "");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  // -----------------------
   // Submit update
   // -----------------------
   const handleSubmit = async (e: React.FormEvent) => {
@@ -133,18 +196,27 @@ export default function EditSiswaPage() {
     await delay(500);
 
     try {
-      const payload: any = {
-        nama: siswa.nama || undefined,
-        nis: siswa.nis || undefined,
-        alamat: siswa.alamat || undefined,
-        tanggalLahir: siswa.tanggalLahir || undefined,
-        jenisKelamin: siswa.jenisKelamin || undefined,
-        kelasId: siswa.kelasId ? parseInt(siswa.kelasId) : undefined,
-        email: siswa.email || undefined,
-        password: siswa.password || undefined,
-      };
+      // Buat FormData untuk mengirim file
+      const formData = new FormData();
 
-      // kirim data orangtua jika ada
+      // Tambahkan data siswa
+      if (siswa.nama) formData.append("nama", siswa.nama);
+      if (siswa.nis) formData.append("nis", siswa.nis);
+      if (siswa.alamat) formData.append("alamat", siswa.alamat);
+      if (siswa.tanggalLahir)
+        formData.append("tanggalLahir", siswa.tanggalLahir);
+      if (siswa.jenisKelamin)
+        formData.append("jenisKelamin", siswa.jenisKelamin);
+      if (siswa.kelasId) formData.append("kelasId", siswa.kelasId);
+      if (siswa.email) formData.append("email", siswa.email);
+      if (siswa.password) formData.append("password", siswa.password);
+
+      // Tambahkan file foto jika ada
+      if (selectedFile) {
+        formData.append("foto", selectedFile);
+      }
+
+      // Tambahkan data orangtua jika ada
       if (
         orangtua.nama ||
         orangtua.hubungan ||
@@ -152,15 +224,22 @@ export default function EditSiswaPage() {
         orangtua.alamat ||
         orangtua.noHp
       ) {
-        payload.orangtuaId = orangtua.id_orangtua;
-        payload.orangtuaNama = orangtua.nama || undefined;
-        payload.orangtuaHubungan = orangtua.hubungan || undefined;
-        payload.orangtuaPekerjaan = orangtua.pekerjaan || undefined;
-        payload.orangtuaAlamat = orangtua.alamat || undefined;
-        payload.orangtuaNoHp = orangtua.noHp || undefined;
+        if (orangtua.id_orangtua)
+          formData.append("orangtuaId", orangtua.id_orangtua.toString());
+        if (orangtua.nama) formData.append("orangtuaNama", orangtua.nama);
+        if (orangtua.hubungan)
+          formData.append("orangtuaHubungan", orangtua.hubungan);
+        if (orangtua.pekerjaan)
+          formData.append("orangtuaPekerjaan", orangtua.pekerjaan);
+        if (orangtua.alamat) formData.append("orangtuaAlamat", orangtua.alamat);
+        if (orangtua.noHp) formData.append("orangtuaNoHp", orangtua.noHp);
       }
 
-      await apiClient.patch(`/siswa/${id}`, payload);
+      await apiClient.patch(`/siswa/${id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       toast.success("Data siswa berhasil diupdate", {
         onAutoClose: () => navigate("/siswa"),
@@ -191,6 +270,64 @@ export default function EditSiswaPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Foto Profil */}
+            <div className="space-y-4 border-b pb-4">
+              <h3 className="text-lg font-semibold">Foto Profil</h3>
+              <div className="flex flex-col items-center space-y-4">
+                <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gray-100 border-2 border-dashed border-gray-300">
+                  {previewUrl ? (
+                    <img
+                      src={previewUrl}
+                      alt="Foto Profil"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-full">
+                      <Camera className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={triggerFileInput}
+                    className="flex items-center gap-2">
+                    <Camera className="w-4 h-4" />
+                    {previewUrl ? "Ubah Foto" : "Pilih Foto"}
+                  </Button>
+
+                  {previewUrl && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRemovePhoto}
+                      className="flex items-center gap-2">
+                      <X className="w-4 h-4" />
+                      Hapus
+                    </Button>
+                  )}
+                </div>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  accept="image/jpeg,image/jpg,image/png,image/gif"
+                  className="hidden"
+                />
+
+                <p className="text-xs text-gray-500 text-center">
+                  Format yang didukung: JPG, JPEG, PNG, GIF
+                  <br />
+                  Ukuran maksimal: 5MB
+                </p>
+              </div>
+            </div>
+
             {/* Data Siswa */}
             <div className="space-y-4 border-b pb-4">
               <h3 className="text-lg font-semibold">Data Siswa</h3>

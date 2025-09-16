@@ -37,39 +37,63 @@ export default function BukuIndukPage() {
   const paginated = filtered.slice(startIndex, startIndex + perPage);
 
   return (
-    <Card className="p-4 shadow-lg rounded-2xl">
-      <CardHeader className="flex justify-between items-center">
-        <CardTitle className="text-xl font-bold">Buku Induk Siswa</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <SiswaSearch search={search} setSearch={setSearch} />
+    <div className="container mx-auto p-6">
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="border-b bg-gray-50/50">
+          <CardTitle className="text-2xl font-semibold text-gray-900">
+            Buku Induk Siswa
+          </CardTitle>
+          <p className="text-sm text-gray-600 mt-1">
+            Kelola data siswa dan informasi akademik
+          </p>
+        </CardHeader>
 
-        <SiswaTable
-          siswaList={paginated}
-          onDetail={(id) => navigate(`/buku-induk/${id}`)}
-        />
+        <CardContent className="p-6">
+          <div className="space-y-6">
+            {/* Search Section */}
+            <div>
+              <SiswaSearch search={search} setSearch={setSearch} />
+            </div>
 
-        {/* Pagination Controls */}
-        <div className="flex justify-between items-center mt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((p) => p - 1)}>
-            Prev
-          </Button>
-          <span>
-            Halaman {currentPage} dari {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((p) => p + 1)}>
-            Next
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+            {/* Table Section */}
+            <div>
+              <SiswaTable
+                siswaList={paginated}
+                onDetail={(id) => navigate(`/buku-induk/${id}`)}
+              />
+            </div>
+
+            {/* Pagination Section */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((p) => p - 1)}
+                    className="h-8 px-3">
+                    Sebelumnya
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((p) => p + 1)}
+                    className="h-8 px-3">
+                    Selanjutnya
+                  </Button>
+                </div>
+
+                <div className="text-sm text-gray-600">
+                  Halaman {currentPage} dari {totalPages} ({filtered.length}{" "}
+                  total data)
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

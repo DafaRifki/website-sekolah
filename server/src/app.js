@@ -8,7 +8,9 @@ import guruRoutes from "./routes/guruRoute.js";
 import authRoutes from "./routes/authRoute.js";
 import userRoutes from "./routes/userRoute.js";
 import kelasRoutes from "./routes/kelasRoute.js";
+import tahunAjaranRoutes from "./routes/tahunAjaranRoute.js";
 import dashboardRoutes from "./routes/dashboardRoute.js";
+import pendaftaranRoutes from "./routes/pendaftaranRoute.js";
 import { authenticate, authorizeRoles } from "./middleware/authMiddleware.js";
 import { fileURLToPath } from "url";
 
@@ -53,6 +55,19 @@ app.use(
   kelasRoutes
 );
 app.use("/api/guru", authenticate, authorizeRoles("ADMIN", "GURU"), guruRoutes);
-app.use("/api/dashboard", authenticate, dashboardRoutes);
+
+app.use(
+  "/api/tahun-ajaran",
+  authenticate,
+  authorizeRoles("ADMIN", "GURU"),
+  tahunAjaranRoutes
+);
+app.use("/api/pendaftaran", authenticate, pendaftaranRoutes);
+app.use(
+  "/api/dashboard",
+  authenticate,
+  authorizeRoles("ADMIN", "SISWA", "GURU"),
+  dashboardRoutes
+);
 
 export default app;
