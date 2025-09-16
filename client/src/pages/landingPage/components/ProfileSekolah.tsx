@@ -84,7 +84,7 @@ const ProfileSekolah: React.FC = () => {
           className="p-8 bg-green-100 rounded-xl shadow hover:shadow-lg transition"
         >
           <h3 className="text-2xl font-bold text-green-700 mb-4">Visi</h3>
-          <p>Terwujudnya peserta didik yang Berprestasi Dan Beraklak Mulia</p>
+          <p>Terwujudnya peserta didik yang Cerdas, Berprestasi Dan Beraklak Mulia</p>
         </motion.div>
 
     {/* Misi & Tujuan */}
@@ -176,13 +176,13 @@ const ProfileSekolah: React.FC = () => {
 
 
         {/* Fasilitas */}
-       <section className="py-0 px-0">
-        <img
-          src="/img/yayasan.jpg" 
-          alt="Fasilitas Sekolah"
-          className="w-full h-[300px] object-cover"
-        />
-      </section>
+        <section className="py-0 px-0">
+          <img
+            src="/img/yayasan.jpg"
+            alt="Fasilitas Sekolah"
+            className="w-full h-auto md:h-[300px] object-contain md:object-cover"
+          />
+        </section>
       </div>
     </PublicLayout>
   );

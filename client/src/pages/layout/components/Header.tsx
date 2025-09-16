@@ -53,7 +53,7 @@ const Header: React.FC = () => {
               <NavigationMenuLink asChild>
                 <Link
                   to="/"
-                  className="text-gray-700 hover:text-green-600 transition-colors"
+                  className="text-gray-800 hover:text-green-600 transition-colors"
                 >
                   Beranda
                 </Link>
@@ -72,7 +72,7 @@ const Header: React.FC = () => {
             </NavigationMenuItem>
 
             <NavigationMenuItem>
-          <NavigationMenuTrigger className="text-gray-700 hover:text-green-600 transition-colors">
+          <NavigationMenuTrigger className="text-gray-800 hover:text-green-600 transition-colors">
             Guru
           </NavigationMenuTrigger>
           <NavigationMenuContent>
@@ -115,7 +115,7 @@ const Header: React.FC = () => {
               <NavigationMenuLink asChild>
                 <Link
                   to="/fasilitas"
-                  className="text-gray-700 hover:text-green-600 transition-colors">
+                  className="text-gray-800 hover:text-green-600 transition-colors">
                   Fasilitas
                 </Link>
               </NavigationMenuLink>
@@ -125,7 +125,7 @@ const Header: React.FC = () => {
               <NavigationMenuLink asChild>
                 <Link
                   to="/berita"
-                  className="text-gray-700 hover:text-green-600 transition-colors"
+                  className="text-gray-800 hover:text-green-600 transition-colors"
                 >
                    Berita
                 </Link>
@@ -136,7 +136,7 @@ const Header: React.FC = () => {
               <NavigationMenuLink asChild>
                 <Link
                   to="/pendaftaran"
-                  className="text-gray-700 hover:text-green-600 transition-colors"
+                  className="text-gray-800 hover:text-green-600 transition-colors"
                 >
                    Pendaftaran
                 </Link>
@@ -149,12 +149,6 @@ const Header: React.FC = () => {
 
         {/* Actions desktop */}
         <div className="hidden md:flex items-center gap-3">
-          <Link to="/signup">
-            <Button variant="outline" className="gap-2">
-              <UserPlus size={16} />
-              Daftar
-            </Button>
-          </Link>
           <Button asChild className="gap-2">
             <Link to="/login">
               <LogIn size={16} />
@@ -243,12 +237,6 @@ const Header: React.FC = () => {
 
               {/* Mobile actions */}
               <div className="mt-6 flex gap-2">
-                <Button variant="outline" asChild className="flex-1 gap-2">
-                  <Link to="/signup">
-                    <UserPlus size={16} />
-                    Daftar
-                  </Link>
-                </Button>
                 <Button asChild className="flex-1 gap-2">
                   <Link to="/login">
                     <LogIn size={16} />
