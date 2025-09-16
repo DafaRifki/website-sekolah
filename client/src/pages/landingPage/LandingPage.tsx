@@ -76,7 +76,7 @@ const LandingPage: React.FC = () => {
           {/* Gambar Sekolah */}
           <div className="flex justify-center md:justify-start">
             <img
-              src="./img/profilgmbr.jpg"
+              src="./img/landingprofil.jpg"
               alt="Profil Sekolah"
               className="rounded-xl shadow-lg object-cover w-full max-w-md"
             />
@@ -87,14 +87,14 @@ const LandingPage: React.FC = () => {
             <h3 className="text-3xl font-bold text-green-700 mb-4">
               Profil Sekolah
             </h3>
-            <p className="text-gray-700 leading-relaxed mb-4">
+            <p className="text-gray-800 leading-relaxed mb-4">
               Sekolah Islam Terpadu As-Sakinah merupakan lembaga pendidikan yang
               berkomitmen untuk mencetak generasi unggul, berakhlak mulia, dan
               berprestasi. Dengan kurikulum terpadu, fasilitas modern, serta tenaga
               pendidik yang berpengalaman, kami berusaha memberikan lingkungan
               belajar yang nyaman dan inspiratif.
             </p>
-            <p className="text-gray-700 leading-relaxed mb-6">
+            <p className="text-gray-800 leading-relaxed mb-6">
               Kami percaya bahwa pendidikan adalah kunci untuk membangun masa depan
               cerah bagi peserta didik agar siap menghadapi tantangan zaman.
             </p>
@@ -120,7 +120,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Counter Section */}
-      <section className="relative py-10 px-6 bg-yellow-500 text-white">
+      <section className="relative py-10 px-6 bg-yellow-400 text-white">
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-5 text-center">
           {stats.map((stat, index) => {
             const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.5 }); // ✅
@@ -145,7 +145,131 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Footer-like Section */}
+   <section className="py-12 bg-white text-gray-800">
+  <div className="max-w-7xl mx-auto px-6">
+    
+    {/* 📱 Mobile: Bagian 1 (foto kiri + teks utama) */}
+    <div className="flex md:hidden items-center gap-6 mb-10">
+      {/* Foto Kiri */}
+      <motion.div
+        initial={{ opacity: 0, x: -50 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8 }}
+        viewport={{ once: true }}
+        className="w-1/2"
+      >
+        <img 
+          src="/img/siswa-kiri2.jpg" 
+          alt="Siswa Membaca" 
+          className="w-full h-60 object-cover rounded-2xl hover:scale-105 transition-transform duration-500"
+        />
+      </motion.div>
+
+      {/* Teks Utama */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+        viewport={{ once: true }}
+        className="w-1/2"
+      >
+        <h3 className="text-xl font-bold text-green-700 mb-3 leading-snug">
+          Generasi Berprestasi <br /> & Berakhlak Islami
+        </h3>
+        <p className="text-sm text-gray-800">
+          Bergabunglah bersama kami untuk meraih ilmu pengetahuan dan akhlak mulia.
+        </p>
+      </motion.div>
+    </div>
+
+    {/* 📱 Mobile: Bagian 2 (foto kanan + teks tambahan) */}
+    <div className="flex md:hidden items-center gap-6">
+      {/* Foto Kanan */}
+       <motion.div
+          initial={{ opacity: 0, x: 50 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="w-1/2 order-2"
+        >
+          <img 
+            src="/img/siswa-kanan.jpg" 
+            alt="Siswa Membaca" 
+            className="w-full h-60 object-cover rounded-2xl hover:scale-105 transition-transform duration-500"
+          />
+        </motion.div>
+
+        {/* Kata-kata Tambahan */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          viewport={{ once: true }}
+          className="w-1/2 order-1"
+        >
+          <h3 className="text-xl font-bold text-green-700 mb-3 leading-snug">
+            Belajar dengan Nyaman <br /> dalam Lingkungan Islami
+          </h3>
+          <p className="text-sm text-gray-800">
+            Kami hadirkan suasana belajar modern, islami, dan penuh semangat kebersamaan.
+          </p>
+        </motion.div>
+    </div>
+
+    {/* 💻 Desktop: Foto kiri – teks – foto kanan */}
+    <div className="hidden md:grid grid-cols-3 items-center gap-10 mt-12">
+      {/* Foto Kiri */}
+      <motion.div
+        initial={{ opacity: 0, x: -100 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        transition={{ duration: 1 }}
+        viewport={{ once: true }}
+        className="flex justify-center"
+      >
+        <img 
+          src="/img/siswa-kiri2.jpg" 
+          alt="Siswa Membaca" 
+          className="w-72 h-96 object-cover rounded-3xl hover:scale-105 transition-transform duration-500"
+        />
+      </motion.div>
+
+      {/* Teks Tengah */}
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 0.3 }}
+        viewport={{ once: true }}
+        className="text-center md:px-8"
+      >
+        <h3 className="text-4xl font-bold text-green-700 mb-6 leading-snug">
+          Membangun Generasi Berprestasi<br /> Berakhlak Islami
+        </h3>
+        <p className="mb-8 text-lg text-gray-800">
+          Bergabunglah bersama kami untuk meraih ilmu pengetahuan yang luas, 
+          iman yang kuat, serta akhlak mulia demi masa depan yang gemilang.
+        </p>
+      </motion.div>
+
+      {/* Foto Kanan */}
+      <motion.div
+        initial={{ opacity: 0, x: 100 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        transition={{ duration: 1 }}
+        viewport={{ once: true }}
+        className="flex justify-center"
+      >
+        <img 
+          src="/img/siswa-kanan.jpg" 
+          alt="Siswa Membaca" 
+          className="w-72 h-96 object-cover rounded-3xl hover:scale-105 transition-transform duration-500"
+        />
+      </motion.div>
+    </div>
+  </div>
+</section>
+
+
+       {/* Footer-like Section */}
       <section className="py-20 bg-blue-300 text-white text-center">
         <h3 className="text-xl font-bold mb-4">Ayo Mulai Sekarang!</h3>
         <p className="mb-6">
@@ -155,7 +279,7 @@ const LandingPage: React.FC = () => {
         <button className="px-6 py-2 bg-white text-green-700 rounded-lg shadow hover:bg-gray-100 transition">
           Daftar Gratis
         </button>
-      </section>
+      </section>   
     </PublicLayout>
   );
 };

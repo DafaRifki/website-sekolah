@@ -42,7 +42,7 @@ const Footer: React.FC = () => {
           <h3 className="text-lg font-semibold mb-3">Ikuti Kami</h3>
           <div className="flex gap-4">
             <a
-              href="#"
+              href="https://www.facebook.com/profile.php?id=100089453354555&mibextid=ZbWKwL"
               className="hover:text-yellow-300 transition-colors"
               aria-label="Facebook"
             >
