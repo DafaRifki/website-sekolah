@@ -1,8 +1,13 @@
 import express from "express";
-import { getDashboardSummary } from "../controllers/dashboardController.js";
+import {
+  getDashboardSiswa,
+  getDashboardSummary,
+} from "../controllers/dashboardController.js";
+import { authenticate } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/summary", getDashboardSummary);
+router.get("/summary", authenticate, getDashboardSummary);
+router.get("/siswa", authenticate, getDashboardSiswa);
 
 export default router;

@@ -26,6 +26,18 @@ export const getAllTahunAjaranService = async () => {
   }
 };
 
+export const getLatestTahunAjaranService = async () => {
+  try {
+    const latest = await prisma.tahunAjaran.findFirst({
+      orderBy: { id_tahun: "desc" }, // ambil yang paling baru
+      select: { namaTahun: true }, // hanya ambil nama tahun
+    });
+    return latest?.namaTahun || null;
+  } catch (error) {
+    throw new Error(`Error fetching latest tahun ajaran: ${error.message}`);
+  }
+};
+
 export const getTahunAjaranByIdService = async (id_tahun) => {
   const tahunAjaran = await prisma.tahunAjaran.findUnique({
     where: { id_tahun: parseInt(id_tahun) },

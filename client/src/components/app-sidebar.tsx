@@ -7,6 +7,7 @@ import {
   Bell,
   Archive,
   Notebook,
+  FileUser,
 } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
@@ -72,6 +73,11 @@ const menuItems: Record<Role, MenuSection[]> = {
           ],
         },
       ],
+    },
+    {
+      type: "link",
+      title: "Pendaftaran",
+      links: [{ name: "Siswa Baru", url: "/pendaftaran", icon: FileUser }],
     },
     {
       type: "link",

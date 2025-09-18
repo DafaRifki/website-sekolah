@@ -254,6 +254,18 @@ export const updateSiswaService = async (id, data, file) => {
   if (!siswa) throw new Error("Siswa tidak ditemukan");
 
   // -----------------------
+  // Cek apakah NIS sudah dipakai siswa lain
+  // -----------------------
+  if (nis) {
+    const existing = await prisma.siswa.findUnique({
+      where: { nis },
+    });
+    if (existing && existing.id_siswa !== parseInt(id)) {
+      throw new Error("NIS sudah digunakan oleh siswa lain");
+    }
+  }
+
+  // -----------------------
   // Update data siswa utama
   // -----------------------
   const updateData = {};
@@ -282,28 +294,36 @@ export const updateSiswaService = async (id, data, file) => {
   // -----------------------
   // Update siswa utama
   // -----------------------
-  const updatedSiswa = await prisma.siswa.update({
-    where: { id_siswa: parseInt(id) },
-    data: updateData,
-    include: {
-      user: { select: { email: true, role: true } },
-      kelas: { include: { guru: { select: { nama: true } } } },
-      nilaiRapor: { include: { mapel: { select: { namaMapel: true } } } },
-      Siswa_Orangtua: {
-        include: {
-          orangtua: {
-            select: {
-              nama: true,
-              hubungan: true,
-              pekerjaan: true,
-              alamat: true,
-              noHp: true,
+  let updatedSiswa;
+  try {
+    updatedSiswa = await prisma.siswa.update({
+      where: { id_siswa: parseInt(id) },
+      data: updateData,
+      include: {
+        user: { select: { email: true, role: true } },
+        kelas: { include: { guru: { select: { nama: true } } } },
+        nilaiRapor: { include: { mapel: { select: { namaMapel: true } } } },
+        Siswa_Orangtua: {
+          include: {
+            orangtua: {
+              select: {
+                nama: true,
+                hubungan: true,
+                pekerjaan: true,
+                alamat: true,
+                noHp: true,
+              },
             },
           },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    if (error.code === "P2002" && error.meta?.target?.includes("nis")) {
+      throw new Error("NIS sudah digunakan, silakan pilih NIS lain");
+    }
+    throw error;
+  }
 
   // -----------------------
   // Update atau buat orangtua

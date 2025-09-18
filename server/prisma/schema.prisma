@@ -150,7 +150,7 @@ model Pendaftaran {
   tanggalLahir     DateTime?
   jenisKelamin     String?
   noHp             String?
-  email            String?
+  email            String?          @unique
   statusDokumen    StatusDokumen    @default(BELUM_DITERIMA)
   statusPembayaran StatusPembayaran @default(BELUM_BAYAR)
 
