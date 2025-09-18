@@ -13,3 +13,27 @@ export interface CardStatProps {
   icon: React.ReactNode;
   color: string;
 }
+
+// Ringkasan untuk ADMIN
+export interface DashboardSummary {
+  totalSiswa: number | null;
+  totalGuru: number | null;
+  totalKelas: number | null;
+  totalPendaftarBaru: number | null;
+  totalPendaftarDiterima: number | null;
+  tahunAjaran: string | null;
+  tarifTahunan: number | null;
+}
+
+// Ringkasan untuk SISWA
+export interface DashboardSiswa {
+  biodata: {
+    nama: string;
+    kelas: string;
+    wali: string;
+  };
+  nilaiRata: number | null;
+  persentaseAbsensi: string;
+  tarif?: string;
+  statusPembayaran?: string;
+}
