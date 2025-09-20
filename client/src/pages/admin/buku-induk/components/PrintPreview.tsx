@@ -126,7 +126,7 @@ const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
                       (e.target as HTMLImageElement).src = AvatarDefault;
                     }}
                   />
-                  <p className="text-xs">Foto</p>
+                  {/* <p className="text-xs">Foto</p> */}
                 </div>
 
                 {/* Personal Data - Compact Table */}
