@@ -1,11 +1,11 @@
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import LoginPage from "./pages/LoginPage.tsx";
 import { Toaster } from "sonner";
 import SignUpPage from "./pages/SignUpPage.tsx";
 import AuthLayout from "./pages/layout/AuthLayout.tsx";
-import DashboardPage from "./pages/DashboardPage.tsx";
+// import DashboardPage from "./pages/DashboardPage.tsx";
 import PublicRoute from "./routes/PublicRoute.tsx";
 import ProfilePage from "./pages/settings/ProfilePage.tsx";
 import PasswordPage from "./pages/settings/PasswordPage.tsx";
@@ -23,7 +23,10 @@ import SiswaDetail from "./pages/admin/buku-induk/components/SiswaDetail.tsx";
 import DataKelasPage from "./pages/admin/kelas/DataKelasPage.tsx";
 import Berita from "./pages/landingPage/berita/Berita.tsx";
 import DashboardPageIndex from "./pages/dashboard/index.tsx";
-
+import PendaftaranPage from "./pages/admin/pendaftaran/PendaftaranPage.tsx";
+import CekStatusPage from "./pages/CekStatusPage.tsx";
+import TahunAjaranPage from "./pages/admin/tahun-ajaran/TahunAjaranPage.tsx";
+import SiswaBaruLayout from "./pages/layout/siswa-baru/SiswaBaruLayout.tsx";
 
 const root = document.getElementById("root") as HTMLElement;
 
@@ -31,6 +34,7 @@ const publicRoute = [
   { path: "/", element: <LandingPage /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/signup", element: <SignUpPage /> },
+  { path: "/cek-status", element: <CekStatusPage /> },
 ];
 
 ReactDOM.createRoot(root).render(
@@ -56,10 +60,20 @@ ReactDOM.createRoot(root).render(
         {/* Data Siswa */}
         <Route path="/siswa" element={<DataSiswaPage />} />
         <Route path="/siswa/:id/edit" element={<EditSiswaPage />} />
+        {/* Pendaftaran siswa baru */}
+        {/* Grup khusus siswa baru */}
+        <Route path="/siswa-baru" element={<SiswaBaruLayout />}>
+          {/* Default redirect ke pendaftaran */}
+          <Route index element={<Navigate to="pendaftaran" replace />} />
+          <Route path="pendaftaran" element={<PendaftaranPage />} />
+          {/* <Route path="pembayaran" element={<PembayaranPage />} /> */}
+        </Route>
         {/* Data Guru */}
         <Route path="/guru" element={<DataGuruPage />} />
         {/* Data Kelas */}
         <Route path="/kelas" element={<DataKelasPage />} />
+        {/* Data Tahun Ajaran */}
+        <Route path="/tahun-ajaran" element={<TahunAjaranPage />} />
         {/* Buku Induk */}
         <Route path="/buku-induk" element={<BukuIndukPage />} />
         <Route path="/buku-induk/:id" element={<SiswaDetail />} />

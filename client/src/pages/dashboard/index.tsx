@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import CardStat from "./components/CardStat";
-import { getDashboardSummary } from "./services/dashboardService";
+import {
+  getDashboardSummary,
+  getDashboardSiswa,
+} from "./services/dashboardService";
 import {
   Users,
   BookOpen,
@@ -15,74 +18,77 @@ import {
   FolderOpen,
   UserCircle,
 } from "lucide-react";
-import type { CardStatProps, User } from "./types";
+import type {
+  CardStatProps,
+  User,
+  DashboardSummary,
+  DashboardSiswa,
+} from "./types";
 
 const DashboardPageIndex: React.FC = () => {
   const { user } = useOutletContext<{ user: User }>();
-  const [summary, setSummary] = useState<any>({
-    totalSiswa: null,
-    totalGuru: null,
-    totalKelas: null,
-    totalPendaftarBaru: null,
-    totalPendaftarDiterima: null,
-    tahunAjaran: null,
-  });
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [siswaData, setSiswaData] = useState<DashboardSiswa | null>(null);
 
   useEffect(() => {
     if (user?.role === "ADMIN") {
       getDashboardSummary()
         .then((data) => setSummary(data))
         .catch((err) => console.error(err));
+    } else if (user?.role === "SISWA") {
+      getDashboardSiswa()
+        .then((data) => setSiswaData(data))
+        .catch((err) => console.error(err));
     }
   }, [user]);
-
-  // Hardcode sementara untuk guru & siswa
-  const dataSiswa = summary.siswaData || {};
 
   const data: Record<string, CardStatProps[]> = {
     ADMIN: [
       {
         title: "Pendaftar Baru",
-        value: summary.totalPendaftarBaru ?? "-",
+        value: summary?.totalPendaftarBaru ?? "-",
         description: "Menunggu verifikasi",
         icon: <ClipboardList className="text-blue-600" />,
         color: "blue",
       },
       {
         title: "Total Siswa Aktif",
-        value: summary.totalSiswa ?? "-",
+        value: summary?.totalSiswa ?? "-",
         description: "Data siswa aktif",
         icon: <Users className="text-green-600" />,
         color: "green",
       },
       {
         title: "Total Guru",
-        value: summary.totalGuru ?? "-",
+        value: summary?.totalGuru ?? "-",
         description: "Data guru aktif",
         icon: <BookOpen className="text-yellow-600" />,
         color: "yellow",
       },
       {
         title: "Total Kelas",
-        value: summary.totalKelas ?? "-",
+        value: summary?.totalKelas ?? "-",
         description: "Jumlah kelas",
         icon: <Calendar className="text-green-500" />,
         color: "green",
       },
       {
         title: "Tahun Ajaran Aktif",
-        value: summary.tahunAjaran ?? "-",
+        value: summary?.tahunAjaran ?? "-",
         description: "Informasi tahun ajaran",
         icon: <Calendar className="text-blue-500" />,
         color: "blue",
       },
       {
         title: "Tarif Tahunan",
-        value: "Rp 5.000.000",
+        value: summary?.tarifTahunan
+          ? `Rp ${summary.tarifTahunan.toLocaleString("id-ID")}`
+          : "-",
         description: "Dapat diubah tiap tahun",
         icon: <DollarSign className="text-red-500" />,
         color: "red",
       },
+
       {
         title: "Pengumuman",
         value: "5",
@@ -186,39 +192,40 @@ const DashboardPageIndex: React.FC = () => {
     SISWA_DITERIMA: [
       {
         title: "Biodata",
-        value: "Lengkap",
-        description: "Data pribadi Anda",
+        value: siswaData?.biodata?.nama ?? "-",
+        description: `Kelas: ${siswaData?.biodata?.kelas ?? "-"}, Wali: ${
+          siswaData?.biodata?.wali ?? "-"
+        }`,
         icon: <UserCircle />,
         color: "green",
       },
       {
-        title: "Kelas & Wali",
-        value: dataSiswa.kelasWali ?? "-",
-        description: "Wali kelas",
-        icon: <Users />,
-        color: "blue",
-      },
-      {
         title: "Absensi",
-        value: "95%",
+        value: siswaData?.persentaseAbsensi ?? "-",
         description: "Kehadiran semester ini",
         icon: <UserCheck />,
         color: "green",
       },
       {
         title: "Nilai Rapor",
-        value: "87",
+        value: siswaData?.nilaiRata ?? "-",
         description: "Rata-rata semester ini",
         icon: <Award />,
         color: "yellow",
       },
       {
         title: "Tarif Tahunan",
-        value: "Rp 5.000.000",
-        description: "Biaya sekolah",
-        icon: <DollarSign />,
-        color: "red",
+        value:
+          siswaData?.statusPembayaran === "LUNAS"
+            ? "Lunas"
+            : siswaData?.tarif
+            ? `Rp ${siswaData.tarif.toLocaleString("id-ID")}`
+            : "-",
+        description: "Biaya sekolah sesuai tahun ajaran aktif",
+        icon: <DollarSign className="text-red-500" />,
+        color: siswaData?.statusPembayaran === "LUNAS" ? "green" : "red",
       },
+
       {
         title: "Pengumuman & Jadwal",
         value: "5",

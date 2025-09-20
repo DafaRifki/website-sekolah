@@ -1,5 +1,9 @@
 import {
+  addManyKelasToTahunAjaranService,
+  bulkUpdateKelasTahunAjaranService,
   createTahunAjaranService,
+  deleteKelasFromTahunAjaranService,
+  deleteTahunAjaranService,
   getAllTahunAjaranService,
   getTahunAjaranByIdService,
   updateTahunAjaranService,
@@ -38,5 +42,70 @@ export const updateTahunAjaran = async (req, res) => {
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteTahunAjaran = async (req, res) => {
+  const { tahunAjaranId } = req.params;
+
+  try {
+    await deleteTahunAjaranService(tahunAjaranId);
+    res.json({ success: true, message: "Tahun ajaran berhasil dihapus" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const deleteKelasFromTahunAjaran = async (req, res) => {
+  const { tahunAjaranId, kelasId } = req.params;
+
+  try {
+    await deleteKelasFromTahunAjaranService(tahunAjaranId, kelasId);
+    res.json({
+      success: true,
+      message: "Kelas berhasil dihapus dari tahun ajaran",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const addManyKelasToTahunAjaran = async (req, res) => {
+  try {
+    const { id_tahun, kelasIds, activeKelasId } = req.body;
+
+    if (!id_tahun || !Array.isArray(kelasIds)) {
+      return res.status(400).json({
+        success: false,
+        message: "id_tahun dan kelasIds wajib diisi",
+      });
+    }
+
+    const result = await addManyKelasToTahunAjaranService(
+      id_tahun,
+      kelasIds,
+      activeKelasId
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Kelas berhasil ditambahkan ke tahun ajaran",
+      data: result,
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+export const bulkUpdateKelasTahunAjaran = async (req, res) => {
+  const { tahunAjaranId, kelas } = req.body;
+  try {
+    await bulkUpdateKelasTahunAjaranService(tahunAjaranId, kelas);
+    res.json({ success: true, message: "Perubahan kelas berhasil disimpan" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
