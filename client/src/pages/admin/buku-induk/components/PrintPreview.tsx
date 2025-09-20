@@ -53,7 +53,7 @@ const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
     return (
       <>
         {/* Print-specific CSS */}
-        <style jsx>{`
+        <style>{`
           @page {
             size: 215mm 330mm; /* F4 size */
             margin: 15mm;

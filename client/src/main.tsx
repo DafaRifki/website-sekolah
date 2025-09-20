@@ -1,6 +1,6 @@
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import LoginPage from "./pages/LoginPage.tsx";
 import { Toaster } from "sonner";
 import SignUpPage from "./pages/SignUpPage.tsx";
@@ -25,6 +25,8 @@ import Berita from "./pages/landingPage/berita/Berita.tsx";
 import DashboardPageIndex from "./pages/dashboard/index.tsx";
 import PendaftaranPage from "./pages/admin/pendaftaran/PendaftaranPage.tsx";
 import CekStatusPage from "./pages/CekStatusPage.tsx";
+import TahunAjaranPage from "./pages/admin/tahun-ajaran/TahunAjaranPage.tsx";
+import SiswaBaruLayout from "./pages/layout/siswa-baru/SiswaBaruLayout.tsx";
 
 const root = document.getElementById("root") as HTMLElement;
 
@@ -59,11 +61,19 @@ ReactDOM.createRoot(root).render(
         <Route path="/siswa" element={<DataSiswaPage />} />
         <Route path="/siswa/:id/edit" element={<EditSiswaPage />} />
         {/* Pendaftaran siswa baru */}
-        <Route path="/pendaftaran" element={<PendaftaranPage />} />
+        {/* Grup khusus siswa baru */}
+        <Route path="/siswa-baru" element={<SiswaBaruLayout />}>
+          {/* Default redirect ke pendaftaran */}
+          <Route index element={<Navigate to="pendaftaran" replace />} />
+          <Route path="pendaftaran" element={<PendaftaranPage />} />
+          {/* <Route path="pembayaran" element={<PembayaranPage />} /> */}
+        </Route>
         {/* Data Guru */}
         <Route path="/guru" element={<DataGuruPage />} />
         {/* Data Kelas */}
         <Route path="/kelas" element={<DataKelasPage />} />
+        {/* Data Tahun Ajaran */}
+        <Route path="/tahun-ajaran" element={<TahunAjaranPage />} />
         {/* Buku Induk */}
         <Route path="/buku-induk" element={<BukuIndukPage />} />
         <Route path="/buku-induk/:id" element={<SiswaDetail />} />
