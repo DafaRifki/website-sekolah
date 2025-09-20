@@ -262,3 +262,36 @@ export const deleteKelasService = async (id_kelas) => {
     throw new Error(`Error deleting kelas: ${error.message}`);
   }
 };
+
+export const getKelasByTahunAjaranService = async (tahunAjaranId) => {
+  if (!tahunAjaranId || isNaN(Number(tahunAjaranId))) {
+    throw new Error("Tahun ajaran tidak valid atau tidak diberikan");
+  }
+
+  try {
+    // Ambil kelas yang termasuk tahun ajaran tertentu
+    const kelasRel = await prisma.kelasTahunAjaran.findMany({
+      where: { tahunAjaranId: Number(tahunAjaranId) },
+      select: {
+        isActive: true,
+        kelas: {
+          select: {
+            id_kelas: true,
+            namaKelas: true,
+            tingkat: true,
+          },
+        },
+      },
+    });
+
+    return kelasRel.map((k) => ({
+      id_kelas: k.kelas.id_kelas,
+      namaKelas: k.kelas.namaKelas,
+      tingkat: k.kelas.tingkat,
+      isActive: k.isActive,
+    }));
+  } catch (err) {
+    console.error("Error fetching kelas by tahun ajaran:", err);
+    throw new Error(`Gagal mengambil kelas: ${err.message}`);
+  }
+};

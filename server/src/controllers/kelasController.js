@@ -3,6 +3,7 @@ import {
   deleteKelasService,
   getAllKelasService,
   getKelasByIdService,
+  getKelasByTahunAjaranService,
   updateKelasService,
 } from "../services/KelasService.js";
 import { errorResponse, successResponse } from "../utils/response.js";
@@ -54,5 +55,23 @@ export const deleteKelas = async (req, res) => {
     return successResponse(res, 200, "Kelas berhasil dihapus");
   } catch (error) {
     return errorResponse(res, 400, error.message);
+  }
+};
+
+export const getKelasByTahunAjaran = async (req, res) => {
+  const { tahun } = req.query;
+
+  if (!tahun) {
+    return res.status(400).json({ message: "Tahun ajaran harus disertakan" });
+  }
+
+  try {
+    const kelasList = await getKelasByTahunAjaranService(Number(tahun));
+    res.json({ data: kelasList });
+  } catch (err) {
+    console.error(err);
+    res
+      .status(500)
+      .json({ message: err.message || "Terjadi kesalahan server" });
   }
 };
