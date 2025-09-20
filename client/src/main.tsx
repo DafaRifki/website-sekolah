@@ -5,7 +5,6 @@ import LoginPage from "./pages/LoginPage.tsx";
 import { Toaster } from "sonner";
 import SignUpPage from "./pages/SignUpPage.tsx";
 import AuthLayout from "./pages/layout/AuthLayout.tsx";
-// import DashboardPage from "./pages/DashboardPage.tsx";
 import PublicRoute from "./routes/PublicRoute.tsx";
 import ProfilePage from "./pages/settings/ProfilePage.tsx";
 import PasswordPage from "./pages/settings/PasswordPage.tsx";
@@ -28,6 +27,9 @@ import CekStatusPage from "./pages/CekStatusPage.tsx";
 import TahunAjaranPage from "./pages/admin/tahun-ajaran/TahunAjaranPage.tsx";
 import SiswaBaruLayout from "./pages/layout/siswa-baru/SiswaBaruLayout.tsx";
 
+// 🔹 Tambahkan ScrollToTop
+import ScrollToTop from "./components/ScrollToTop.tsx";
+
 const root = document.getElementById("root") as HTMLElement;
 
 const publicRoute = [
@@ -39,7 +41,11 @@ const publicRoute = [
 
 ReactDOM.createRoot(root).render(
   <BrowserRouter>
+    {/* supaya selalu scroll ke atas */}
+    <ScrollToTop />
+
     <Toaster duration={2000} position="top-right" />
+
     <Routes>
       {publicRoute.map(({ path, element }) => (
         <Route
@@ -48,6 +54,8 @@ ReactDOM.createRoot(root).render(
           key={path}
         />
       ))}
+
+      {/* duplikat signup ini sebenarnya bisa dihapus karena sudah ada di publicRoute */}
       <Route path="/signup" element={<SignUpPage />} />
 
       <Route path="/profil-sekolah" element={<ProfileSekolah />} />
@@ -55,35 +63,40 @@ ReactDOM.createRoot(root).render(
       <Route path="/fasilitas" element={<Fasilitas />} />
       <Route path="/struktur-organisasi" element={<StrukturOrganisasi />} />
       <Route path="/berita" element={<Berita />} />
+
+      {/* Grup dengan AuthLayout */}
       <Route element={<AuthLayout />}>
         <Route path="/dashboard" element={<DashboardPageIndex />} />
+
         {/* Data Siswa */}
         <Route path="/siswa" element={<DataSiswaPage />} />
         <Route path="/siswa/:id/edit" element={<EditSiswaPage />} />
+
         {/* Pendaftaran siswa baru */}
-        {/* Grup khusus siswa baru */}
         <Route path="/siswa-baru" element={<SiswaBaruLayout />}>
-          {/* Default redirect ke pendaftaran */}
           <Route index element={<Navigate to="pendaftaran" replace />} />
           <Route path="pendaftaran" element={<PendaftaranPage />} />
-          {/* <Route path="pembayaran" element={<PembayaranPage />} /> */}
         </Route>
+
         {/* Data Guru */}
         <Route path="/guru" element={<DataGuruPage />} />
+
         {/* Data Kelas */}
         <Route path="/kelas" element={<DataKelasPage />} />
+
         {/* Data Tahun Ajaran */}
         <Route path="/tahun-ajaran" element={<TahunAjaranPage />} />
+
         {/* Buku Induk */}
         <Route path="/buku-induk" element={<BukuIndukPage />} />
         <Route path="/buku-induk/:id" element={<SiswaDetail />} />
 
+        {/* Settings */}
         <Route path="/settings/profile" element={<ProfilePage />} />
         <Route path="/settings/password" element={<PasswordPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
-      {/* <Route path="/test" element={<h2>Halo ini adalah test</h2>} /> */}
     </Routes>
   </BrowserRouter>
 );
