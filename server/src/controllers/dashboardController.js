@@ -90,14 +90,12 @@ export const getDashboardSiswa = async (req, res) => {
 
     // cari pendaftaran siswa di tahun ajaran terbaru
     const pendaftaran = await prisma.pendaftaran.findFirst({
-      where: {
-        siswaId: user.siswaId,
-      },
+      where: { siswaId: user.siswaId },
       include: {
         tahunAjaran: {
           include: {
             tarif: {
-              orderBy: { id_tarif: "desc" }, // jaga-jaga kalau ada lebih dari satu
+              orderBy: { id_tarif: "desc" },
               take: 1,
             },
           },
@@ -110,6 +108,28 @@ export const getDashboardSiswa = async (req, res) => {
 
     const tarifTahunan = pendaftaran?.tahunAjaran?.tarif?.[0]?.nominal ?? null;
     const statusPembayaran = pendaftaran?.statusPembayaran ?? "BELUM";
+
+    // ambil pembayaran terakhir siswa
+    const pembayaranTerakhir = await prisma.pembayaran.findFirst({
+      where: { siswaId: user.siswaId },
+      orderBy: { tanggal: "desc" },
+      include: {
+        siswa: {
+          select: {
+            id_siswa: true,
+            nis: true,
+            nama: true,
+            alamat: true,
+            tanggalLahir: true,
+            jenisKelamin: true,
+            fotoProfil: true,
+            kelasId: true,
+          },
+        },
+        tahunAjaran: true,
+        tarif: true,
+      },
+    });
 
     // hitung nilai rata-rata
     const nilaiRata = siswa.nilaiRapor.length
@@ -138,6 +158,7 @@ export const getDashboardSiswa = async (req, res) => {
       tarif: tarifTahunan,
       tahunAjaran: pendaftaran?.tahunAjaran?.namaTahun ?? "-",
       statusPembayaran, // "LUNAS" / "BELUM"
+      pembayaranTerakhir, // full object pembayaran terakhir
     });
   } catch (error) {
     console.error(error);

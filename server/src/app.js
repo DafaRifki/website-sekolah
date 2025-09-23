@@ -12,6 +12,7 @@ import tahunAjaranRoutes from "./routes/tahunAjaranRoute.js";
 import dashboardRoutes from "./routes/dashboardRoute.js";
 import pendaftaranRoutes from "./routes/pendaftaranRoute.js";
 import tarifRoutes from "./routes/tarifRoute.js";
+import pembayaranRoutes from "./routes/pembayaranRoutes.js";
 import { authenticate, authorizeRoles } from "./middleware/authMiddleware.js";
 import { fileURLToPath } from "url";
 
@@ -64,8 +65,6 @@ app.use(
   tahunAjaranRoutes
 );
 
-app.use("/api/pendaftaran", pendaftaranRoutes);
-
 app.use(
   "/api/dashboard",
   authenticate,
@@ -74,5 +73,7 @@ app.use(
 );
 
 app.use("/api/tarif", authenticate, tarifRoutes);
+app.use("/api/pembayaran", pembayaranRoutes);
+app.use("/api/pendaftaran", pendaftaranRoutes);
 
 export default app;
