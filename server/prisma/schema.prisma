@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -54,9 +51,8 @@ model Siswa {
   nilaiRapor     NilaiRapor[]
   Siswa_Orangtua Siswa_Orangtua[]
   absensi        Absensi[]
-
-  // opsional: link ke data pendaftaran awal
-  pendaftaran Pendaftaran[]
+  pendaftaran    Pendaftaran[]
+  pembayaran     Pembayaran[]
 }
 
 model OrangTua {
@@ -88,7 +84,7 @@ model Kelas {
   waliId    Int?
   guru      Guru?              @relation(fields: [waliId], references: [id_guru])
   siswa     Siswa[]
-  tahunRel  KelasTahunAjaran[] // pivot ke tahun ajaran
+  tahunRel  KelasTahunAjaran[]
 }
 
 model KelasTahunAjaran {
@@ -122,12 +118,13 @@ model NilaiRapor {
 }
 
 model TahunAjaran {
-  id_tahun  Int                @id @default(autoincrement())
-  namaTahun String
-  absensi   Absensi[]
-  kelasRel  KelasTahunAjaran[]
-  tarif     TarifPembayaran[] // setiap tahun ajaran bisa punya tarif berbeda
-  daftar    Pendaftaran[] // pendaftaran siswa baru terkait tahun ajaran
+  id_tahun   Int                @id @default(autoincrement())
+  namaTahun  String
+  absensi    Absensi[]
+  kelasRel   KelasTahunAjaran[]
+  tarif      TarifPembayaran[]
+  daftar     Pendaftaran[]
+  pembayaran Pembayaran[]
 }
 
 model Absensi {
@@ -152,7 +149,7 @@ model Pendaftaran {
   noHp             String?
   email            String?          @unique
   statusDokumen    StatusDokumen    @default(BELUM_DITERIMA)
-  statusPembayaran StatusPembayaran @default(BELUM_BAYAR)
+  statusPembayaran StatusPembayaran @default(BELUM_BAYAR) // bisa dihitung dari riwayat pembayaran
 
   tahunAjaranId Int
   tahunAjaran   TahunAjaran @relation(fields: [tahunAjaranId], references: [id_tahun])
@@ -164,10 +161,27 @@ model Pendaftaran {
 model TarifPembayaran {
   id_tarif      Int     @id @default(autoincrement())
   tahunAjaranId Int
-  nominal       Int // contoh: 5000000
+  nominal       Int
   keterangan    String?
 
-  tahunAjaran TahunAjaran @relation(fields: [tahunAjaranId], references: [id_tahun])
+  tahunAjaran TahunAjaran  @relation(fields: [tahunAjaranId], references: [id_tahun])
+  pembayaran  Pembayaran[]
+}
+
+model Pembayaran {
+  id_pembayaran Int  @id @default(autoincrement())
+  siswaId       Int
+  tahunAjaranId Int
+  tarifId       Int?
+
+  tanggal     DateTime @default(now())
+  jumlahBayar Int
+  metode      String?
+  keterangan  String?
+
+  siswa       Siswa            @relation(fields: [siswaId], references: [id_siswa])
+  tahunAjaran TahunAjaran      @relation(fields: [tahunAjaranId], references: [id_tahun])
+  tarif       TarifPembayaran? @relation(fields: [tarifId], references: [id_tarif])
 }
 
 enum Role {

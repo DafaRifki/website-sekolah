@@ -225,7 +225,21 @@ const DashboardPageIndex: React.FC = () => {
         icon: <DollarSign className="text-red-500" />,
         color: siswaData?.statusPembayaran === "LUNAS" ? "green" : "red",
       },
-
+      {
+        title: "Pembayaran Terakhir",
+        value: siswaData?.pembayaranTerakhir
+          ? `Rp ${siswaData.pembayaranTerakhir.jumlahBayar.toLocaleString(
+              "id-ID"
+            )}`
+          : "-",
+        description: siswaData?.pembayaranTerakhir
+          ? `${siswaData.pembayaranTerakhir.metode ?? "-"} | ${
+              siswaData.pembayaranTerakhir.tahunAjaran?.namaTahun ?? "-"
+            }`
+          : "Belum ada pembayaran",
+        icon: <DollarSign className="text-green-600" />,
+        color: "green",
+      },
       {
         title: "Pengumuman & Jadwal",
         value: "5",

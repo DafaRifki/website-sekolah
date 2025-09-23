@@ -27,6 +27,7 @@ import PendaftaranPage from "./pages/admin/pendaftaran/PendaftaranPage.tsx";
 import CekStatusPage from "./pages/CekStatusPage.tsx";
 import TahunAjaranPage from "./pages/admin/tahun-ajaran/TahunAjaranPage.tsx";
 import SiswaBaruLayout from "./pages/layout/siswa-baru/SiswaBaruLayout.tsx";
+import PembayaranPage from "./pages/admin/pembayaran/PembayaranPage.tsx";
 
 const root = document.getElementById("root") as HTMLElement;
 
@@ -66,7 +67,7 @@ ReactDOM.createRoot(root).render(
           {/* Default redirect ke pendaftaran */}
           <Route index element={<Navigate to="pendaftaran" replace />} />
           <Route path="pendaftaran" element={<PendaftaranPage />} />
-          {/* <Route path="pembayaran" element={<PembayaranPage />} /> */}
+          <Route path="pembayaran" element={<PembayaranPage />} />
         </Route>
         {/* Data Guru */}
         <Route path="/guru" element={<DataGuruPage />} />
