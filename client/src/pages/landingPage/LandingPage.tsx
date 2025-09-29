@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from "react";
 import PublicLayout from "../layout/PublicLayout";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { Users, GraduationCap, School, Trophy } from "lucide-react";
+import { Users, GraduationCap, School, Trophy,BookOpen ,Star, ArrowRight, Award} from "lucide-react";
 import { useInView } from "react-intersection-observer"; // ✅ tambahan
 
-// Komponen Counter
 interface CounterProps {
   from?: number;
   to: number;
   duration?: number;
-  start?: boolean; // ✅ kontrol kapan mulai
+  start?: boolean; 
 }
 
 const Counter: React.FC<CounterProps> = ({ from = 0, to, duration = 2, start = false }) => {
@@ -72,41 +71,116 @@ const LandingPage: React.FC = () => {
 
       {/* Section Konten 1 */}
       <section className="py-20 px-6 bg-gray-50">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-          {/* Gambar Sekolah */}
-          <div className="flex justify-center md:justify-start">
-            <img
-              src="./img/landingprofil.jpg"
-              alt="Profil Sekolah"
-              className="rounded-xl shadow-lg object-cover w-full max-w-md"
-            />
+      <div className="max-w-6xl mx-auto relative z-10">
+        {/* Header Section */}
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-teal-500 rounded-full mb-6">
+            <BookOpen className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 via-teal-600 to-blue-600 bg-clip-text text-transparent mb-4">
+            Profil Sekolah
+          </h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-green-500 to-teal-500 mx-auto rounded-full"></div>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          {/* Image Section */}
+          <div className="relative group">
+            <div className="absolute -inset-4 bg-gradient-to-r from-green-400 to-teal-400 rounded-2xl opacity-20 group-hover:opacity-30 transition-opacity duration-300 blur"></div>
+            <div className="relative">
+              <img
+                src="./img/landingprofil.jpg"
+                alt="Profil Sekolah"
+                className="rounded-2xl shadow-2xl object-cover w-full h-96 transform group-hover:scale-105 transition-transform duration-500"
+              />
+              
+              {/* Floating Stats Cards */}
+              <div className="absolute -top-6 -right-6 bg-white rounded-xl shadow-lg p-4 transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                <div className="flex items-center space-x-2">
+                  <Award className="w-5 h-5 text-yellow-500" />
+                  <div className="text-sm">
+                    <div className="font-bold text-gray-800">15+</div>
+                    <div className="text-gray-600">Prestasi</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg p-4 transform -rotate-3 hover:rotate-0 transition-transform duration-300">
+                <div className="flex items-center space-x-2">
+                  <Users className="w-5 h-5 text-blue-500" />
+                  <div className="text-sm">
+                    <div className="font-bold text-gray-800">150+</div>
+                    <div className="text-gray-600">Siswa</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Deskripsi Sekolah */}
-          <div className="text-left">
-            <h3 className="text-3xl font-bold text-green-700 mb-4">
-              Profil Sekolah
-            </h3>
-            <p className="text-gray-800 leading-relaxed mb-4">
-              Sekolah Islam Terpadu As-Sakinah merupakan lembaga pendidikan yang
-              berkomitmen untuk mencetak generasi unggul, berakhlak mulia, dan
-              berprestasi. Dengan kurikulum terpadu, fasilitas modern, serta tenaga
-              pendidik yang berpengalaman, kami berusaha memberikan lingkungan
-              belajar yang nyaman dan inspiratif.
-            </p>
-            <p className="text-gray-800 leading-relaxed mb-6">
-              Kami percaya bahwa pendidikan adalah kunci untuk membangun masa depan
-              cerah bagi peserta didik agar siap menghadapi tantangan zaman.
-            </p>
-            <Link
-              to="/profil-sekolah"
-              className="px-6 py-3 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition inline-block"
-            >
-              Lihat Selengkapnya
-            </Link>
+          {/* Content Section */}
+          <div className="space-y-8">
+            <div className="space-y-6">
+              <h3 className="text-3xl md:text-4xl font-bold text-gray-800 leading-tight">
+                Sekolah Islam Terpadu
+                <span className="block bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
+                  As-Sakinah
+                </span>
+              </h3>
+              
+              <div className="space-y-4 text-gray-700 leading-relaxed">
+                <p className="text-lg">
+                  Lembaga pendidikan yang berkomitmen untuk mencetak generasi unggul, 
+                  berakhlak mulia, dan berprestasi. Dengan kurikulum terpadu, fasilitas modern, 
+                  serta tenaga pendidik yang berpengalaman.
+                </p>
+                <p>
+                  Kami percaya bahwa pendidikan adalah kunci untuk membangun masa depan 
+                  cerah bagi peserta didik agar siap menghadapi tantangan zaman.
+                </p>
+              </div>
+            </div>
+
+            {/* Key Features */}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/20 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-800">Kurikulum Terpadu</h4>
+                    <p className="text-sm text-gray-600">Islami & Modern</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/20 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                    <Star className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-800">Fasilitas Modern</h4>
+                    <p className="text-sm text-gray-600">Teknologi Terdepan</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA Button */}
+            <div className="pt-4">
+              <button className="group relative px-8 py-4 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-green-700 to-teal-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative flex items-center space-x-2">
+                  <span className="font-semibold">Lihat Selengkapnya</span>
+                  <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" />
+                </div>
+              </button>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
       {/* Section Konten 2 */}
       <section className="py-20 px-6 bg-gray-50 text-center">
@@ -270,16 +344,28 @@ const LandingPage: React.FC = () => {
 
 
        {/* Footer-like Section */}
-      <section className="py-20 bg-blue-300 text-white text-center">
-        <h3 className="text-xl font-bold mb-4">Ayo Mulai Sekarang!</h3>
-        <p className="mb-6">
-          Bergabunglah bersama ribuan pelajar lainnya dan temukan pengalaman belajar
-          baru.
-        </p>
-        <button className="px-6 py-2 bg-white text-green-700 rounded-lg shadow hover:bg-gray-100 transition">
-          Daftar Gratis
-        </button>
-      </section>   
+      <section className="px-4 pb-20">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="bg-gradient-to-r from-sky-400 to-sky-600 rounded-3xl p-8 md:p-12 text-center text-white shadow-2xl"
+          >
+            <h3 className="text-3xl md:text-4xl font-bold mb-4">
+              Tertarik Bergabung?
+            </h3>
+            <p className="text-xl mb-8 opacity-90">
+              Kunjungi sekolah kami dan rasakan langsung kualitas fasilitas yang tersedia
+            </p>
+            <button className="bg-white text-sky-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-sky-50 transform hover:scale-105 transition-all duration-300 shadow-lg">
+              Daftar Sekarang
+            </button>
+          </motion.div>
+        </div>
+      </section>
+
     </PublicLayout>
   );
 };

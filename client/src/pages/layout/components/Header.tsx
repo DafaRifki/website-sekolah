@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Menu, LogIn, UserPlus, ShieldCheck } from "lucide-react";
+import { Menu, LogIn, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import {

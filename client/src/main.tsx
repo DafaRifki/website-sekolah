@@ -27,6 +27,8 @@ import PendaftaranPage from "./pages/admin/pendaftaran/PendaftaranPage.tsx";
 import CekStatusPage from "./pages/CekStatusPage.tsx";
 import TahunAjaranPage from "./pages/admin/tahun-ajaran/TahunAjaranPage.tsx";
 import SiswaBaruLayout from "./pages/layout/siswa-baru/SiswaBaruLayout.tsx";
+import ScrollToTop from "./components/ScrollToTop.tsx";
+
 
 const root = document.getElementById("root") as HTMLElement;
 
@@ -39,6 +41,7 @@ const publicRoute = [
 
 ReactDOM.createRoot(root).render(
   <BrowserRouter>
+    <ScrollToTop />
     <Toaster duration={2000} position="top-right" />
     <Routes>
       {publicRoute.map(({ path, element }) => (
