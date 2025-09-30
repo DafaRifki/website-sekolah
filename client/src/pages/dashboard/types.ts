@@ -36,4 +36,14 @@ export interface DashboardSiswa {
   persentaseAbsensi: string;
   tarif?: string;
   statusPembayaran?: string;
+
+  pembayaranTerakhir?: {
+    id_pembayaran: number;
+    jumlahBayar: number;
+    metode: string | null;
+    tanggal: string;
+    keterangan: string | null;
+    tahunAjaran: { namaTahun: string };
+    tarif: { nominal: number; keterangan: string | null } | null;
+  };
 }

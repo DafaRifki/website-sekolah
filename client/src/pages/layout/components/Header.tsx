@@ -38,7 +38,7 @@ const Header: React.FC = () => {
         {/* Logo */}
         <a href="/" className="flex items-center gap-2">
           <img src="/img/logo.png" alt="Logo" className="h-8 w-8" />
-          <span className="font-sans font-semibold text-xl text-green-700">
+          <span className="font-sans font-semibold text-xl text-emerald-700">
             SMA AS-SAKINAH
           </span>
         </a>
@@ -51,7 +51,7 @@ const Header: React.FC = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to="/"
-                    className="text-gray-800 hover:text-green-600 transition-colors">
+                    className="text-gray-800 hover:text-emerald-600 transition-colors">
                     Beranda
                   </Link>
                 </NavigationMenuLink>
@@ -61,14 +61,14 @@ const Header: React.FC = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to="/profil-sekolah"
-                    className="text-gray-800 hover:text-green-600 transition-colors">
+                    className="text-gray-800 hover:text-emerald-600 transition-colors">
                     Profil
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="text-gray-800 hover:text-green-600 transition-colors">
+                <NavigationMenuTrigger className="text-gray-800 hover:text-emerald-600 transition-colors">
                   Guru
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -77,7 +77,7 @@ const Header: React.FC = () => {
                       <NavigationMenuLink asChild>
                         <Link
                           to="/kepala-sekolah"
-                          className="block px-3 py-2 rounded hover:bg-green-100">
+                          className="block px-3 py-2 rounded hover:bg-emerald-100">
                           Kepala Sekolah
                         </Link>
                       </NavigationMenuLink>
@@ -86,7 +86,7 @@ const Header: React.FC = () => {
                       <NavigationMenuLink asChild>
                         <Link
                           to="/guru/staff-pengajar"
-                          className="block px-3 py-2 rounded hover:bg-green-100">
+                          className="block px-3 py-2 rounded hover:bg-emerald-100">
                           Staff Pengajar
                         </Link>
                       </NavigationMenuLink>
@@ -95,7 +95,7 @@ const Header: React.FC = () => {
                       <NavigationMenuLink asChild>
                         <Link
                           to="/struktur-organisasi"
-                          className="block px-3 py-2 rounded hover:bg-green-100">
+                          className="block px-3 py-2 rounded hover:bg-emerald-100">
                           Struktur Organisasi
                         </Link>
                       </NavigationMenuLink>
@@ -108,7 +108,7 @@ const Header: React.FC = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to="/fasilitas"
-                    className="text-gray-800 hover:text-green-600 transition-colors">
+                    className="text-gray-800 hover:text-emerald-600 transition-colors">
                     Fasilitas
                   </Link>
                 </NavigationMenuLink>
@@ -118,7 +118,7 @@ const Header: React.FC = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to="/berita"
-                    className="text-gray-800 hover:text-green-600 transition-colors">
+                    className="text-gray-800 hover:text-emerald-600 transition-colors">
                     Berita
                   </Link>
                 </NavigationMenuLink>
@@ -128,7 +128,7 @@ const Header: React.FC = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to="/pendaftaran"
-                    className="text-gray-800 hover:text-green-600 transition-colors">
+                    className="text-gray-800 hover:text-emerald-600 transition-colors">
                     Pendaftaran
                   </Link>
                 </NavigationMenuLink>
@@ -166,17 +166,15 @@ const Header: React.FC = () => {
                 <SheetTitle className="text-lg font-bold">Navigasi</SheetTitle>
               </SheetHeader>
 
-              {/* Beranda */}
               <Link
                 to="/"
-                className="px-3 py-2 rounded-lg hover:bg-green-100 transition-colors">
+                className="px-3 py-2 rounded-lg hover:bg-emerald-100 transition-colors">
                 Beranda
               </Link>
 
-              {/* Profil */}
               <Link
                 to="/profil-sekolah"
-                className="px-3 py-2 rounded-lg hover:bg-green-100 transition-colors">
+                className="px-3 py-2 rounded-lg hover:bg-emerald-100 transition-colors">
                 Profil
               </Link>
 
@@ -186,40 +184,37 @@ const Header: React.FC = () => {
                 <div className="ml-3 mt-2 grid gap-1">
                   <Link
                     to="/kepala-sekolah"
-                    className="block px-3 py-2 rounded hover:bg-green-50 text-sm">
+                    className="block px-3 py-2 rounded hover:bg-emerald-50 text-sm">
                     Kepala Sekolah
                   </Link>
                   <Link
                     to="/guru/staff-pengajar"
-                    className="block px-3 py-2 rounded hover:bg-green-50 text-sm">
+                    className="block px-3 py-2 rounded hover:bg-emerald-50 text-sm">
                     Staff Pengajar
                   </Link>
                   <Link
                     to="/struktur-organisasi"
-                    className="block px-3 py-2 rounded hover:bg-green-50 text-sm">
+                    className="block px-3 py-2 rounded hover:bg-emerald-50 text-sm">
                     Struktur Organisasi
                   </Link>
                 </div>
               </div>
 
-              {/* Fasilitas */}
               <Link
                 to="/fasilitas"
-                className="px-3 py-2 rounded-lg hover:bg-green-100 transition-colors">
+                className="px-3 py-2 rounded-lg hover:bg-emerald-100 transition-colors">
                 Fasilitas
               </Link>
 
-              {/* Berita */}
               <Link
                 to="/berita"
-                className="px-3 py-2 rounded-lg hover:bg-green-100 transition-colors">
+                className="px-3 py-2 rounded-lg hover:bg-emerald-100 transition-colors">
                 Berita
               </Link>
 
-              {/* Pendaftaran */}
               <Link
                 to="/pendaftaran"
-                className="px-3 py-2 rounded-lg hover:bg-green-100 transition-colors">
+                className="px-3 py-2 rounded-lg hover:bg-emerald-100 transition-colors">
                 Pendaftaran
               </Link>
 
@@ -233,7 +228,7 @@ const Header: React.FC = () => {
                 </Button>
                 <Button asChild className="flex-1 gap-2">
                   <Link to="/cek-status">
-                    <LogIn size={16} />
+                    <ShieldCheck size={16} />
                     Cek Status Pendaftaran
                   </Link>
                 </Button>

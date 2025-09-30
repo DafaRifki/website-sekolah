@@ -122,9 +122,9 @@ const StrukturOrganisasi: React.FC = () => {
     level = 'middle',
   }) => {
     const cardSizes = {
-      top: 'w-80 h-96',
-      middle: 'w-72 h-88',
-      bottom: 'w-64 h-80'
+      top: 'w-80 h-96 max-w-full',
+      middle: 'w-72 h-88 max-w-full', 
+      bottom: 'w-64 h-80 max-w-full sm:w-56 sm:h-72'
     };
 
     const photoSizes = {
@@ -268,7 +268,7 @@ const StrukturOrganisasi: React.FC = () => {
           </div>
 
           {/* Wakasek & Bendahara */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 justify-items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 justify-items-center">
             {data.wakasek.map((item, i) => (
               <Card key={i} {...item} index={i} level="bottom" />
             ))}

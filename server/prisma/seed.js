@@ -16,7 +16,7 @@ async function main() {
         namaTahun: daftarTahun[i],
         tarif: {
           create: {
-            nominal: 5000000 + i * 500000, // beda tiap tahun
+            nominal: 5000000 + i * 500000,
             keterangan: `Tarif pendaftaran tahun ${daftarTahun[i]}`,
           },
         },
@@ -58,7 +58,7 @@ async function main() {
   for (let i = 1; i <= 5; i++) {
     const guru = await prisma.guru.create({
       data: {
-        nip: `198000${i}`,
+        nip: `19800${i}`,
         nama: `Guru ${i}`,
         jenisKelamin: i % 2 === 0 ? "Perempuan" : "Laki-laki",
         alamat: `Alamat Guru ${i}`,
@@ -266,6 +266,41 @@ async function main() {
     });
   }
   console.log("✅ 5 Pendaftaran Siswa Baru dibuat");
+
+  // ==========================
+  // Pembayaran (simulate cicilan random)
+  // ==========================
+  for (const siswa of siswaList) {
+    const tahunAktif =
+      tahunAjaranList[Math.floor(Math.random() * tahunAjaranList.length)];
+    const tarif = await prisma.tarifPembayaran.findFirst({
+      where: { tahunAjaranId: tahunAktif.id_tahun },
+    });
+
+    // tentukan jumlah cicilan random (0 - 3 kali)
+    const cicilanCount = Math.floor(Math.random() * 4);
+
+    let totalBayar = 0;
+    for (let c = 0; c < cicilanCount; c++) {
+      const bayar = Math.min(
+        Math.floor(tarif.nominal / 3),
+        tarif.nominal - totalBayar
+      );
+      totalBayar += bayar;
+
+      await prisma.pembayaran.create({
+        data: {
+          siswaId: siswa.id_siswa,
+          tahunAjaranId: tahunAktif.id_tahun,
+          tarifId: tarif.id_tarif,
+          jumlahBayar: bayar,
+          metode: c % 2 === 0 ? "Transfer" : "Tunai",
+          keterangan: `Cicilan ke-${c + 1}`,
+        },
+      });
+    }
+  }
+  console.log("✅ Pembayaran dibuat (random cicilan untuk siswa)");
 }
 
 main()

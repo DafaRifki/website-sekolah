@@ -78,10 +78,24 @@ export const tolakSiswa = async (req, res) => {
 // Cek status pendaftaran siswa
 export const cekStatusPendaftaran = async (req, res) => {
   try {
-    const { email } = req.query; // siswa isi form dengan email pendaftaran
-    const result = await cekStatusPendaftaranService(email);
-    res.json({ success: true, data: result });
+    const { email } = req.query;
+    if (!email) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email wajib diisi" });
+    }
+
+    const pendaftaran = await cekStatusPendaftaranService(email);
+
+    if (!pendaftaran) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Pendaftaran tidak ditemukan" });
+    }
+
+    res.json({ success: true, data: pendaftaran });
   } catch (error) {
-    res.status(404).json({ success: false, message: error.message });
+    console.error("Cek status error:", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };

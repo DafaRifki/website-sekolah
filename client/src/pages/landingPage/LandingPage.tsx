@@ -2,7 +2,11 @@ import React, { useEffect, useState } from "react";
 import PublicLayout from "../layout/PublicLayout";
 // import { Link } from "react-router-dom";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+<<<<<<< HEAD
 import { Users, GraduationCap, School, Trophy,BookOpen ,Star, ArrowRight, Award} from "lucide-react";
+=======
+import { Users, GraduationCap, School, Trophy,Award } from "lucide-react";
+>>>>>>> e37c9e02bd1a80dec29ea8b605afd30730fa16cd
 import { useInView } from "react-intersection-observer"; // ✅ tambahan
 
 interface CounterProps {
@@ -71,6 +75,7 @@ const LandingPage: React.FC = () => {
 
       {/* Section Konten 1 */}
       <section className="py-20 px-6 bg-gray-50">
+<<<<<<< HEAD
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Header Section */}
         <div className="text-center mb-16">
@@ -179,6 +184,93 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
         </div>
+=======
+      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+        
+        {/* Gambar Sekolah */}
+        <motion.div
+          className="relative group"
+          initial={{ opacity: 0, x: -80 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 1 }}
+        >
+          <div className="absolute -inset-4 bg-gradient-to-r from-green-400 to-teal-400 rounded-2xl opacity-20 group-hover:opacity-30 transition-opacity duration-300 blur"></div>
+          <div className="relative">
+            <motion.img
+              src="./img/landingprofil.jpg"
+              alt="Profil Sekolah"
+              className="rounded-2xl shadow-2xl object-cover w-full h-96 transform group-hover:scale-105 transition-transform duration-500"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 1 }}
+            />
+
+            {/* Floating Stats Cards */}
+            <motion.div
+              className="absolute -top-6 -right-6 bg-white rounded-xl shadow-lg p-4 transform rotate-3 hover:rotate-0 transition-transform duration-300"
+              initial={{ opacity: 0, y: -40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            >
+              <div className="flex items-center space-x-2">
+                <Award className="w-5 h-5 text-yellow-500" />
+                <div className="text-sm">
+                  <div className="font-bold text-gray-800">15+</div>
+                  <div className="text-gray-600">Prestasi</div>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg p-4 transform -rotate-3 hover:rotate-0 transition-transform duration-300"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+            >
+              <div className="flex items-center space-x-2">
+                <Users className="w-5 h-5 text-blue-500" />
+                <div className="text-sm">
+                  <div className="font-bold text-gray-800">100+</div>
+                  <div className="text-gray-600">Siswa</div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Deskripsi Sekolah */}
+        <motion.div
+          className="text-left"
+          initial={{ opacity: 0, x: 80 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 1 }}
+        >
+          <h3 className="text-3xl font-bold text-green-700 mb-4">
+            Profil Sekolah
+          </h3>
+          <p className="text-gray-800 leading-relaxed mb-4">
+            Sekolah Islam Terpadu As-Sakinah merupakan lembaga pendidikan yang
+            berkomitmen untuk mencetak generasi unggul, berakhlak mulia, dan
+            berprestasi. Dengan kurikulum terpadu, fasilitas modern, serta tenaga
+            pendidik yang berpengalaman, kami berusaha memberikan lingkungan
+            belajar yang nyaman dan inspiratif.
+          </p>
+          <p className="text-gray-800 leading-relaxed mb-6">
+            Kami percaya bahwa pendidikan adalah kunci untuk membangun masa depan
+            cerah bagi peserta didik agar siap menghadapi tantangan zaman.
+          </p>
+          <Link
+            to="/profil-sekolah"
+            className="px-6 py-3 bg-emerald-600 text-white rounded-lg shadow hover:bg-green-800 transition inline-block"
+          >
+            Lihat Selengkapnya
+          </Link>
+        </motion.div>
+>>>>>>> e37c9e02bd1a80dec29ea8b605afd30730fa16cd
       </div>
     </section>
 
@@ -344,6 +436,7 @@ const LandingPage: React.FC = () => {
 
 
        {/* Footer-like Section */}
+<<<<<<< HEAD
       <section className="px-4 pb-20">
         <div className="max-w-4xl mx-auto">
           <motion.div
@@ -366,6 +459,29 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
+=======
+     <section className="px-4 pb-20">
+               <div className="max-w-4xl mx-auto">
+                 <motion.div
+                   initial={{ opacity: 0, y: 30 }}
+                   whileInView={{ opacity: 1, y: 0 }}
+                   viewport={{ once: true }}
+                   transition={{ duration: 0.8 }}
+                   className="bg-gradient-to-r from-sky-400 to-cyan-500 rounded-3xl p-8 md:p-12 text-center text-white shadow-2xl"
+                 >
+                   <h3 className="text-3xl md:text-4xl font-bold mb-4">
+                     Ayo Mulai Sekarang!
+                   </h3>
+                   <p className="text-xl mb-8 opacity-90">
+                     Bergabunglah Dengan Pelajar Yang Berakhlak Mulia
+                   </p>
+                   <button className="bg-white text-sky-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-sky-50 transform hover:scale-105 transition-all duration-300 shadow-lg">
+                     Daftar
+                   </button>
+                 </motion.div>
+               </div>
+             </section>
+>>>>>>> e37c9e02bd1a80dec29ea8b605afd30730fa16cd
     </PublicLayout>
   );
 };
