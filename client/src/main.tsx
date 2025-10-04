@@ -27,12 +27,10 @@ import PendaftaranPage from "./pages/admin/pendaftaran/PendaftaranPage.tsx";
 import CekStatusPage from "./pages/CekStatusPage.tsx";
 import TahunAjaranPage from "./pages/admin/tahun-ajaran/TahunAjaranPage.tsx";
 import SiswaBaruLayout from "./pages/layout/siswa-baru/SiswaBaruLayout.tsx";
-<<<<<<< HEAD
 import ScrollToTop from "./components/ScrollToTop.tsx";
+import Pendaftaran from "./pages/landingPage/pendaftaran/Pendaftaran.tsx";
+import TenagaKependidikan from "./pages/landingPage/guru/TenagaKependidikan.tsx";
 
-=======
-import PembayaranPage from "./pages/admin/pembayaran/PembayaranPage.tsx";
->>>>>>> e37c9e02bd1a80dec29ea8b605afd30730fa16cd
 
 const root = document.getElementById("root") as HTMLElement;
 
@@ -62,6 +60,8 @@ ReactDOM.createRoot(root).render(
       <Route path="/fasilitas" element={<Fasilitas />} />
       <Route path="/struktur-organisasi" element={<StrukturOrganisasi />} />
       <Route path="/berita" element={<Berita />} />
+      <Route path="/pendaftaran" element={<Pendaftaran/>}/>
+      <Route path="/tenaga-kependidikan" element={<TenagaKependidikan />} />
       <Route element={<AuthLayout />}>
         <Route path="/dashboard" element={<DashboardPageIndex />} />
         {/* Data Siswa */}
@@ -73,7 +73,7 @@ ReactDOM.createRoot(root).render(
           {/* Default redirect ke pendaftaran */}
           <Route index element={<Navigate to="pendaftaran" replace />} />
           <Route path="pendaftaran" element={<PendaftaranPage />} />
-          <Route path="pembayaran" element={<PembayaranPage />} />
+          {/* <Route path="pembayaran" element={<PembayaranPage />} /> */}
         </Route>
         {/* Data Guru */}
         <Route path="/guru" element={<DataGuruPage />} />

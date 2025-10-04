@@ -85,9 +85,9 @@ const Header: React.FC = () => {
                     <li>
                       <NavigationMenuLink asChild>
                         <Link
-                          to="/guru/staff-pengajar"
+                          to="/tenaga-kependidikan"
                           className="block px-3 py-2 rounded hover:bg-emerald-100">
-                          Staff Pengajar
+                          Tenaga Kependidikan
                         </Link>
                       </NavigationMenuLink>
                     </li>
@@ -188,9 +188,9 @@ const Header: React.FC = () => {
                     Kepala Sekolah
                   </Link>
                   <Link
-                    to="/guru/staff-pengajar"
+                    to="/guru/tenaga-kependidikan"
                     className="block px-3 py-2 rounded hover:bg-emerald-50 text-sm">
-                    Staff Pengajar
+                    Tenaga Kependidikan
                   </Link>
                   <Link
                     to="/struktur-organisasi"
