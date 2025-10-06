@@ -81,7 +81,7 @@ export default function Berita() {
                 INFORMASI TERKINI
               </span>
               <h3 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
-                Berita & Pengumuman
+                BERITA & PENGUMUMAN
               </h3>
               <div className="w-24 h-1 bg-gradient-to-r from-emerald-400 to-teal-500 mx-auto rounded-full"></div>
             </motion.div>
