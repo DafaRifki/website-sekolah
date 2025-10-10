@@ -19,12 +19,29 @@ const Pendaftaran = () => {
         {/* Hero Section with Image */}
         <section className="relative h-[70vh] w-full flex items-center justify-center overflow-hidden">
           {/* Background Image */}
+         {/* <div className="relative w-full h-[500px] overflow-hidden"> */}
+
+          {/* Background Utama */}
           <div 
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: "url('/img/pendaftaran-hero.jpg')" }}
           >
-            <div className="absolute inset-0 bg-gradient-to-b from-emerald-900/70 via-emerald-800/60 to-emerald-900/80"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-emerald-900/70 via-emerald-800/60 to-emerald-900/80"></div>
           </div>
+
+          {/* Foto Promosi Kiri */}
+          <img
+            src="/img/anak-belajar-kiri.png"
+            alt="Anak Belajar"
+            className="absolute left-17 top-[75%] -translate-y-1/2 w-110 h-130 object-cover rounded-2xl hidden md:block"
+          />
+
+          {/* Foto Promosi Kanan */}
+          <img
+            src="/img/anak-belajar-kanan.png"
+            alt="Anak Belajar"
+            className="absolute right-18 top-[68%] -translate-y-1/2 w-80 h-100 object-cover rounded-2xl hidden md:block"
+          />
 
           {/* Decorative Elements */}
           <motion.div
@@ -137,7 +154,7 @@ const Pendaftaran = () => {
               <h2 className="text-3xl sm:text-4xl font-bold text-emerald-800 mb-4">
                 Mengapa Memilih Kami?
               </h2>
-              <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              <p className="text-gray-800 text-lg max-w-2xl mx-auto">
                 Berbagai keunggulan dan fasilitas terbaik menanti Anda
               </p>
             </motion.div>
@@ -211,19 +228,19 @@ const Pendaftaran = () => {
               <h2 className="text-3xl sm:text-4xl font-bold text-emerald-800 mb-4">
                 Persyaratan Pendaftaran
               </h2>
-              <p className="text-gray-600 text-lg">
+              <p className="text-gray-800 text-lg">
                 Siapkan dokumen-dokumen berikut untuk proses pendaftaran
               </p>
             </motion.div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
-                "Fotokopi Ijazah SMP/sederajat",
-                "Fotokopi SKHUN",
-                "Fotokopi Kartu Keluarga",
-                "Fotokopi Akta Kelahiran",
+                "Fotocopy Ijazah/SKL",
+                "Fotocopy SKHUN",
+                "Fotocopy Kartu Keluarga",
+                "Fotocopy Akta Kelahiran",
                 "Pas Foto 3x4 (3 lembar)",
-                "Formulir Pendaftaran"
+                "Fotocopy KTP OrangTua"
               ].map((item, index) => (
                 <motion.div
                   key={index}
@@ -304,10 +321,6 @@ const Pendaftaran = () => {
                   <div className="flex items-center gap-2">
                     <CheckCircle size={18} />
                     <span>100% Aman</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} />
-                    <span>Tanpa Biaya Pendaftaran</span>
                   </div>
                 </motion.div>
               </div>
