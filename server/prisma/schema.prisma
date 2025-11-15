@@ -1,5 +1,12 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
+  // output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -52,7 +59,7 @@ model Siswa {
   Siswa_Orangtua Siswa_Orangtua[]
   absensi        Absensi[]
   pendaftaran    Pendaftaran[]
-  pembayaran     Pembayaran[]
+  tagihan        Tagihan[]
 }
 
 model OrangTua {
@@ -107,24 +114,44 @@ model MataPelajaran {
 }
 
 model NilaiRapor {
-  id_nilai Int    @id @default(autoincrement())
-  id_siswa Int
-  id_mapel Int
-  semester String
-  nilai    Int
+  id_nilai      Int    @id @default(autoincrement())
+  id_siswa      Int
+  id_mapel      Int
+  tahunAjaranId Int
+  semester      String // "1" or "2"
+  nilai         Int // 0-100
 
-  siswa Siswa         @relation(fields: [id_siswa], references: [id_siswa])
-  mapel MataPelajaran @relation(fields: [id_mapel], references: [id_mapel])
+  siswa       Siswa         @relation(fields: [id_siswa], references: [id_siswa])
+  mapel       MataPelajaran @relation(fields: [id_mapel], references: [id_mapel])
+  tahunAjaran TahunAjaran   @relation(fields: [tahunAjaranId], references: [id_tahun])
+
+  @@unique([id_siswa, id_mapel, tahunAjaranId, semester])
+  @@index([id_siswa])
+  @@index([id_mapel])
+  @@index([tahunAjaranId])
 }
 
 model TahunAjaran {
-  id_tahun   Int                @id @default(autoincrement())
-  namaTahun  String
+  id_tahun  Int      @id @default(autoincrement())
+  namaTahun String // "2024/2025"
+  startDate DateTime // Start date of semester
+  endDate   DateTime // End date of semester
+  semester  Int      @default(1) // 1 or 2
+
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   absensi    Absensi[]
   kelasRel   KelasTahunAjaran[]
   tarif      TarifPembayaran[]
   daftar     Pendaftaran[]
-  pembayaran Pembayaran[]
+  tagihan    Tagihan[]
+  NilaiRapor NilaiRapor[]
+
+  @@unique([namaTahun, semester])
+  @@index([isActive])
+  @@index([startDate, endDate])
 }
 
 model Absensi {
@@ -138,50 +165,154 @@ model Absensi {
 
   siswa       Siswa       @relation(fields: [id_siswa], references: [id_siswa])
   tahunAjaran TahunAjaran @relation(fields: [id_tahun], references: [id_tahun])
+
+  @@unique([id_siswa, tanggal, id_tahun])
+  @@index([id_siswa])
+  @@index([tanggal])
+  @@index([id_tahun])
 }
 
 model Pendaftaran {
-  id_pendaftaran   Int              @id @default(autoincrement())
-  nama             String
-  alamat           String?
-  tanggalLahir     DateTime?
-  jenisKelamin     String?
-  noHp             String?
-  email            String?          @unique
-  statusDokumen    StatusDokumen    @default(BELUM_DITERIMA)
-  statusPembayaran StatusPembayaran @default(BELUM_BAYAR) // bisa dihitung dari riwayat pembayaran
+  id_pendaftaran Int @id @default(autoincrement())
 
+  // Informasi Pendaftaran
+  unitPendidikan      String?
+  jenisPendaftaran    String?
+  noIndukPesertaDidik String?
+  jurusan             String?
+  tanggalPendaftaran  DateTime?
+
+  // Data Siswa - Identitas
+  nama         String
+  jenisKelamin String?
+  nisn         String?
+  nik          String?
+  noKK         String?
+  tempatLahir  String?
+  tanggalLahir DateTime?
+  agama        String?
+
+  // Data Siswa - Alamat & Kontak
+  alamat          String? @db.Text
+  noHandphonAktif String?
+  tempatTinggal   String?
+  transportasi    String?
+
+  // Data Siswa - Keluarga
+  anakKe      String?
+  penerimaKIP String?
+  noKIP       String?
+
+  // Data Ayah
+  namaAyah         String?
+  nikAyah          String?
+  tempatLahirAyah  String?
+  tanggalLahirAyah DateTime?
+  pendidikanAyah   String?
+  noHPAyah         String?
+  pekerjaanAyah    String?
+  penghasilanAyah  String?
+
+  // Data Ibu
+  namaIbu         String?
+  nikIbu          String?
+  tempatLahirIbu  String?
+  tanggalLahirIbu DateTime?
+  pendidikanIbu   String?
+  noHPIbu         String?
+  pekerjaanIbu    String?
+  penghasilanIbu  String?
+
+  // Data Wali (jika ada)
+  namaWali         String?
+  nikWali          String?
+  tempatLahirWali  String?
+  tanggalLahirWali DateTime?
+  pendidikanWali   String?
+  noWali           String?
+  pekerjaanWali    String?
+  penghasilanWali  String?
+
+  // Data Fisik & Jarak
+  tinggiBadan   String?
+  beratBadan    String?
+  jarakSekolah  String?
+  waktuTempuh   String?
+  jumlahSaudara String?
+
+  // Dokumen
+  ijazah        String?
+  skhun         String?
+  kartuKeluarga String?
+  aktaKelahiran String?
+  ktpOrangTua   String?
+
+  // Contact & Asal Sekolah
+  email       String?
+  noHp        String?
+  asalSekolah String?
+
+  // Status
+  statusDokumen    StatusDokumen               @default(BELUM_DITERIMA)
+  statusPembayaran StatusPembayaranPendaftaran @default(BELUM_BAYAR)
+
+  // Relations
   tahunAjaranId Int
   tahunAjaran   TahunAjaran @relation(fields: [tahunAjaranId], references: [id_tahun])
 
-  siswaId Int?
+  siswaId Int?   @unique
   siswa   Siswa? @relation(fields: [siswaId], references: [id_siswa])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tahunAjaranId])
+  @@index([statusDokumen])
+  @@index([statusPembayaran])
 }
 
 model TarifPembayaran {
   id_tarif      Int     @id @default(autoincrement())
   tahunAjaranId Int
+  namaTagihan   String // misal "SPP Januari 2024"
   nominal       Int
   keterangan    String?
 
-  tahunAjaran TahunAjaran  @relation(fields: [tahunAjaranId], references: [id_tahun])
+  tahunAjaran TahunAjaran @relation(fields: [tahunAjaranId], references: [id_tahun])
+  tagihan     Tagihan[]
+}
+
+model Tagihan {
+  id_tagihan    Int           @id @default(autoincrement())
+  id_siswa      Int
+  tarifId       Int
+  tahunAjaranId Int
+  bulan         String?
+  status        StatusTagihan @default(BELUM_BAYAR)
+
+  siswa       Siswa           @relation(fields: [id_siswa], references: [id_siswa])
+  tarif       TarifPembayaran @relation(fields: [tarifId], references: [id_tarif])
+  tahunAjaran TahunAjaran     @relation(fields: [tahunAjaranId], references: [id_tahun])
   pembayaran  Pembayaran[]
+
+  @@unique([id_siswa, tarifId, tahunAjaranId, bulan])
+  @@index([id_siswa])
+  @@index([tarifId])
+  @@index([tahunAjaranId])
+  @@index([status])
 }
 
 model Pembayaran {
-  id_pembayaran Int  @id @default(autoincrement())
-  siswaId       Int
-  tahunAjaranId Int
-  tarifId       Int?
+  id_pembayaran Int      @id @default(autoincrement())
+  tagihanId     Int
+  jumlahBayar   Int
+  tanggal       DateTime @default(now())
+  metode        String?
+  keterangan    String?
 
-  tanggal     DateTime @default(now())
-  jumlahBayar Int
-  metode      String?
-  keterangan  String?
+  tagihan Tagihan @relation(fields: [tagihanId], references: [id_tagihan])
 
-  siswa       Siswa            @relation(fields: [siswaId], references: [id_siswa])
-  tahunAjaran TahunAjaran      @relation(fields: [tahunAjaranId], references: [id_tahun])
-  tarif       TarifPembayaran? @relation(fields: [tarifId], references: [id_tarif])
+  @@index([tagihanId])
 }
 
 enum Role {
@@ -203,7 +334,13 @@ enum StatusDokumen {
   KURANG
 }
 
-enum StatusPembayaran {
+enum StatusTagihan {
+  BELUM_BAYAR
+  LUNAS
+  CICIL
+}
+
+enum StatusPembayaranPendaftaran {
   BELUM_BAYAR
   LUNAS
   CICIL
