@@ -691,3 +691,40 @@ export const updateStatusTagihanValidation = Joi.object({
       "string.base": "Status harus berupa teks",
     }),
 });
+
+/**
+ * Validation for creating pembayaran
+ * POST /api/pembayaran
+ */
+export const pembayaranValidation = Joi.object({
+  tagihanId: Joi.number().integer().required().messages({
+    "any.required": "ID tagihan wajib diisi",
+    "number.base": "ID tagihan harus berupa angka",
+  }),
+  jumlahBayar: Joi.number().integer().min(1).required().messages({
+    "any.required": "Jumlah bayar wajib diisi",
+    "number.base": "Jumlah bayar harus berupa angka",
+    "number.min": "Jumlah bayar minimal 1",
+  }),
+  metode: Joi.string().optional().messages({
+    "string.base": "Metode harus berupa teks",
+  }),
+  keterangan: Joi.string().allow("", null).optional(),
+  tanggal: Joi.date().optional().messages({
+    "date.base": "Tanggal harus berupa format tanggal",
+  }),
+});
+
+/**
+ * Validation for updating pembayaran
+ * PUT /api/pembayaran/:id
+ */
+export const updatePembayaranValidation = Joi.object({
+  jumlahBayar: Joi.number().integer().min(1).optional().messages({
+    "number.base": "Jumlah bayar harus berupa angka",
+    "number.min": "Jumlah bayar minimal 1",
+  }),
+  metode: Joi.string().optional(),
+  keterangan: Joi.string().allow("", null).optional(),
+  tanggal: Joi.date().optional(),
+}).min(1);
