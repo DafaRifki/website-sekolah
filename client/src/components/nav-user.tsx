@@ -55,18 +55,40 @@ export function NavUser({
 
   const handleLogout = async () => {
     try {
-      const { data } = await apiClient.post("/auth/logout");
-      setOpenDialog(false);
-      // console.log(data);
+      // Try to call logout API (optional for JWT stateless, but good practice)
+      try {
+        await apiClient.post("/auth/logout");
+      } catch (apiError) {
+        // Even if API call fails (e.g., token expired), continue with logout
+        console.log("Logout API call failed (non-critical):", apiError);
+      }
 
-      toast.success(data.message, {
+      // Clear all authentication data from localStorage
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+
+      setOpenDialog(false);
+
+      toast.success("Logout berhasil", {
         onAutoClose: () => {
-          navigate("/login");
+          navigate("/login", { replace: true });
         },
       });
     } catch (error) {
-      console.log(error);
-      toast.error("Something went wrong");
+      console.error("Logout error:", error);
+
+      // Even if there's an error, clear localStorage and redirect
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+
+      setOpenDialog(false);
+      toast.error("Terjadi kesalahan saat logout", {
+        onAutoClose: () => {
+          navigate("/login", { replace: true });
+        },
+      });
     }
   };
 
@@ -85,7 +107,7 @@ export function NavUser({
                     {initials}
                   </AvatarFallback> */}
                   {user.fotoProfil ? (
-                    <img src={'${user.fotoProfil}'} alt={user.name} />
+                    <img src={"${user.fotoProfil}"} alt={user.name} />
                   ) : (
                     <AvatarFallback className="rounded-lg">
                       {initials}

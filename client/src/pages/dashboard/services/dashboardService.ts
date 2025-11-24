@@ -1,6 +1,52 @@
 import apiClient from "@/config/axios";
 import type { DashboardSiswa, DashboardSummary } from "../types";
 
+// ==================== ADMIN DASHBOARD ====================
+export const getDashboardSummary = async (): Promise<DashboardSummary> => {
+  try {
+    // ✅ Call backend dashboard API yang sudah kita buat
+    const res = await apiClient.get("/dashboard/all");
+
+    // ✅ Transform backend response to match frontend types
+    const backendData = res.data.data;
+
+    return {
+      totalSiswa: backendData.summary.totalSiswa,
+      totalGuru: backendData.summary.totalGuru,
+      totalKelas: backendData.summary.totalKelas,
+      totalPendaftarBaru: backendData.pendaftaran.pendingAction || 0,
+      totalPendaftarDiterima: backendData.pendaftaran.total || 0,
+      tahunAjaran: backendData.summary.tahunAjaranAktif?.namaTahun || "-",
+      tarifTahunan: backendData.financial.totalTagihan || 0,
+    };
+  } catch (error) {
+    console.error("Error fetching dashboard summary:", error);
+    throw error;
+  }
+};
+
+// ==================== SISWA DASHBOARD ====================
+export const getDashboardSiswa = async (): Promise<DashboardSiswa> => {
+  try {
+    const res = await apiClient.get("/dashboard/siswa");
+    return res.data.data;
+  } catch (error) {
+    console.error("Error fetching dashboard siswa:", error);
+    throw error;
+  }
+};
+
+// ==================== GURU DASHBOARD ====================
+export const getDashboardGuru = async () => {
+  try {
+    const res = await apiClient.get("/dashboard/guru");
+    return res.data.data;
+  } catch (error) {
+    console.error("Error fetching dashboard guru:", error);
+    throw error;
+  }
+};
+
 // export const getDashboardSummary = async () => {
 //   try {
 //     const res = await apiClient.get("/dashboard/summary");
@@ -21,24 +67,24 @@ import type { DashboardSiswa, DashboardSummary } from "../types";
 //   }
 // };
 
-// ADMIN
-export const getDashboardSummary = async (): Promise<DashboardSummary> => {
-  try {
-    const res = await apiClient.get("/dashboard/summary");
-    return res.data;
-  } catch (error) {
-    console.error("Error fetching dashboard summary:", error);
-    throw error;
-  }
-};
+// // ADMIN
+// export const getDashboardSummary = async (): Promise<DashboardSummary> => {
+//   try {
+//     const res = await apiClient.get("/dashboard/summary");
+//     return res.data;
+//   } catch (error) {
+//     console.error("Error fetching dashboard summary:", error);
+//     throw error;
+//   }
+// };
 
-// SISWA
-export const getDashboardSiswa = async (): Promise<DashboardSiswa> => {
-  try {
-    const res = await apiClient.get("/dashboard/siswa");
-    return res.data;
-  } catch (error) {
-    console.error("Error fetching dashboard siswa:", error);
-    throw error;
-  }
-};
+// // SISWA
+// export const getDashboardSiswa = async (): Promise<DashboardSiswa> => {
+//   try {
+//     const res = await apiClient.get("/dashboard/siswa");
+//     return res.data;
+//   } catch (error) {
+//     console.error("Error fetching dashboard siswa:", error);
+//     throw error;
+//   }
+// };
