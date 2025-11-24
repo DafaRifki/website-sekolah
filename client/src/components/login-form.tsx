@@ -46,30 +46,6 @@ export function LoginForm({
     },
   });
 
-  // --------- Handle Tilt Effect ----------
-  // const handleMouseMove = (e: React.MouseEvent) => {
-  //   const card = cardRef.current;
-  //   if (!card) return;
-
-  //   const rect = card.getBoundingClientRect();
-  //   const x = e.clientX - rect.left;
-  //   const y = e.clientY - rect.top;
-
-  //   const centerX = rect.width / 2;
-  //   const centerY = rect.height / 2;
-
-  //   const rotateX = ((y - centerY) / 20) * -1;
-  //   const rotateY = (x - centerX) / 20;
-
-  //   card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
-  // };
-
-  // const handleMouseLeave = () => {
-  //   const card = cardRef.current;
-  //   if (!card) return;
-  //   card.style.transform = "perspective(1000px) rotateX(0) rotateY(0) scale(1)";
-  // };
-
   // --------- Handle Login ----------
   const handleLogin = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
@@ -78,17 +54,58 @@ export function LoginForm({
       const { data } = await apiClient.post("/auth/login", values);
       // console.log(data);
 
+      // store token & user to localStorage (server returns tokens in data.data.tokens)
+      const payload = data?.data;
+      const accessToken = payload?.tokens?.accessToken || payload?.token;
+      const refreshToken = payload?.tokens?.refreshToken;
+      const user = payload?.user;
+
+      if (accessToken) {
+        // use key `accessToken` so axios interceptor (and other parts) can read it
+        localStorage.setItem("accessToken", accessToken);
+      }
+      if (refreshToken) {
+        localStorage.setItem("refreshToken", refreshToken);
+      }
+      if (user) {
+        try {
+          localStorage.setItem("user", JSON.stringify(user));
+        } catch (e) {
+          // ignore serialization errors but surface small warning
+          console.warn("Failed to save user to localStorage", e);
+        }
+      }
+
       toast.success("Login berhasil", {
         onAutoClose: () => {
           navigate("/dashboard");
           setLoading(false);
         },
       });
-    } catch (error: any) {
-      console.log(error);
-      toast.error(error?.response?.data?.message || "Terjadi kesalahan", {
+    } catch (err: unknown) {
+      // log the error for debugging
+      console.error("Login error:", err);
+
+      // Extract error message from response
+      let errorMessage = "Terjadi kesalahan saat login";
+
+      if (err && typeof err === "object" && "response" in err) {
+        const axiosError = err as any;
+        if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        } else if (axiosError.response?.data?.error) {
+          errorMessage = axiosError.response.data.error;
+        } else if (axiosError.message) {
+          errorMessage = axiosError.message;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
+      toast.error(errorMessage, {
         onAutoClose: () => setLoading(false),
       });
+      setLoading(false);
     }
     // console.log(values);
   };

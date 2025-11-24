@@ -20,6 +20,7 @@ import absensiRoutes from "./routes/absensi.routes";
 import tarifPembayaranRoutes from "./routes/tarif-pembayaran.routes";
 import tagihanRoutes from "./routes/tagihan.routes";
 import pembayaranRoutes from "./routes/pembayaran.routes";
+import dashboardRoutes from "./routes/dashboard.routes";
 
 const app = express();
 
@@ -106,6 +107,7 @@ app.use("/api/absensi", absensiRoutes);
 app.use("/api/tarif-pembayaran", tarifPembayaranRoutes);
 app.use("/api/tagihan", tagihanRoutes);
 app.use("/api/pembayaran", pembayaranRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // Error handling
 app.use(notFoundHandler);

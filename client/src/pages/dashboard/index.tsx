@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+// import { useOutletContext } from "react-router-dom";
 import CardStat from "./components/CardStat";
 import {
   getDashboardSummary,
@@ -26,11 +26,27 @@ import type {
 } from "./types";
 
 const DashboardPageIndex: React.FC = () => {
-  const { user } = useOutletContext<{ user: User }>();
+  const [user, setUser] = useState<User | null>(null);
+  // const { user } = useOutletContext<{ user: User }>();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [siswaData, setSiswaData] = useState<DashboardSiswa | null>(null);
 
   useEffect(() => {
+    // get user from localStorage
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error("Failed to parse user:", error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
     if (user?.role === "ADMIN") {
       getDashboardSummary()
         .then((data) => setSummary(data))
