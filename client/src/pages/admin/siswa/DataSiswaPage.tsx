@@ -82,7 +82,7 @@ const DataSiswaPage: React.FC = () => {
       .catch((err) => console.error(err));
     apiClient
       .get("/kelas")
-      .then((res) => setKelas(res.data.data))
+      .then((res) => setKelas(res.data.data.data))
       .catch((err) => console.error(err));
   }, []);
 

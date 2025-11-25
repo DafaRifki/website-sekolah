@@ -74,7 +74,7 @@ export default function DataKelasPage() {
   const fetchKelas = async () => {
     try {
       const res = await apiClient.get("/kelas");
-      setKelas(res.data.data);
+      setKelas(res.data.data.data);
     } catch (error: any) {
       console.error("Gagal fetch kelas: ", error.message);
     }

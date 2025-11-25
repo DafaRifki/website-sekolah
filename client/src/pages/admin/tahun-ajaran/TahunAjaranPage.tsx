@@ -40,7 +40,7 @@ export default function TahunAjaranPage() {
       setLoading(true);
       setError(null);
       const res = await apiClient.get("/tahun-ajaran");
-      setTahunAjaran(res.data.data || []);
+      setTahunAjaran(res.data.data.data || []);
     } catch (error: any) {
       console.error("Error fetching tahun ajaran:", error);
       setError(
