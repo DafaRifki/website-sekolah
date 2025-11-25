@@ -52,7 +52,7 @@ export default function PembayaranPage() {
     try {
       setLoading(true);
       const res = await apiClient.get("/pembayaran");
-      setPembayaran(res.data);
+      setPembayaran(res.data.data);
     } catch (error) {
       console.error(error);
     } finally {

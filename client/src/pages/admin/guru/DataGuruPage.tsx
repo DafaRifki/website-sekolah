@@ -38,7 +38,7 @@ export default function DataGuruPage() {
     const fetchGuru = async () => {
       try {
         const res = await apiClient.get("/guru");
-        setGuru(res.data.data);
+        setGuru(res.data.data.data);
       } catch (error) {
         console.error(error);
       }

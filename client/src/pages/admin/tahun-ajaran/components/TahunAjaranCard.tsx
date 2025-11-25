@@ -18,14 +18,16 @@ import { useState } from "react";
 
 interface TahunAjaranCardProps {
   data: {
-    id_tahun: number;
-    namaTahun: string;
-    kelasRel: {
-      isActive: boolean;
-      kelas: {
-        id_kelas: number;
-        namaKelas: string;
-        tingkat: string;
+    data: {
+      id_tahun: number;
+      namaTahun: string;
+      kelasRel: {
+        isActive: boolean;
+        kelas: {
+          id_kelas: number;
+          namaKelas: string;
+          tingkat: string;
+        };
       };
     }[];
   };
@@ -33,7 +35,7 @@ interface TahunAjaranCardProps {
 
 export default function TahunAjaranCard({ data }: TahunAjaranCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const totalKelas = data.kelasRel.length;
+  const totalKelas = data.data.kelasRel.length;
   const kelasAktif = data.kelasRel.filter((rel) => rel.isActive).length;
   const persentaseAktif =
     totalKelas > 0 ? Math.round((kelasAktif / totalKelas) * 100) : 0;

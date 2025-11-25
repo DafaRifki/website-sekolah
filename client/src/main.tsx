@@ -29,7 +29,7 @@ import SiswaBaruLayout from "./pages/layout/siswa-baru/SiswaBaruLayout.tsx";
 import ScrollToTop from "./components/ScrollToTop.tsx";
 import Pendaftaran from "./pages/landingPage/pendaftaran/Pendaftaran.tsx";
 import TenagaKependidikan from "./pages/landingPage/guru/TenagaKependidikan.tsx";
-
+import PembayaranPage from "./pages/admin/pembayaran/PembayaranPage.tsx";
 
 const root = document.getElementById("root") as HTMLElement;
 
@@ -63,7 +63,7 @@ ReactDOM.createRoot(root).render(
       <Route path="/fasilitas" element={<Fasilitas />} />
       <Route path="/struktur-organisasi" element={<StrukturOrganisasi />} />
       <Route path="/berita" element={<Berita />} />
-      <Route path="/pendaftaran" element={<Pendaftaran/>}/>
+      <Route path="/pendaftaran" element={<Pendaftaran />} />
       <Route path="/tenaga-kependidikan" element={<TenagaKependidikan />} />
       {/* Grup dengan AuthLayout */}
       <Route element={<AuthLayout />}>
@@ -77,6 +77,7 @@ ReactDOM.createRoot(root).render(
         <Route path="/siswa-baru" element={<SiswaBaruLayout />}>
           <Route index element={<Navigate to="pendaftaran" replace />} />
           <Route path="pendaftaran" element={<PendaftaranPage />} />
+          <Route path="pembayaran" element={<PembayaranPage />} />
         </Route>
 
         {/* Data Guru */}
