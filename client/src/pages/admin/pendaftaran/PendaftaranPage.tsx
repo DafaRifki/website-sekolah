@@ -46,31 +46,34 @@ export default function PendaftaranPage() {
 
   // ✅ handle status update
   const handleUpdate = async (
-    id: number,
-    field: "statusDokumen" | "statusPembayaran",
-    value: string
-  ) => {
-    try {
-      if (field === "statusDokumen") {
-        if (value === "LENGKAP") {
-          // terima siswa
-          await apiClient.put(`/pendaftaran/${id}/terima`);
-        } else if (value === "KURANG") {
-          // tolak siswa
-          await apiClient.put(`/pendaftaran/${id}/tolak`);
-        }
+  id: number,
+  field: "statusDokumen" | "statusPembayaran",
+  value: string
+) => {
+  try {
+    if (field === "statusDokumen") {
+      if (value === "LENGKAP") {
+        await apiClient.post(`/pendaftaran/${id}/approve`);
+      } else if (value === "KURANG") {
+        await apiClient.post(`/pendaftaran/${id}/reject`);
       } else {
-        // untuk statusPembayaran → bikin endpoint update pembayaran kalau ada
-        await apiClient.patch(`/pendaftaran/${id}`, {
-          statusPembayaran: value,
+        // BELUM_DITERIMA → update biasa
+        await apiClient.put(`/pendaftaran/${id}`, {
+          statusDokumen: value,
         });
       }
-
-      fetchData(); // refresh setelah update
-    } catch (error) {
-      console.error("Error updating data:", error);
+    } else {
+      // pembayaran
+      await apiClient.put(`/pendaftaran/${id}`, {
+        statusPembayaran: value,
+      });
     }
-  };
+
+    fetchData();
+  } catch (error) {
+    console.error("Error updating data:", error);
+  }
+};
 
   // Calculate statistics
   const totalPendaftaran = data.length;
