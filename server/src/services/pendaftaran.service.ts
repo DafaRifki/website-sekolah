@@ -743,4 +743,44 @@ export class PendaftaranService {
 
     return pendaftaran;
   }
+  static async convertPendaftaranToSiswa(id: number) {
+  const pendaftaran = await prisma.pendaftaran.findUnique({
+    where: { id_pendaftaran: id },
+  });
+
+  if (!pendaftaran) {
+    throw new Error("Pendaftaran not found");
+  }
+
+  if (pendaftaran.siswaId) {
+    throw new Error("Data pendaftar sudah pernah dikonversi menjadi siswa");
+  }
+
+  // Buat siswa baru berdasarkan data pendaftaran
+  const siswa = await prisma.siswa.create({
+    data: {
+      nama: pendaftaran.nama,
+      alamat: pendaftaran.alamat || undefined,
+      tanggalLahir: pendaftaran.tanggalLahir || undefined,
+      jenisKelamin: pendaftaran.jenisKelamin as "L" | "P" | undefined,
+      // tambahkan field yang kamu butuhkan sesuai struktur tabel siswa
+    },
+  });
+
+  // Update pendaftaran agar terhubung dengan siswa baru
+  const updated = await prisma.pendaftaran.update({
+    where: { id_pendaftaran: id },
+    data: {
+      siswaId: siswa.id_siswa,
+    },
+    include: { siswa: true },
+  });
+
+  return {
+    message: "Berhasil mengubah pendaftar menjadi siswa",
+    pendaftaran: updated,
+    siswa,
+  };
+}
+
 }
