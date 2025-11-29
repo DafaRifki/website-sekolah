@@ -218,7 +218,21 @@ export class PendaftaranController {
       sendError(res, "Failed to get statistics", error.message, 400);
     }
   }
+  static async convertToSiswa(req: Request, res: Response) {
+  try {
+    const id = parseInt(req.params.id);
 
+    if (isNaN(id)) {
+      return sendError(res, "Invalid pendaftaran ID", null, 400);
+    }
+
+    const result = await PendaftaranService.convertPendaftaranToSiswa(id);
+
+    sendSuccess(res, "Berhasil convert ke siswa", result);
+  } catch (error: any) {
+    sendError(res, "Gagal convert ke siswa", error.message, 400);
+  }
+}
   static async getByTahunAjaran(req: Request, res: Response) {
     try {
       const tahunAjaranId = parseInt(req.params.tahunAjaranId);
