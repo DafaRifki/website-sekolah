@@ -10,9 +10,9 @@ const isLoggedIn = async () => {
     const { data } = await apiClient.get("/auth/profile");
     // server returns profile in data.data (sendSuccess wrapper)
     return data?.data || null;
-  } catch (error: any) {
+  } catch (err: unknown) {
     // treat any error as not logged in; log it for debugging
-    console.error("Auth check failed:", error);
+    console.error("Auth check failed:", err);
     return null;
   }
 };

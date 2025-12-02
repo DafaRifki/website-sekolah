@@ -71,7 +71,7 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
   const fetchKelas = async () => {
     try {
       const { data } = await apiClient.get("/kelas");
-      setKelasList(data.data);
+      setKelasList(data.data.data || []);
     } catch (error) {
       console.error(error);
     }
@@ -187,7 +187,11 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
       setPreviewUrl("");
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Gagal menambahkan siswa");
+      toast.error(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          "Gagal menambahkan siswa"
+      );
       console.error(error);
     } finally {
       setLoading(false);
@@ -379,8 +383,8 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
                       <SelectValue placeholder="Pilih jenis kelamin" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Laki-laki">Laki-laki</SelectItem>
-                      <SelectItem value="Perempuan">Perempuan</SelectItem>
+                      <SelectItem value="L">Laki-laki</SelectItem>
+                      <SelectItem value="P">Perempuan</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

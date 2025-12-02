@@ -1,4 +1,5 @@
 import { prisma } from "../config/database";
+import { hashPassword } from "../utils/hash.util";
 import { PaginationQuery, PaginationResult } from "../types/common.types";
 import {
   buildPaginationQuery,
@@ -9,10 +10,21 @@ import { Prisma } from "@prisma/client";
 
 interface CreateSiswaData {
   nama: string;
+  nis?: string;
+  email: string;
+  password?: string;
   alamat?: string;
   tanggalLahir?: Date | string;
   jenisKelamin?: "L" | "P";
   kelasId?: number;
+  fotoProfil?: string;
+
+  // Orang Tua
+  orangtuaNama?: string;
+  orangtuaHubungan?: string;
+  orangtuaPekerjaan?: string;
+  orangtuaAlamat?: string;
+  orangtuaNoHp?: string;
 }
 
 interface UpdateSiswaData {
@@ -63,6 +75,9 @@ export class SiswaService {
 
     const where: Prisma.SiswaWhereInput = {
       ...searchFilter,
+      ...(query.kelasId && query.kelasId !== "all"
+        ? { kelasId: parseInt(query.kelasId as string) }
+        : {}),
     };
 
     const [siswa, total] = await Promise.all([
@@ -85,6 +100,11 @@ export class SiswaService {
               id_kelas: true,
               namaKelas: true,
               tingkat: true,
+              guru: {
+                select: {
+                  nama: true,
+                },
+              },
             },
           },
           user: {
@@ -169,8 +189,17 @@ export class SiswaService {
   }
 
   static async create(data: CreateSiswaData) {
-    // Generate NIS automatically
-    const nis = await this.generateNIS();
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
+    if (existingUser) {
+      throw new Error("Email already exists");
+    }
+
+    // Generate NIS automatically if not provided
+    const nis = data.nis || (await this.generateNIS());
 
     // Validate kelas if provided
     if (data.kelasId) {
@@ -183,6 +212,9 @@ export class SiswaService {
       }
     }
 
+    // Hash password
+    const hashedPassword = await hashPassword(data.password || "123456");
+
     const siswa = await prisma.siswa.create({
       data: {
         nis,
@@ -193,6 +225,34 @@ export class SiswaService {
           : undefined,
         jenisKelamin: data.jenisKelamin,
         kelasId: data.kelasId,
+        fotoProfil: data.fotoProfil,
+
+        // Create User
+        user: {
+          create: {
+            email: data.email,
+            password: hashedPassword,
+            role: "SISWA",
+          },
+        },
+
+        // Create OrangTua if provided
+        Siswa_Orangtua: data.orangtuaNama
+          ? {
+              create: {
+                status: "Wali",
+                orangtua: {
+                  create: {
+                    nama: data.orangtuaNama,
+                    hubungan: data.orangtuaHubungan || "Wali",
+                    pekerjaan: data.orangtuaPekerjaan || "-",
+                    alamat: data.orangtuaAlamat || data.alamat || "-",
+                    noHp: data.orangtuaNoHp || "-",
+                  },
+                },
+              },
+            }
+          : undefined,
       },
       include: {
         kelas: {
@@ -200,6 +260,11 @@ export class SiswaService {
             id_kelas: true,
             namaKelas: true,
             tingkat: true,
+          },
+        },
+        user: {
+          select: {
+            email: true,
           },
         },
       },

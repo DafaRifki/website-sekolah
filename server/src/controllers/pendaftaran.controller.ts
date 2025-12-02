@@ -129,6 +129,29 @@ export class PendaftaranController {
       }
 
       const pendaftaran = await PendaftaranService.update(id, req.body);
+
+      // Cek apakah auto-approved
+      if ((pendaftaran as any).autoApproved) {
+        return sendSuccess(
+          res,
+          `Pendaftaran updated and automatically approved! Siswa created with NIS: ${
+            (pendaftaran as any).siswa?.nis
+          }`,
+          pendaftaran
+        );
+      }
+
+      // Cek apakah ada error saat auto-approve
+      if ((pendaftaran as any).autoApproveError) {
+        return sendSuccess(
+          res,
+          `Pendaftaran updated but auto-approve failed: ${
+            (pendaftaran as any).autoApproveError
+          }`,
+          pendaftaran
+        );
+      }
+
       sendSuccess(res, "Pendaftaran updated successfully", pendaftaran);
     } catch (error: any) {
       if (error.message === "Pendaftaran not found") {
@@ -218,21 +241,7 @@ export class PendaftaranController {
       sendError(res, "Failed to get statistics", error.message, 400);
     }
   }
-  static async convertToSiswa(req: Request, res: Response) {
-  try {
-    const id = parseInt(req.params.id);
 
-    if (isNaN(id)) {
-      return sendError(res, "Invalid pendaftaran ID", null, 400);
-    }
-
-    const result = await PendaftaranService.convertPendaftaranToSiswa(id);
-
-    sendSuccess(res, "Berhasil convert ke siswa", result);
-  } catch (error: any) {
-    sendError(res, "Gagal convert ke siswa", error.message, 400);
-  }
-}
   static async getByTahunAjaran(req: Request, res: Response) {
     try {
       const tahunAjaranId = parseInt(req.params.tahunAjaranId);
