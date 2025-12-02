@@ -569,6 +569,71 @@ export class PendaftaranService {
       },
     });
 
+    // cek jika dokumen LENGKAP & pembayaran LUNAS
+    const shouldAutoApprove =
+      updated.statusDokumen === StatusDokumen.LENGKAP &&
+      updated.statusPembayaran === StatusPembayaranPendaftaran.LUNAS;
+
+    if (shouldAutoApprove && !updated.siswaId) {
+      try {
+        // Otomatis approve dan buat siswa
+        const siswa = await SiswaService.create({
+          nama: updated.nama,
+          nis: updated.nisn || undefined,
+          email: updated.email || `siswa${Date.now()}@sekolah.com`,
+          alamat: updated.alamat || undefined,
+          tanggalLahir: updated.tanggalLahir || undefined,
+          jenisKelamin: updated.jenisKelamin as "L" | "P" | undefined,
+          orangtuaNama:
+            updated.namaAyah ||
+            updated.namaIbu ||
+            updated.namaWali ||
+            undefined,
+          orangtuaHubungan: updated.namaAyah
+            ? "Ayah"
+            : updated.namaIbu
+            ? "Ibu"
+            : "Wali",
+          orangtuaPekerjaan:
+            updated.pekerjaanAyah ||
+            updated.pekerjaanIbu ||
+            updated.pekerjaanWali ||
+            undefined,
+          orangtuaNoHp:
+            updated.noHPAyah || updated.noHPIbu || updated.noWali || undefined,
+        });
+
+        // Update pendaftaran dengan siswaId
+        const finalPendaftaran = await prisma.pendaftaran.update({
+          where: { id_pendaftaran: id },
+          data: { siswaId: siswa.id_siswa },
+          include: {
+            tahunAjaran: {
+              select: {
+                namaTahun: true,
+                semester: true,
+              },
+            },
+            siswa: true,
+          },
+        });
+
+        return {
+          ...finalPendaftaran,
+          autoApproved: true,
+          siswa: siswa,
+        };
+      } catch (error: any) {
+        // Jika gagal auto-approve, kembalikan data yang sudah di-update saja
+        console.error("Auto-approve failed:", error.message);
+        return {
+          ...updated,
+          autoApproved: false,
+          autoApproveError: error.message,
+        };
+      }
+    }
+
     return updated;
   }
 
@@ -601,9 +666,33 @@ export class PendaftaranService {
 
     const siswa = await SiswaService.create({
       nama: pendaftaran.nama,
+      nis: pendaftaran.nisn || undefined,
+      email: pendaftaran.email || `siswa${Date.now()}@sekolah.com`, // Fallback email if not provided
       alamat: pendaftaran.alamat || undefined,
       tanggalLahir: pendaftaran.tanggalLahir || undefined,
       jenisKelamin: pendaftaran.jenisKelamin as "L" | "P" | undefined,
+
+      // Parent Info
+      orangtuaNama:
+        pendaftaran.namaAyah ||
+        pendaftaran.namaIbu ||
+        pendaftaran.namaWali ||
+        undefined,
+      orangtuaHubungan: pendaftaran.namaAyah
+        ? "Ayah"
+        : pendaftaran.namaIbu
+        ? "Ibu"
+        : "Wali",
+      orangtuaPekerjaan:
+        pendaftaran.pekerjaanAyah ||
+        pendaftaran.pekerjaanIbu ||
+        pendaftaran.pekerjaanWali ||
+        undefined,
+      orangtuaNoHp:
+        pendaftaran.noHPAyah ||
+        pendaftaran.noHPIbu ||
+        pendaftaran.noWali ||
+        undefined,
     });
 
     const updatedPendaftaran = await prisma.pendaftaran.update({
@@ -743,44 +832,4 @@ export class PendaftaranService {
 
     return pendaftaran;
   }
-  static async convertPendaftaranToSiswa(id: number) {
-  const pendaftaran = await prisma.pendaftaran.findUnique({
-    where: { id_pendaftaran: id },
-  });
-
-  if (!pendaftaran) {
-    throw new Error("Pendaftaran not found");
-  }
-
-  if (pendaftaran.siswaId) {
-    throw new Error("Data pendaftar sudah pernah dikonversi menjadi siswa");
-  }
-
-  // Buat siswa baru berdasarkan data pendaftaran
-  const siswa = await prisma.siswa.create({
-    data: {
-      nama: pendaftaran.nama,
-      alamat: pendaftaran.alamat || undefined,
-      tanggalLahir: pendaftaran.tanggalLahir || undefined,
-      jenisKelamin: pendaftaran.jenisKelamin as "L" | "P" | undefined,
-      // tambahkan field yang kamu butuhkan sesuai struktur tabel siswa
-    },
-  });
-
-  // Update pendaftaran agar terhubung dengan siswa baru
-  const updated = await prisma.pendaftaran.update({
-    where: { id_pendaftaran: id },
-    data: {
-      siswaId: siswa.id_siswa,
-    },
-    include: { siswa: true },
-  });
-
-  return {
-    message: "Berhasil mengubah pendaftar menjadi siswa",
-    pendaftaran: updated,
-    siswa,
-  };
-}
-
 }

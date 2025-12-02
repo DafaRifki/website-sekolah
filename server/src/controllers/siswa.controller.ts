@@ -56,7 +56,13 @@ export class SiswaController {
 
   static async create(req: Request, res: Response) {
     try {
-      const siswa = await SiswaService.create(req.body);
+      const data = { ...req.body };
+
+      if (req.file) {
+        data.fotoProfil = `/uploads/profiles/${req.file.filename}`;
+      }
+
+      const siswa = await SiswaService.create(data);
       sendSuccess(
         res,
         "Siswa created successfully with NIS: " + siswa.nis,
@@ -65,6 +71,9 @@ export class SiswaController {
     } catch (error: any) {
       if (error.message === "Kelas not found") {
         return sendError(res, "Kelas not found", null, 404);
+      }
+      if (error.message.includes("Email already exists")) {
+        return sendError(res, "Email already exists", null, 400);
       }
       sendError(res, "Failed to create siswa", error.message, 400);
     }

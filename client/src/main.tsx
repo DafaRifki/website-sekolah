@@ -31,14 +31,14 @@ import Pendaftaran from "./pages/landingPage/pendaftaran/Pendaftaran.tsx";
 import TenagaKependidikan from "./pages/landingPage/guru/TenagaKependidikan.tsx";
 import PembayaranPage from "./pages/admin/pembayaran/PembayaranPage.tsx";
 import React from "react";
-import App from "./App";
+// import App from "./App";
 import "./index.css";
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <App />
-    <Toaster position="top-right" richColors closeButton />
-  </React.StrictMode>
-);
+// ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+//   <React.StrictMode>
+//     {/* <App /> */}
+//     <Toaster position="top-right" richColors closeButton />
+//   </React.StrictMode>
+// );
 
 const root = document.getElementById("root") as HTMLElement;
 

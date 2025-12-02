@@ -30,10 +30,9 @@ interface Props {
     field: "statusDokumen" | "statusPembayaran",
     value: string
   ) => void;
-  onConvert: (id: number) => void;  // 🔥 Tambahan
 }
 
-export default function PendaftaranTable({ data, onUpdate, onConvert }: Props) {
+export default function PendaftaranTable({ data, onUpdate }: Props) {
   const dokumenOptions = ["BELUM_DITERIMA", "LENGKAP", "KURANG"];
   const pembayaranOptions = ["BELUM_BAYAR", "CICIL", "LUNAS"];
 
@@ -47,7 +46,6 @@ export default function PendaftaranTable({ data, onUpdate, onConvert }: Props) {
           <TableHead>Tahun Ajaran</TableHead>
           <TableHead>Status Dokumen</TableHead>
           <TableHead>Status Pembayaran</TableHead>
-          <TableHead>Aksi</TableHead> {/* 🔥 Tambah Kolom */}
         </TableRow>
       </TableHeader>
 
@@ -84,17 +82,6 @@ export default function PendaftaranTable({ data, onUpdate, onConvert }: Props) {
                 />
               </div>
             </TableCell>
-
-            {/* 🔥 Tombol Convert */}
-            <TableCell>
-              <button
-                onClick={() => onConvert(row.id_pendaftaran)}
-                className="px-3 py-1 text-xs rounded bg-emerald-600 text-white hover:bg-emerald-700"
-              >
-                Convert
-              </button>
-            </TableCell>
-
           </TableRow>
         ))}
       </TableBody>

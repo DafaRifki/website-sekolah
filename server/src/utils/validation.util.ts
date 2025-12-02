@@ -73,12 +73,28 @@ export const siswaValidation = Joi.object({
     "any.required": "Nama siswa wajib diisi",
     "string.empty": "Nama siswa tidak boleh kosong",
   }),
+  nis: Joi.string().optional().allow(""),
+  email: Joi.string().email().required().messages({
+    "any.required": "Email wajib diisi",
+    "string.email": "Format email tidak valid",
+  }),
+  password: Joi.string().min(6).required().messages({
+    "string.min": "Password minimal 6 karakter",
+    "any.required": "Password wajib diisi",
+  }),
   alamat: Joi.string().optional().allow(""),
   tanggalLahir: Joi.date().iso().optional().allow(null),
   jenisKelamin: Joi.string().valid("L", "P").optional().messages({
     "any.only": "Jenis kelamin harus L atau P",
   }),
   kelasId: Joi.number().integer().optional().allow(null),
+
+  // Orang Tua
+  orangtuaNama: Joi.string().optional().allow(""),
+  orangtuaHubungan: Joi.string().optional().allow(""),
+  orangtuaPekerjaan: Joi.string().optional().allow(""),
+  orangtuaAlamat: Joi.string().optional().allow(""),
+  orangtuaNoHp: Joi.string().optional().allow(""),
 });
 
 export const updateSiswaValidation = Joi.object({

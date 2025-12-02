@@ -10,13 +10,13 @@ export function StatusBadge({ value, type }: StatusBadgeProps) {
 
   if (type === "dokumen") {
     if (value === "LENGKAP") color = "bg-green-500 text-white";
-    else if (value === "KURANG") color = "bg-red-500 text-white";
-    else color = "bg-yellow-500 text-white"; // BELUM_DITERIMA
+    else if (value === "KURANG") color = "bg-amber-500 text-white";
+    else color = "bg-red-500 text-white"; // BELUM_DITERIMA
   }
 
   if (type === "pembayaran") {
-    if (value === "LUNAS") color = "bg-green-500 text-white";
-    else if (value === "CICIL") color = "bg-blue-500 text-white";
+    if (value === "LUNAS") color = "bg-blue-500 text-white";
+    else if (value === "CICIL") color = "bg-green-500 text-white";
     else color = "bg-red-500 text-white"; // BELUM_BAYAR
   }
 

@@ -53,11 +53,6 @@ router.post(
   requireRole("ADMIN", "GURU"),
   PendaftaranController.approve
 );
-router.post(
-  "/:id/convert",
-  requireRole("ADMIN", "GURU"),
-  PendaftaranController.convertToSiswa
-);
 
 router.post("/:id/reject", requireRole("ADMIN"), PendaftaranController.reject);
 

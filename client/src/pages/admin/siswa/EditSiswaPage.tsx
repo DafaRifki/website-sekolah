@@ -21,7 +21,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Camera, X } from "lucide-react";
+import { CalendarIcon, Camera, X, Eye, EyeOff } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 
 interface Kelas {
@@ -39,7 +39,9 @@ export default function EditSiswaPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [currentFotoUrl, setCurrentFotoUrl] = useState<string>("");
+  const [showPassword, setShowPassword] = useState(false);
 
+  const [userId, setUserId] = useState<number | null>(null);
   const [siswa, setSiswa] = useState({
     nama: "",
     nis: "",
@@ -93,6 +95,12 @@ export default function EditSiswaPage() {
           kelasId: siswaData.kelasId?.toString() || "",
         });
 
+        // console.log("Siswa Data:", siswaData);
+        if (siswaData.user?.id) {
+          setUserId(siswaData.user.id);
+          // console.log("Set UserId:", siswaData.user.id);
+        }
+
         // Set foto profil saat ini
         if (siswaData.fotoProfil) {
           const baseUrl =
@@ -114,7 +122,7 @@ export default function EditSiswaPage() {
           });
         }
 
-        setKelasList(resKelas.data.data);
+        setKelasList(resKelas.data.data.data);
       } catch (error: any) {
         console.error(error.response?.data || error.message);
         toast.error("Gagal memuat data");
@@ -196,27 +204,55 @@ export default function EditSiswaPage() {
     await delay(500);
 
     try {
-      // Buat FormData untuk mengirim file
-      const formData = new FormData();
+      // 1. Update Data Siswa (JSON)
+      await apiClient.put(`/siswa/${id}`, {
+        nama: siswa.nama,
+        nis: siswa.nis,
+        alamat: siswa.alamat,
+        tanggalLahir: siswa.tanggalLahir,
+        jenisKelamin: siswa.jenisKelamin,
+        kelasId: siswa.kelasId ? parseInt(siswa.kelasId) : null,
+      });
 
-      // Tambahkan data siswa
-      if (siswa.nama) formData.append("nama", siswa.nama);
-      if (siswa.nis) formData.append("nis", siswa.nis);
-      if (siswa.alamat) formData.append("alamat", siswa.alamat);
-      if (siswa.tanggalLahir)
-        formData.append("tanggalLahir", siswa.tanggalLahir);
-      if (siswa.jenisKelamin)
-        formData.append("jenisKelamin", siswa.jenisKelamin);
-      if (siswa.kelasId) formData.append("kelasId", siswa.kelasId);
-      if (siswa.email) formData.append("email", siswa.email);
-      if (siswa.password) formData.append("password", siswa.password);
+      // 2. Update Data User (Email & Password)
+      // console.log("UserId:", userId);
 
-      // Tambahkan file foto jika ada
-      if (selectedFile) {
-        formData.append("foto", selectedFile);
+      if (userId) {
+        // Update existing user
+        if (siswa.email) {
+          await apiClient.put(`/users/${userId}`, {
+            email: siswa.email,
+          });
+        }
+
+        if (siswa.password) {
+          await apiClient.post(`/users/${userId}/reset-password`, {
+            newPassword: siswa.password,
+          });
+        }
+      } else if (siswa.email && siswa.password) {
+        // Create new user if doesn't exist
+        // console.log("Creating new user for siswa...");
+        await apiClient.post("/users", {
+          email: siswa.email,
+          password: siswa.password,
+          role: "SISWA",
+          siswaId: parseInt(id!),
+        });
       }
 
-      // Tambahkan data orangtua jika ada
+      // 2. Upload Foto jika ada
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("fotoProfil", selectedFile);
+        await apiClient.post(`/siswa/${id}/foto`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
+
+      // 4. Update Data Orang Tua
       if (
         orangtua.nama ||
         orangtua.hubungan ||
@@ -224,22 +260,34 @@ export default function EditSiswaPage() {
         orangtua.alamat ||
         orangtua.noHp
       ) {
-        if (orangtua.id_orangtua)
-          formData.append("orangtuaId", orangtua.id_orangtua.toString());
-        if (orangtua.nama) formData.append("orangtuaNama", orangtua.nama);
-        if (orangtua.hubungan)
-          formData.append("orangtuaHubungan", orangtua.hubungan);
-        if (orangtua.pekerjaan)
-          formData.append("orangtuaPekerjaan", orangtua.pekerjaan);
-        if (orangtua.alamat) formData.append("orangtuaAlamat", orangtua.alamat);
-        if (orangtua.noHp) formData.append("orangtuaNoHp", orangtua.noHp);
-      }
+        if (orangtua.id_orangtua) {
+          // Update existing
+          await apiClient.put(`/orangtua/${orangtua.id_orangtua}`, {
+            nama: orangtua.nama,
+            hubungan: orangtua.hubungan,
+            pekerjaan: orangtua.pekerjaan,
+            alamat: orangtua.alamat,
+            noHp: orangtua.noHp,
+          });
+        } else {
+          // Create new and link
+          // console.log("Creating new orangtua...");
+          const resOrtu = await apiClient.post("/orangtua", {
+            nama: orangtua.nama,
+            hubungan: orangtua.hubungan,
+            pekerjaan: orangtua.pekerjaan,
+            alamat: orangtua.alamat,
+            noHp: orangtua.noHp,
+          });
 
-      await apiClient.patch(`/siswa/${id}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+          const newOrtuId = resOrtu.data.data.id_orangtua;
+          // console.log("Linking orangtua", newOrtuId, "to siswa", id);
+
+          await apiClient.post(`/orangtua/${newOrtuId}/link-siswa`, {
+            siswaId: parseInt(id!),
+          });
+        }
+      }
 
       toast.success("Data siswa berhasil diupdate", {
         onAutoClose: () => navigate("/siswa"),
@@ -401,8 +449,8 @@ export default function EditSiswaPage() {
                       <SelectValue placeholder="Pilih jenis kelamin" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Laki-laki">Laki-laki</SelectItem>
-                      <SelectItem value="Perempuan">Perempuan</SelectItem>
+                      <SelectItem value="L">Laki-laki</SelectItem>
+                      <SelectItem value="P">Perempuan</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -446,13 +494,26 @@ export default function EditSiswaPage() {
                 </div>
                 <div>
                   <Label className="mb-2">Password (Opsional)</Label>
-                  <Input
-                    type="password"
-                    name="password"
-                    value={siswa.password}
-                    onChange={handleChange}
-                    placeholder="Kosongkan jika tidak ingin diubah"
-                  />
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={siswa.password}
+                      onChange={handleChange}
+                      placeholder="Kosongkan jika tidak ingin diubah"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

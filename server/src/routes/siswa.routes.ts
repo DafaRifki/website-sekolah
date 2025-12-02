@@ -25,6 +25,7 @@ router.get("/:id", SiswaController.getById);
 router.post(
   "/",
   requireRole("ADMIN", "GURU"),
+  uploadSingle("fotoProfil"),
   validate(siswaValidation),
   SiswaController.create
 );

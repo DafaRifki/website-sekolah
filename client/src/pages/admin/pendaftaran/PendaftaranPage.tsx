@@ -11,7 +11,13 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Users, UserPlus, FileText, CreditCard } from "lucide-react";
+import {
+  Users,
+  UserPlus,
+  FileText,
+  CreditCard,
+  CheckCircle,
+} from "lucide-react";
 import PendaftaranTable from "./components/PendaftaranTable";
 import TambahPendaftaranModal from "./components/TambahPendaftaranModal";
 import { toast } from "sonner";
@@ -39,37 +45,45 @@ export default function PendaftaranPage() {
       setData(res.data.data);
     } catch (error) {
       console.error("Error fetching data:", error);
+      toast.error("Gagal memuat data pendaftaran");
     } finally {
       setLoading(false);
     }
   };
 
+  // handle status update with auto-approve detection
   const handleUpdate = async (
     id: number,
     field: "statusDokumen" | "statusPembayaran",
     value: string
   ) => {
     try {
-      await apiClient.put(`/pendaftaran/${id}`, {
-        [field]: value,
-      });
-       toast.success(
-      `Status ${field === "statusDokumen" ? "Dokumen" : "Pembayaran"} berhasil diubah menjadi ${value}`
-    );
-      fetchData(); // refresh tabel
-    } catch (error) {
-      console.error("Error updating data:", error);
-    }
-  };
+      const updateData = { [field]: value };
+      const response = await apiClient.put(`/pendaftaran/${id}`, updateData);
 
-   const handleConvert = async (id: number) => {
-    try {
-      await apiClient.post(`/pendaftaran/${id}/convert`);
-      toast.success("Data berhasil dipindahkan ke tabel siswa");
-      fetchData();
-    } catch (error) {
-      console.error("Error converting data:", error);
-      toast.error("Gagal memindahkan data ke tabel siswa");
+      if (response.data.data.autoApproved) {
+        toast.success("Otomatis Diterima!", {
+          description:
+            response.data.message ||
+            "Pendaftaran otomatis disetujui karena dokumen lengkap dan pembayaran lunas",
+          duration: 5000,
+        });
+      } else if (response.data.data.autoApproveError) {
+        toast.warning("Update Berhasil", {
+          description: `Status diupdate, tapi auto-approve gagal: ${response.data.dara.autoApproveError}`,
+          duration: 5000,
+        });
+      } else {
+        toast.success("Berhasil", {
+          description: "Status berhasil diupdate",
+        });
+      }
+      fetchData(); // refresh data
+    } catch (error: any) {
+      console.error("Error updating data:", error);
+      toast.error("Gagal mengupdate status", {
+        description: error.response?.data?.message || "Terjadi kesalahan",
+      });
     }
   };
 
@@ -81,6 +95,7 @@ export default function PendaftaranPage() {
   const pembayaranLunas = data.filter(
     (item) => item.statusPembayaran === "LUNAS"
   ).length;
+  const approved = data.filter((item) => item.siswaId !== null).length;
 
   useEffect(() => {
     fetchData();
@@ -89,7 +104,6 @@ export default function PendaftaranPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="container mx-auto p-6 space-y-8">
-
         {/* Header Section */}
         <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
           <div className="space-y-2">
@@ -99,14 +113,20 @@ export default function PendaftaranPage() {
             <p className="text-slate-600 dark:text-slate-400">
               Kelola dan pantau pendaftaran siswa baru untuk tahun ajaran aktif
             </p>
+            <Badge
+              variant="outline"
+              className="bg-blue-50 text-blue-700 border-blue-200">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Auto-approve: Dokumen Lengkap + Pembayaran Lunas
+            </Badge>
           </div>
 
+          {/* Action Button */}
           <TambahPendaftaranModal onSuccess={fetchData} />
         </div>
 
         {/* Statistics Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-
           <Card className="border-0 shadow-sm bg-white/50 backdrop-blur-sm dark:bg-slate-800/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -161,19 +181,16 @@ export default function PendaftaranPage() {
           <Card className="border-0 shadow-sm bg-white/50 backdrop-blur-sm dark:bg-slate-800/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                Tingkat Kelengkapan
+                Siswa Diterima
               </CardTitle>
               <UserPlus className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-purple-600">
-                {totalPendaftaran > 0
-                  ? Math.round((dokumenLengkap / totalPendaftaran) * 100)
-                  : 0}
-                %
+                {approved}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                Dokumen lengkap
+                Otomatis & Manual
               </p>
             </CardContent>
           </Card>
@@ -193,16 +210,34 @@ export default function PendaftaranPage() {
               </div>
 
               <div className="flex gap-2 flex-wrap">
-                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                <Badge
+                  variant="outline"
+                  className="bg-red-50 text-red-700 border-red-200">
+                  Belum Diterima
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-emerald-50 text-emerald-700 border-emerald-200">
                   Lengkap
                 </Badge>
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                <Badge
+                  variant="outline"
+                  className="bg-amber-50 text-amber-700 border-amber-200">
                   Kurang
                 </Badge>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 border-blue-200">
                   Lunas
                 </Badge>
-                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                <Badge
+                  variant="outline"
+                  className="bg-green-50 text-green-700 border-green-200">
+                  Cicil
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-red-50 text-red-700 border-red-200">
                   Belum Lunas
                 </Badge>
               </div>
@@ -217,11 +252,10 @@ export default function PendaftaranPage() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
               </div>
             ) : (
-              <PendaftaranTable data={data} onUpdate={handleUpdate} onConvert={handleConvert} />
+              <PendaftaranTable data={data} onUpdate={handleUpdate} />
             )}
           </CardContent>
         </Card>
-
       </div>
     </div>
   );

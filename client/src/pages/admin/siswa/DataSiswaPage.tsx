@@ -25,19 +25,12 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import apiClient from "@/config/axios";
-import {
-  Search,
-  UserPlus,
-  Eye,
-  Edit3,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Search, UserPlus, Eye, Edit3, Trash2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import TambahSiswaModal from "./TambahSiswaModal";
 import Swal from "sweetalert2";
+import Pagination from "./components/Pagination";
 
 interface Siswa {
   id_siswa: number;
@@ -73,31 +66,39 @@ const DataSiswaPage: React.FC = () => {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const pageSize = 10;
 
-  useEffect(() => {
+  const fetchSiswa = () => {
     apiClient
-      .get("/siswa")
-      .then((res) => setSiswa(res.data.data))
+      .get("/siswa", {
+        params: {
+          page: currentPage,
+          limit: pageSize,
+          search: search,
+          kelasId: kelasFilter,
+        },
+      })
+      .then((res) => {
+        setSiswa(res.data.data);
+        setTotalPages(res.data.pagination.totalPages);
+      })
       .catch((err) => console.error(err));
+  };
+
+  useEffect(() => {
+    fetchSiswa();
+  }, [currentPage, search, kelasFilter]);
+
+  useEffect(() => {
     apiClient
       .get("/kelas")
       .then((res) => setKelas(res.data.data.data))
       .catch((err) => console.error(err));
   }, []);
 
-  const filteredSiswa = siswa.filter((s) => {
-    const matchesSearch = s.nama.toLowerCase().includes(search.toLowerCase());
-    const matchesKelas =
-      kelasFilter === "all" || s.kelas?.id_kelas === parseInt(kelasFilter);
-    return matchesSearch && matchesKelas;
-  });
-
-  const totalPages = Math.ceil(filteredSiswa.length / pageSize);
-  const currentData = filteredSiswa.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  // Server-side filtering/pagination is now used
+  const currentData = siswa;
 
   const handleDelete = async (id: number) => {
     const result = await Swal.fire({
@@ -121,7 +122,7 @@ const DataSiswaPage: React.FC = () => {
       });
 
       await apiClient.delete(`/siswa/${id}`, { withCredentials: true });
-      setSiswa((prev) => prev.filter((s) => s.id_siswa !== id));
+      fetchSiswa(); // Refetch to update list correctly
 
       Swal.fire("Berhasil!", "Data siswa berhasil dihapus.", "success");
     } catch (error: any) {
@@ -272,65 +273,11 @@ const DataSiswaPage: React.FC = () => {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50">
-              <div className="text-sm text-gray-700">
-                Menampilkan {(currentPage - 1) * pageSize + 1} -{" "}
-                {Math.min(currentPage * pageSize, filteredSiswa.length)} dari{" "}
-                {filteredSiswa.length} data
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((prev) => prev - 1)}
-                  className="gap-1">
-                  <ChevronLeft className="w-4 h-4" />
-                  Prev
-                </Button>
-
-                {/* Page numbers */}
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNumber;
-                    if (totalPages <= 5) {
-                      pageNumber = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNumber = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNumber = totalPages - 4 + i;
-                    } else {
-                      pageNumber = currentPage - 2 + i;
-                    }
-
-                    return (
-                      <Button
-                        key={pageNumber}
-                        variant={
-                          pageNumber === currentPage ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => setCurrentPage(pageNumber)}
-                        className="w-8 h-8 p-0">
-                        {pageNumber}
-                      </Button>
-                    );
-                  })}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((prev) => prev + 1)}
-                  className="gap-1">
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
         </CardContent>
       </Card>
 
@@ -460,7 +407,7 @@ const DataSiswaPage: React.FC = () => {
         isOpen={isAddOpenModal}
         onClose={() => setIsAddOpenModal(false)}
         onAdded={() => {
-          apiClient.get("/siswa").then((res) => setSiswa(res.data.data));
+          fetchSiswa();
         }}
       />
     </div>

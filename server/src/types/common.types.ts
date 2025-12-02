@@ -4,6 +4,7 @@ export interface PaginationQuery {
   search?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  kelasId?: string;
 }
 
 export interface PaginationResult<T> {
