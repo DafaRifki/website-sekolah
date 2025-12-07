@@ -27,7 +27,7 @@ interface Props {
   onAdded: () => void;
 }
 
-// Pindahkan FormField keluar dari komponen utama
+// Komponen Helper untuk Form Field
 const FormField = ({
   label,
   children,
@@ -102,9 +102,39 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData();
+
+    // --- LOGIKA PEMBERSIHAN DATA (Agar tidak Validation Error) ---
     Object.entries(form).forEach(([key, value]) => {
-      if (value !== null) formData.append(key, value as any);
+      // 1. Abaikan null/undefined
+      if (value === null || value === undefined) return;
+
+      // 2. Handle Foto
+      if (key === "fotoProfil") {
+        if (value instanceof File) {
+          formData.append(key, value);
+        }
+        return;
+      }
+
+      // 3. Handle String (Sangat Penting untuk NIP/Jabatan)
+      if (typeof value === "string") {
+        const cleanValue = value.trim();
+        // Hanya kirim jika string TIDAK kosong
+        // Backend sering error jika field unik (NIP) dikirim ""
+        if (cleanValue !== "") {
+          formData.append(key, cleanValue);
+        }
+        return;
+      }
+
+      // 4. Handle tipe lain
+      formData.append(key, String(value));
     });
+
+    // Debugging: Cek di console apa yang dikirim
+    // for (let pair of formData.entries()) {
+    //   console.log(pair[0] + ': ' + pair[1]);
+    // }
 
     try {
       Swal.fire({
@@ -112,9 +142,10 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading(),
       });
-      await apiClient.post("/guru", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+
+      // PERBAIKAN: Hapus headers manual, biarkan Axios handle multipart
+      await apiClient.post("/guru", formData);
+
       Swal.close();
       Swal.fire("Berhasil!", "Data guru berhasil ditambahkan.", "success");
 
@@ -123,9 +154,13 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
       onClose();
     } catch (error: any) {
       Swal.close();
+      console.error("Add error detail:", error.response?.data);
+      
+      const pesanError = error.response?.data?.message || "Gagal menambahkan guru (Validation Error)";
+      
       Swal.fire(
         "Gagal!",
-        error.response?.data?.message || "Gagal menambahkan guru",
+        pesanError,
         "error"
       );
     }
@@ -273,8 +308,9 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
                     <SelectValue placeholder="Pilih jenis kelamin" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Laki-laki">Laki-laki</SelectItem>
-                    <SelectItem value="Perempuan">Perempuan</SelectItem>
+                    {/* PERBAIKAN PENTING: Gunakan Value 'L' dan 'P' */}
+                    <SelectItem value="L">Laki-laki</SelectItem>
+                    <SelectItem value="P">Perempuan</SelectItem>
                   </SelectContent>
                 </Select>
               </FormField>
@@ -286,7 +322,7 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
                 name="jabatan"
                 value={form.jabatan}
                 onChange={handleChange}
-                placeholder="Contoh: Guru Matematika, Kepala Sekolah"
+                placeholder="Contoh: Guru Matematika"
               />
             </FormField>
 

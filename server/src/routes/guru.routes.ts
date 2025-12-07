@@ -48,8 +48,15 @@ router.get("/:id", GuruController.getById);
 /**
  * POST /api/guru
  * Create new guru
+ * PERBAIKAN: Tambahkan upload.single("fotoProfil") SEBELUM validasi
+ * Agar req.body terisi dan req.file terdeteksi
  */
-router.post("/", validate(guruValidation), GuruController.create);
+router.post(
+  "/", 
+  upload.single("fotoProfil"), // <--- TAMBAHKAN INI
+  validate(guruValidation), 
+  GuruController.create
+);
 
 /**
  * PUT /api/guru/:id
