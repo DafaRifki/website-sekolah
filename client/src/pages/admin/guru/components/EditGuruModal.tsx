@@ -21,7 +21,11 @@ import apiClient from "@/config/axios";
 import { User, Camera, Save } from "lucide-react";
 import defaultAvatar from "../../../../assets/avatar.png";
 
-interface Guru {
+// --- PERBAIKAN 1: Import Tipe Guru dari DetailGuruModal ---
+import type { Guru } from "./DetailGuruModal"; 
+
+// --- PERBAIKAN 2: Hapus Interface Lokal agar tidak bentrok ---
+/* interface Guru {
   id_guru: number;
   nama: string;
   nip?: string;
@@ -32,9 +36,10 @@ interface Guru {
   fotoProfil?: string;
   user?: { email: string; role: string };
 }
+*/
 
 interface Props {
-  guru: Guru | null;
+  guru: Guru | null; // Sekarang ini mengacu pada tipe dari DetailGuruModal
   isOpen: boolean;
   onClose: () => void;
   onUpdated: (guru: Guru) => void;
@@ -111,7 +116,6 @@ export default function EditGuruModal({
       const file = e.target.files[0];
       setForm({ ...form, fotoProfil: file });
 
-      // Create preview URL
       const reader = new FileReader();
       reader.onload = () => {
         setPreviewImage(reader.result as string);
@@ -120,29 +124,32 @@ export default function EditGuruModal({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!guru) return;
 
     const formData = new FormData();
 
-    // Append data dengan pengecekan yang lebih ketat
+    // --- LOGIKA PEMBERSIHAN DATA (DATA CLEANING) ---
     Object.entries(form).forEach(([key, value]) => {
-      if (value !== null && value !== undefined && value !== "") {
-        if (key === "fotoProfil" && value instanceof File) {
+      if (value === null || value === undefined) return;
+      if (key === "fotoProfil") {
+        if (value instanceof File) {
           formData.append(key, value);
-          // console.log("File appended:", value.name, value.size);
-        } else if (key !== "fotoProfil") {
-          formData.append(key, value as string);
         }
+        return; 
       }
-    });
 
-    // // Debug: Log formData contents
-    // console.log("FormData contents:");
-    // for (let [key, value] of formData.entries()) {
-    //   console.log(key, value);
-    // }
+      if (typeof value === "string") {
+        const cleanValue = value.trim(); 
+        if (cleanValue !== "") {
+          formData.append(key, cleanValue);
+        }
+        return;
+      }
+
+      formData.append(key, String(value));
+    });
 
     try {
       Swal.fire({
@@ -151,12 +158,8 @@ export default function EditGuruModal({
         didOpen: () => Swal.showLoading(),
       });
 
-      // Coba gunakan PUT atau POST jika PATCH tidak work
-      const res = await apiClient.patch(`/guru/${guru.id_guru}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      // API Call (Tanpa header manual Content-Type)
+      const res = await apiClient.put(`/guru/${guru.id_guru}`, formData);
 
       Swal.close();
       Swal.fire("Berhasil!", "Data guru berhasil diperbarui.", "success");
@@ -165,10 +168,12 @@ export default function EditGuruModal({
       onClose?.();
     } catch (error: any) {
       Swal.close();
-      console.error("Update error:", error.response?.data);
+      // Debugging: Cek error detail di Console (F12)
+      console.error("Update error detail:", error.response?.data);
+      
       Swal.fire(
         "Gagal!",
-        error.response?.data?.message || error.message,
+        error.response?.data?.message || "Terjadi kesalahan saat validasi data.",
         "error"
       );
     }
@@ -280,8 +285,8 @@ export default function EditGuruModal({
                     <SelectValue placeholder="Pilih jenis kelamin" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Laki-laki">Laki-laki</SelectItem>
-                    <SelectItem value="Perempuan">Perempuan</SelectItem>
+                    <SelectItem value="L">Laki-laki</SelectItem>
+                    <SelectItem value="P">Perempuan</SelectItem>
                   </SelectContent>
                 </Select>
               </FormField>
