@@ -41,6 +41,28 @@ router.post(
   PendaftaranController.importCSV
 );
 
+/**
+ * POST /api/pendaftaran/upload
+ * Upload CSV/Excel for bulk insert
+ * Body: file (multipart/form-data), tahunAjaranId
+ */
+router.post(
+  "/upload",
+  requireRole("ADMIN"),
+  uploadSingle("file"), // ✅ Use multer middleware
+  PendaftaranController.uploadBulk
+);
+
+/**
+ * GET /api/pendaftaran/template
+ * Download CSV template
+ */
+router.get(
+  "/template",
+  requireRole("ADMIN"),
+  PendaftaranController.downloadTemplate
+);
+
 router.put(
   "/:id",
   requireRole("ADMIN", "GURU"),

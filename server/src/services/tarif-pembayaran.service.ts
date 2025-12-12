@@ -63,7 +63,7 @@ export class TarifPembayaranService {
 
     const formatted = tarif.map((t) => ({
       id_tarif: t.id_tarif,
-      jenisPembayaran: t.namaTagihan,
+      namaTagihan: t.namaTagihan,
       nominal: t.nominal,
       keterangan: t.keterangan,
       tahunAjaranId: t.tahunAjaranId,

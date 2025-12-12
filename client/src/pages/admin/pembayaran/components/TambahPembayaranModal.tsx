@@ -1,4 +1,7 @@
+"use client";
+
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +34,7 @@ import {
   AlertCircle,
   Users,
   Tag,
+  Calendar,
 } from "lucide-react";
 import apiClient from "@/config/axios";
 
@@ -42,7 +46,13 @@ interface Siswa {
 interface Tarif {
   id_tarif: number;
   nominal: number;
-  keterangan: string;
+  namaTagihan: string;
+}
+
+interface TahunAjaran {
+  id_tahun: number;
+  namaTahun: string;
+  semester: string;
 }
 
 interface TambahPembayaranModalProps {
@@ -55,12 +65,13 @@ export default function TambahPembayaranModal({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [siswaList, setSiswaList] = useState<Siswa[]>([]);
   const [tarifList, setTarifList] = useState<Tarif[]>([]);
+  const [tahunAjaranList, setTahunAjaranList] = useState<TahunAjaran[]>([]);
   const [form, setForm] = useState({
     siswaId: "",
     tarifId: "",
+    tahunAjaranId: "",
     jumlahBayar: "",
     metode: "",
     keterangan: "",
@@ -68,22 +79,26 @@ export default function TambahPembayaranModal({
 
   const metodePembayaran = ["Transfer Bank", "Cash", "Virtual Account"];
 
-  // fetch siswa & tarif saat modal dibuka
+  // fetch data saat modal dibuka
   useEffect(() => {
     if (open) {
       const fetchData = async () => {
         try {
           setFetchLoading(true);
-          setError(null);
-          const [siswaRes, tarifRes] = await Promise.all([
+          const [siswaRes, tarifRes, tahunRes] = await Promise.all([
             apiClient.get("/siswa"),
-            apiClient.get("/tarif"),
+            apiClient.get("/tarif-pembayaran"),
+            apiClient.get("/tahun-ajaran"),
           ]);
           setSiswaList(siswaRes.data.data || []);
           setTarifList(tarifRes.data.data || []);
+          setTahunAjaranList(tahunRes.data.data || []);
         } catch (error: any) {
           console.error(error);
-          setError("Gagal memuat data siswa dan tarif");
+          toast.error("Gagal memuat data", {
+            description:
+              "Tidak dapat memuat data siswa, tarif, dan tahun ajaran",
+          });
         } finally {
           setFetchLoading(false);
         }
@@ -94,12 +109,10 @@ export default function TambahPembayaranModal({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    if (error) setError(null);
   };
 
   const handleSelectChange = (value: string, name: string) => {
     setForm({ ...form, [name]: value });
-    if (error) setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -107,19 +120,60 @@ export default function TambahPembayaranModal({
 
     try {
       setLoading(true);
-      setError(null);
 
+      // ✅ Step 1: Cek apakah sudah ada tagihan untuk siswa + tarif + tahun ajaran ini
+      let tagihanId: number;
+
+      try {
+        const checkTagihan = await apiClient.get(
+          `/tagihan/check?siswaId=${form.siswaId}&tarifId=${form.tarifId}&tahunAjaranId=${form.tahunAjaranId}`
+        );
+
+        if (checkTagihan.data.data) {
+          tagihanId = checkTagihan.data.data.id_tagihan;
+          toast.info("Tagihan sudah ada", {
+            description: "Menggunakan tagihan yang sudah ada",
+          });
+        } else {
+          // Step 2: Buat tagihan baru jika belum ada
+          const createTagihan = await apiClient.post("/tagihan", {
+            id_siswa: Number(form.siswaId),
+            tarifId: Number(form.tarifId),
+            tahunAjaranId: Number(form.tahunAjaranId),
+            status: "BELUM_BAYAR",
+          });
+
+          tagihanId = createTagihan.data.data.id_tagihan;
+        }
+      } catch (error: any) {
+        // Jika endpoint check tidak ada, langsung buat tagihan baru
+        const createTagihan = await apiClient.post("/tagihan", {
+          id_siswa: Number(form.siswaId),
+          tarifId: Number(form.tarifId),
+          tahunAjaranId: Number(form.tahunAjaranId),
+          status: "BELUM_BAYAR",
+        });
+
+        tagihanId = createTagihan.data.data.id_tagihan;
+      }
+
+      // ✅ Step 3: Buat pembayaran dengan tagihanId
       await apiClient.post("/pembayaran", {
-        ...form,
-        siswaId: Number(form.siswaId),
-        tarifId: Number(form.tarifId),
+        tagihanId: tagihanId,
         jumlahBayar: Number(form.jumlahBayar),
+        metode: form.metode,
+        keterangan: form.keterangan,
+      });
+
+      toast.success("Pembayaran berhasil disimpan! 🎉", {
+        description: "Status pembayaran siswa telah diperbarui",
       });
 
       // Reset form
       setForm({
         siswaId: "",
         tarifId: "",
+        tahunAjaranId: "",
         jumlahBayar: "",
         metode: "",
         keterangan: "",
@@ -129,10 +183,11 @@ export default function TambahPembayaranModal({
       onSuccess();
     } catch (error: any) {
       console.error(error);
-      setError(
-        error.response?.data?.message ||
-          "Terjadi kesalahan saat menyimpan pembayaran"
-      );
+      toast.error("Gagal menyimpan pembayaran", {
+        description:
+          error.response?.data?.message ||
+          "Terjadi kesalahan saat menyimpan pembayaran",
+      });
     } finally {
       setLoading(false);
     }
@@ -151,7 +206,6 @@ export default function TambahPembayaranModal({
       tarifId: value,
       jumlahBayar: tarif ? String(tarif.nominal) : form.jumlahBayar,
     });
-    if (error) setError(null);
   };
 
   const formatCurrency = (value: string) => {
@@ -162,7 +216,6 @@ export default function TambahPembayaranModal({
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
     setForm({ ...form, jumlahBayar: value });
-    if (error) setError(null);
   };
 
   return (
@@ -181,17 +234,10 @@ export default function TambahPembayaranModal({
             Tambah Pembayaran Baru
           </DialogTitle>
           <DialogDescription className="text-slate-600 dark:text-slate-400">
-            Pilih siswa dan tarif yang sesuai untuk mencatat pembayaran
+            Pilih siswa, tarif, dan tahun ajaran untuk mencatat pembayaran
           </DialogDescription>
           <Separator />
         </DialogHeader>
-
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
 
         {fetchLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -242,6 +288,40 @@ export default function TambahPembayaranModal({
               </CardContent>
             </Card>
 
+            {/* Tahun Ajaran Selection */}
+            <Card className="bg-slate-50/50 dark:bg-slate-800/50 border-0">
+              <CardContent className="p-4 space-y-3">
+                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-purple-600" />
+                  Tahun Ajaran
+                </h4>
+
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium">
+                    Pilih Tahun Ajaran
+                  </Label>
+                  <Select
+                    value={form.tahunAjaranId}
+                    onValueChange={(value) =>
+                      handleSelectChange(value, "tahunAjaranId")
+                    }>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih tahun ajaran..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tahunAjaranList.map((tahun) => (
+                        <SelectItem
+                          key={tahun.id_tahun}
+                          value={String(tahun.id_tahun)}>
+                          {tahun.namaTahun} - {tahun.semester}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Tariff Selection */}
             <Card className="bg-slate-50/50 dark:bg-slate-800/50 border-0">
               <CardContent className="p-4 space-y-3">
@@ -263,12 +343,12 @@ export default function TambahPembayaranModal({
                         <SelectItem
                           key={tarif.id_tarif}
                           value={String(tarif.id_tarif)}>
-                          <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-2">
                             <span className="font-medium">
-                              Rp{tarif.nominal.toLocaleString("id-ID")}
+                              {tarif.namaTagihan}
                             </span>
-                            <span className="text-xs text-slate-500 ml-2">
-                              {tarif.keterangan}
+                            <span className="text-xs text-slate-500">
+                              - Rp{tarif.nominal.toLocaleString("id-ID")}
                             </span>
                           </div>
                         </SelectItem>
@@ -287,7 +367,7 @@ export default function TambahPembayaranModal({
                     <Badge
                       variant="outline"
                       className="bg-white text-green-700 border-green-300">
-                      {selectedTarif.keterangan} - Rp
+                      {selectedTarif.namaTagihan} - Rp
                       {selectedTarif.nominal.toLocaleString("id-ID")}
                     </Badge>
                   </div>
@@ -365,6 +445,14 @@ export default function TambahPembayaranModal({
               </CardContent>
             </Card>
 
+            <Alert className="bg-blue-50 border-blue-200">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-sm text-blue-800">
+                Sistem akan otomatis membuat tagihan jika belum ada, dan
+                mengupdate status pembayaran siswa
+              </AlertDescription>
+            </Alert>
+
             <DialogFooter className="gap-3 pt-4">
               <Button
                 type="button"
@@ -373,11 +461,11 @@ export default function TambahPembayaranModal({
                   setForm({
                     siswaId: "",
                     tarifId: "",
+                    tahunAjaranId: "",
                     jumlahBayar: "",
                     metode: "",
                     keterangan: "",
                   });
-                  setError(null);
                   setOpen(false);
                 }}
                 disabled={loading}>
@@ -389,6 +477,7 @@ export default function TambahPembayaranModal({
                   loading ||
                   !form.siswaId ||
                   !form.tarifId ||
+                  !form.tahunAjaranId ||
                   !form.jumlahBayar ||
                   !form.metode
                 }
