@@ -17,10 +17,13 @@ import {
   FileText,
   CreditCard,
   CheckCircle,
+  Upload,
 } from "lucide-react";
 import PendaftaranTable from "./components/PendaftaranTable";
 import TambahPendaftaranModal from "./components/TambahPendaftaranModal";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import UploadPendaftaranModal from "./components/UploadPendaftaranModal";
 
 interface Pendaftaran {
   id_pendaftaran: number;
@@ -37,6 +40,7 @@ interface Pendaftaran {
 export default function PendaftaranPage() {
   const [data, setData] = useState<Pendaftaran[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isUploadModalOpen, setIsModalOpen] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -87,6 +91,11 @@ export default function PendaftaranPage() {
     }
   };
 
+  const handleUploadSuccess = () => {
+    fetchData();
+    setIsModalOpen(false);
+  };
+
   // Calculate statistics
   const totalPendaftaran = data.length;
   const dokumenLengkap = data.filter(
@@ -122,7 +131,16 @@ export default function PendaftaranPage() {
           </div>
 
           {/* Action Button */}
-          <TambahPendaftaranModal onSuccess={fetchData} />
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant={"outline"}
+              onClick={() => setIsModalOpen(true)}
+              className="gap-2">
+              <Upload className="h-4 w-4" />
+              Upload CSV/Excel
+            </Button>
+            <TambahPendaftaranModal onSuccess={fetchData} />
+          </div>
         </div>
 
         {/* Statistics Cards */}
@@ -257,6 +275,12 @@ export default function PendaftaranPage() {
           </CardContent>
         </Card>
       </div>
+
+      <UploadPendaftaranModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleUploadSuccess}
+      />
     </div>
   );
 }

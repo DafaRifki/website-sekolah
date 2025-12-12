@@ -5,6 +5,7 @@ import { PaginationQuery } from "../types/common.types";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import fs from "fs";
+import { PendaftaranUploadService } from "../services/pendaftaran-upload.service";
 
 export class PendaftaranController {
   static async getAll(req: Request, res: Response) {
@@ -256,6 +257,110 @@ export class PendaftaranController {
       sendSuccess(res, "Pendaftaran retrieved successfully", pendaftaran);
     } catch (error: any) {
       sendError(res, "Failed to get pendaftaran", error.message, 400);
+    }
+  }
+  /**
+   * POST /api/pendaftaran/upload
+   * Upload CSV/Excel for bulk insert
+   */
+  static async uploadBulk(req: Request, res: Response) {
+    let filePath = "";
+    try {
+      if (!req.file) {
+        return sendError(res, "No file uploaded", null, 400);
+      }
+
+      filePath = req.file.path;
+      const tahunAjaranId = req.body.tahunAjaranId
+        ? parseInt(req.body.tahunAjaranId)
+        : undefined;
+
+      if (!tahunAjaranId) {
+        // Clean up file if validation fails
+        if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return sendError(res, "Tahun ajaran ID required", null, 400);
+      }
+
+      const fileExt = req.file.originalname.split(".").pop()?.toLowerCase();
+      let data: any[] = [];
+
+      // Parse CSV
+      if (fileExt === "csv") {
+        const fileContent = fs.readFileSync(filePath, "utf-8");
+        const parsed = Papa.parse(fileContent, {
+          header: true,
+          skipEmptyLines: true,
+          transformHeader: (header) => header.trim(),
+        });
+
+        data = parsed.data;
+      }
+      // Parse Excel
+      else if (fileExt === "xlsx" || fileExt === "xls") {
+        const workbook = XLSX.readFile(filePath);
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        data = XLSX.utils.sheet_to_json(worksheet);
+      } else {
+        if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return sendError(
+          res,
+          "Invalid file format. Only CSV and Excel files are allowed",
+          null,
+          400
+        );
+      }
+
+      // Cleanup file after reading
+      if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+      if (data.length === 0) {
+        return sendError(res, "File is empty", null, 400);
+      }
+
+      // Process bulk upload
+      const results = await PendaftaranUploadService.bulkUpload(
+        data,
+        tahunAjaranId
+      );
+
+      return sendSuccess(
+        res,
+        `Upload complete. Success: ${results.success}, Failed: ${results.failed}`,
+        results
+      );
+    } catch (error: any) {
+      // Cleanup file on error
+      if (filePath && fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+        } catch (e) {
+          console.error("Failed to delete temp file:", e);
+        }
+      }
+
+      console.error("Upload error:", error);
+      return sendError(res, "Failed to upload file", error.message, 500);
+    }
+  }
+
+  /**
+   * GET /api/pendaftaran/template
+   * Download CSV template
+   */
+  static async downloadTemplate(req: Request, res: Response) {
+    try {
+      const headers = PendaftaranUploadService.getCSVTemplate();
+      const csv = headers.join(",");
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="template_pendaftaran.csv"'
+      );
+      res.send(csv);
+    } catch (error: any) {
+      return sendError(res, "Failed to download template", error.message, 500);
     }
   }
 }
