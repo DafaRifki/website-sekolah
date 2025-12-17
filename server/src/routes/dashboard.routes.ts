@@ -23,6 +23,7 @@ router.get("/pendaftaran", DashboardController.getPendaftaran);
 router.get("/alerts", DashboardController.getAlerts);
 router.get("/activities", DashboardController.getActivities);
 router.get("/charts", DashboardController.getCharts);
+router.get("/siswa", DashboardController.getSiswaDashboard);
 router.get("/stats-monthly", DashboardController.getMonthlyStats);
 
 export default router;

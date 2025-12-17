@@ -78,7 +78,11 @@ const menuItems: Record<Role, MenuSection[]> = {
       type: "link",
       title: "Pendaftaran",
       links: [
-        { name: "Siswa Baru", url: "/siswa-baru/pendaftaran", icon: FileUser },
+        {
+          name: "Siswa Baru & Pembayaran",
+          url: "/siswa-baru/pendaftaran",
+          icon: FileUser,
+        },
       ],
     },
     {

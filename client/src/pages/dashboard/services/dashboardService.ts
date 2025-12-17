@@ -1,5 +1,5 @@
 import apiClient from "@/config/axios";
-import type { DashboardSiswa, DashboardSummary } from "../types";
+import type { DashboardGuru, DashboardSiswa, DashboardSummary } from "../types";
 
 // ==================== ADMIN DASHBOARD ====================
 export const getDashboardSummary = async (): Promise<DashboardSummary> => {
@@ -37,9 +37,9 @@ export const getDashboardSiswa = async (): Promise<DashboardSiswa> => {
 };
 
 // ==================== GURU DASHBOARD ====================
-export const getDashboardGuru = async () => {
+export const getDashboardGuru = async (): Promise<DashboardGuru> => {
   try {
-    const res = await apiClient.get("/dashboard/guru");
+    const res = await apiClient.get("/dashboard-guru");
     return res.data.data;
   } catch (error) {
     console.error("Error fetching dashboard guru:", error);

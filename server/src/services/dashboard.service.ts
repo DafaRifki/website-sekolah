@@ -650,4 +650,141 @@ export class DashboardService {
       throw new Error(`Failed to get monthly stats: ${error.message}`);
     }
   }
+  /**
+   * Get student dashboard data
+   */
+  static async getSiswaDashboard(siswaId: number) {
+    try {
+      // 1. Get Biodata & Active Status
+      const siswa = await prisma.siswa.findUnique({
+        where: { id_siswa: siswaId },
+        include: {
+          kelas: {
+            include: {
+              guru: true, // Wali Kelas
+            },
+          },
+        },
+      });
+
+      if (!siswa) {
+        throw new Error("Student not found");
+      }
+
+      const tahunAjaranAktif = await prisma.tahunAjaran.findFirst({
+        where: { isActive: true },
+      });
+
+      // 2. Get Academic Stats (Attendance & Grades)
+      let attendanceRate = "0%";
+      let nilaiRata = 0;
+
+      if (tahunAjaranAktif) {
+        // Attendance
+        const absensi = await prisma.absensi.findMany({
+          where: {
+            id_siswa: siswaId,
+            id_tahun: tahunAjaranAktif.id_tahun,
+          },
+        });
+
+        const totalHadir = absensi.filter((a) => a.status === "HADIR").length;
+        if (absensi.length > 0) {
+          attendanceRate =
+            Math.round((totalHadir / absensi.length) * 100) + "%";
+        }
+
+        // Grades
+        const nilai = await prisma.nilaiRapor.findMany({
+          where: {
+            id_siswa: siswaId,
+            tahunAjaranId: tahunAjaranAktif.id_tahun,
+          },
+        });
+
+        if (nilai.length > 0) {
+          const totalNilai = nilai.reduce((sum, n) => sum + n.nilai, 0);
+          nilaiRata = Math.round((totalNilai / nilai.length) * 10) / 10;
+        }
+      }
+
+      // 3. Get Financial Status
+      let statusPembayaran = "LUNAS";
+      let totalTagihan = 0;
+      let totalTerbayar = 0;
+
+      if (tahunAjaranAktif) {
+        const tagihan = await prisma.tagihan.findMany({
+          where: {
+            id_siswa: siswaId,
+            tahunAjaranId: tahunAjaranAktif.id_tahun,
+          },
+          include: {
+            tarif: true,
+            pembayaran: true,
+          },
+        });
+
+        tagihan.forEach((t) => {
+          totalTagihan += t.tarif.nominal;
+          const bayar = t.pembayaran.reduce((sum, p) => sum + p.jumlahBayar, 0);
+          totalTerbayar += bayar;
+
+          if (t.status === "BELUM_BAYAR" || t.status === "CICIL") {
+            statusPembayaran = "BELUM_LUNAS";
+          }
+        });
+      }
+
+      // Last Payment
+      const lastPayment = await prisma.pembayaran.findFirst({
+        where: {
+          tagihan: {
+            id_siswa: siswaId,
+          },
+        },
+        orderBy: { tanggal: "desc" },
+        include: {
+          tagihan: {
+            include: {
+              tarif: true,
+              tahunAjaran: true,
+            },
+          },
+        },
+      });
+
+      // Construct Response
+      return {
+        biodata: {
+          nama: siswa.nama,
+          kelas: siswa.kelas?.namaKelas || "-",
+          wali: siswa.kelas?.guru?.nama || "-",
+        },
+        nilaiRata,
+        persentaseAbsensi: attendanceRate,
+        tarif: totalTagihan.toString(),
+        statusPembayaran:
+          totalTagihan > totalTerbayar ? "BELUM_LUNAS" : "LUNAS",
+        pembayaranTerakhir: lastPayment
+          ? {
+              id_pembayaran: lastPayment.id_pembayaran,
+              jumlahBayar: lastPayment.jumlahBayar,
+              metode: lastPayment.metode,
+              tanggal: lastPayment.tanggal.toISOString(),
+              keterangan: lastPayment.keterangan || null,
+              tahunAjaran: lastPayment.tagihan.tahunAjaran,
+              tarif: lastPayment.tagihan.tarif
+                ? {
+                    nominal: lastPayment.tagihan.tarif.nominal,
+                    keterangan: lastPayment.tagihan.tarif.keterangan,
+                  }
+                : null,
+            }
+          : undefined,
+      };
+    } catch (error: any) {
+      throw new Error(`Failed to get student dashboard: ${error.message}`);
+    }
+  }
 }

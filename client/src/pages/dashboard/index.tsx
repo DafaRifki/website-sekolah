@@ -4,6 +4,7 @@ import CardStat from "./components/CardStat";
 import {
   getDashboardSummary,
   getDashboardSiswa,
+  getDashboardGuru,
 } from "./services/dashboardService";
 import {
   Users,
@@ -23,6 +24,7 @@ import type {
   User,
   DashboardSummary,
   DashboardSiswa,
+  DashboardGuru,
 } from "./types";
 
 const DashboardPageIndex: React.FC = () => {
@@ -30,6 +32,7 @@ const DashboardPageIndex: React.FC = () => {
   // const { user } = useOutletContext<{ user: User }>();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [siswaData, setSiswaData] = useState<DashboardSiswa | null>(null);
+  const [guruData, setGuruData] = useState<DashboardGuru | null>(null);
 
   useEffect(() => {
     // get user from localStorage
@@ -47,13 +50,17 @@ const DashboardPageIndex: React.FC = () => {
   useEffect(() => {
     if (!user) return;
 
-    if (user?.role === "ADMIN") {
+    if (user.role === "ADMIN") {
       getDashboardSummary()
         .then((data) => setSummary(data))
         .catch((err) => console.error(err));
-    } else if (user?.role === "SISWA") {
+    } else if (user.role === "SISWA") {
       getDashboardSiswa()
         .then((data) => setSiswaData(data))
+        .catch((err) => console.error(err));
+    } else if (user.role === "GURU") {
+      getDashboardGuru()
+        .then((data) => setGuruData(data))
         .catch((err) => console.error(err));
     }
   }, [user]);
@@ -123,59 +130,59 @@ const DashboardPageIndex: React.FC = () => {
     GURU: [
       {
         title: "Kelas yang Diampu",
-        value: "3",
-        description: "Kelas aktif",
+        value: guruData?.isWaliKelas ? "1" : "0", // Currently limited to wali kelas logic or simple count
+        description: guruData?.waliKelas?.kelas.namaKelas ?? "Tidak ada",
         icon: <Users />,
         color: "green",
       },
       {
         title: "Jadwal Mengajar",
-        value: "12",
+        value: "-", // Api doesn`t provide this yet
         description: "Pertemuan minggu ini",
         icon: <Calendar />,
         color: "blue",
       },
       {
         title: "Absensi Harian",
-        value: "→",
+        value: guruData?.waliKelas?.statistics?.attendanceToday?.pending ?? "0",
         description: "Input absensi",
         icon: <UserCheck />,
         color: "red",
       },
-      {
-        title: "Nilai Rapor",
-        value: "→",
-        description: "Input nilai",
-        icon: <Award />,
-        color: "yellow",
-      },
+      // {
+      //   title: "Nilai Rapor",
+      //   value: "→",
+      //   description: "Input nilai",
+      //   icon: <Award />,
+      //   color: "yellow",
+      // },
       {
         title: "Profil Guru",
-        value: user?.name ?? "-",
-        description: "Data guru",
+        value: guruData?.guru?.nama ?? user?.name ?? "-",
+        description: guruData?.guru?.jabatan ?? "Guru",
         icon: <UserCircle />,
         color: "blue",
       },
-      ...(user?.isWaliKelas
+      ...(guruData?.isWaliKelas
         ? [
             {
               title: "Daftar Siswa",
-              value: "30",
-              description: "Siswa di kelas Anda",
+              value: guruData?.waliKelas?.statistics.totalSiswa ?? "0",
+              description: `Siswa di ${guruData.waliKelas?.kelas.namaKelas}`,
               icon: <Users />,
               color: "green",
             },
             {
-              title: "Orang Tua Siswa",
-              value: "30",
-              description: "Kontak orang tua siswa",
+              title: "Masalah Absensi",
+              value: guruData.waliKelas?.statistics.lowAttendanceCount ?? "0",
+              description: "Siswa kehadiran < 75%",
               icon: <FolderOpen />,
               color: "red",
             },
             {
-              title: "Rekap Absensi & Nilai",
-              value: "→",
-              description: "Kelas yang Anda wali",
+              title: "Nilai Rata-rata Kelas",
+              value: guruData.waliKelas?.statistics.nilaiAverage ?? "0",
+              description: "Rata-rata semua mapel",
               icon: <FileText />,
               color: "yellow",
             },
@@ -217,27 +224,30 @@ const DashboardPageIndex: React.FC = () => {
       },
       {
         title: "Absensi",
-        value: siswaData?.persentaseAbsensi ?? "-",
+        value: siswaData?.persentaseAbsensi ?? "0%",
         description: "Kehadiran semester ini",
         icon: <UserCheck />,
         color: "green",
       },
       {
         title: "Nilai Rapor",
-        value: siswaData?.nilaiRata ?? "-",
+        value: siswaData?.nilaiRata ? siswaData.nilaiRata.toFixed(1) : "-",
         description: "Rata-rata semester ini",
         icon: <Award />,
         color: "yellow",
       },
       {
-        title: "Tarif Tahunan",
+        title: "Status SPP",
         value:
           siswaData?.statusPembayaran === "LUNAS"
             ? "Lunas"
             : siswaData?.tarif
-            ? `Rp ${siswaData.tarif.toLocaleString("id-ID")}`
+            ? `Rp ${Number(siswaData.tarif).toLocaleString("id-ID")}`
             : "-",
-        description: "Biaya sekolah sesuai tahun ajaran aktif",
+        description:
+          siswaData?.statusPembayaran === "LUNAS"
+            ? "Semua tagihan lunas"
+            : "Total tagihan belum dibayar",
         icon: <DollarSign className="text-red-500" />,
         color: siswaData?.statusPembayaran === "LUNAS" ? "green" : "red",
       },
@@ -249,18 +259,20 @@ const DashboardPageIndex: React.FC = () => {
             )}`
           : "-",
         description: siswaData?.pembayaranTerakhir
-          ? `${siswaData.pembayaranTerakhir.metode ?? "-"} | ${
-              siswaData.pembayaranTerakhir.tahunAjaran?.namaTahun ?? "-"
+          ? `${new Date(
+              siswaData.pembayaranTerakhir.tanggal
+            ).toLocaleDateString("id-ID")} | ${
+              siswaData.pembayaranTerakhir.metode ?? "-"
             }`
-          : "Belum ada pembayaran",
+          : "Belum ada riwayat",
         icon: <DollarSign className="text-green-600" />,
         color: "green",
       },
       {
-        title: "Pengumuman & Jadwal",
-        value: "5",
-        description: "Informasi terbaru",
-        icon: <Bell />,
+        title: "Pengumuman",
+        value: "0", // TODO: Fetch announcement count
+        description: "Pengumuman terbaru",
+        icon: <Bell className="text-blue-500" />,
         color: "blue",
       },
     ],
@@ -280,7 +292,14 @@ const DashboardPageIndex: React.FC = () => {
       <h1 className="text-3xl font-bold text-green-700">
         Dashboard {user?.role}
       </h1>
-      <p className="text-gray-500">Selamat datang, {user?.name}</p>
+      <p className="text-gray-500">
+        Selamat datang,{" "}
+        {user?.role === "GURU"
+          ? guruData?.guru?.nama ?? user?.name
+          : user?.role === "SISWA"
+          ? siswaData?.biodata?.nama ?? user?.name
+          : user?.name}
+      </p>
 
       <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mt-6">
         {cardsToShow.map((item, idx) => (

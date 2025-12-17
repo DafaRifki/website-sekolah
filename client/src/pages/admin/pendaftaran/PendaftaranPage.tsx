@@ -24,6 +24,7 @@ import TambahPendaftaranModal from "./components/TambahPendaftaranModal";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import UploadPendaftaranModal from "./components/UploadPendaftaranModal";
+import Swal from "sweetalert2";
 
 interface Pendaftaran {
   id_pendaftaran: number;
@@ -88,6 +89,41 @@ export default function PendaftaranPage() {
       toast.error("Gagal mengupdate status", {
         description: error.response?.data?.message || "Terjadi kesalahan",
       });
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    const result = await Swal.fire({
+      title: "Yakin akan dihapus?",
+      text: "Data pendaftaran yang dihapus tidak bisa dikembalikan!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Ya, hapus",
+      cancelButtonText: "Batal",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      Swal.fire({
+        title: "Menghapus...",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+      });
+
+      await apiClient.delete(`/pendaftaran/${id}`);
+      await fetchData();
+
+      Swal.fire("Berhasil", "Data pendaftaran berhasil dihapus.", "success");
+    } catch (error: any) {
+      console.error("Error deleting data: ", error);
+      Swal.fire(
+        "Gagal!",
+        error.response?.data?.message || "Gagal menghapus data pendaftaran",
+        "error"
+      );
     }
   };
 
@@ -270,7 +306,11 @@ export default function PendaftaranPage() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
               </div>
             ) : (
-              <PendaftaranTable data={data} onUpdate={handleUpdate} />
+              <PendaftaranTable
+                data={data}
+                onUpdate={handleUpdate}
+                onDelete={handleDelete}
+              />
             )}
           </CardContent>
         </Card>

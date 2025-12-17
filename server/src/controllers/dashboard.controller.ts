@@ -228,4 +228,34 @@ export class DashboardController {
       return sendError(res, "Failed to get dashboard data", error.message, 500);
     }
   }
+  /**
+   * GET /api/dashboard/siswa
+   * Get student dashboard data
+   */
+  static async getSiswaDashboard(req: Request, res: Response) {
+    try {
+      const user = req.user;
+      if (!user || user.role !== "SISWA" || !user.siswaId) {
+        return sendError(res, "Access denied", "Student access required", 403);
+      }
+
+      const dashboardData = await DashboardService.getSiswaDashboard(
+        user.siswaId
+        // req.query.tahunAjaranId ? Number(req.query.tahunAjaranId) : undefined
+      );
+
+      return sendSuccess(
+        res,
+        "Student dashboard data retrieved successfully",
+        dashboardData
+      );
+    } catch (error: any) {
+      return sendError(
+        res,
+        "Failed to get student dashboard data",
+        error.message,
+        500
+      );
+    }
+  }
 }

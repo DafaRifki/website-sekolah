@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/table";
 import { StatusBadge } from "./StatusBadge";
 import { EditableSelect } from "./EditableSelect";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 
 interface TahunAjaran {
   id_tahun: number;
@@ -30,9 +32,10 @@ interface Props {
     field: "statusDokumen" | "statusPembayaran",
     value: string
   ) => void;
+  onDelete: (id: number) => void;
 }
 
-export default function PendaftaranTable({ data, onUpdate }: Props) {
+export default function PendaftaranTable({ data, onUpdate, onDelete }: Props) {
   const dokumenOptions = ["BELUM_DITERIMA", "LENGKAP", "KURANG"];
   const pembayaranOptions = ["BELUM_BAYAR", "CICIL", "LUNAS"];
 
@@ -46,6 +49,7 @@ export default function PendaftaranTable({ data, onUpdate }: Props) {
           <TableHead>Tahun Ajaran</TableHead>
           <TableHead>Status Dokumen</TableHead>
           <TableHead>Status Pembayaran</TableHead>
+          <TableHead>...</TableHead>
         </TableRow>
       </TableHeader>
 
@@ -81,6 +85,15 @@ export default function PendaftaranTable({ data, onUpdate }: Props) {
                   }
                 />
               </div>
+            </TableCell>
+            <TableCell>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDelete(row.id_pendaftaran)}
+                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
+                <Trash2 className="w-4 h-4" />
+              </Button>
             </TableCell>
           </TableRow>
         ))}
