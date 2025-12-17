@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronRight, type LucideIcon } from "lucide-react";
-
 import {
   Collapsible,
   CollapsibleContent,
@@ -41,7 +40,10 @@ export function NavMain({
         {items.map((item) => {
           const isParentActive =
             location.pathname === item.url ||
-            item.items?.some((sub) => location.pathname.startsWith(sub.url));
+            item.items?.some((sub) =>
+              location.pathname.startsWith(sub.url + "/")
+            ) ||
+            item.items?.some((sub) => location.pathname === sub.url);
 
           return (
             <Collapsible

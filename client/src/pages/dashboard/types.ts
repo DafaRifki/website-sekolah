@@ -30,6 +30,82 @@ export interface DashboardSiswa {
   };
 }
 
+export interface DashboardGuru {
+  guru: {
+    id_guru: number;
+    nama: string;
+    nip: string;
+    jabatan: string;
+    fotoProfil: string | null;
+  };
+  tahunAjaran: {
+    id_tahun: number;
+    namaTahun: string;
+    semester: string;
+  };
+  isWaliKelas: boolean;
+  waliKelas: {
+    kelas: {
+      id_kelas: number;
+      namaKelas: string;
+      tingkat: number;
+    };
+    statistics: {
+      totalSiswa: number;
+      nilaiAverage: number;
+      attendanceToday: {
+        hadir: number;
+        sakit: number;
+        izin: number;
+        alpha: number;
+        total: number;
+        inputted: number;
+        pending: number;
+      };
+      outstandingPayments: number;
+      lowAttendanceCount: number;
+      lowGradesCount: number;
+    };
+    students: {
+      id_siswa: number;
+      nama: string;
+      nis: string;
+      fotoProfil: string | null;
+      attendanceRate: string;
+      nilaiAverage: number | null;
+      outstandingBills: number;
+    }[];
+    alerts: {
+      lowAttendance: {
+        id_siswa: number;
+        nama: string;
+        attendanceRate: number;
+      }[];
+      lowGrades: {
+        id_siswa: number;
+        nama: string;
+        average: number;
+      }[];
+    };
+  } | null;
+  recentActivities: {
+    nilai: {
+      type: string;
+      siswa: string;
+      mapel: string;
+      nilai: number;
+      semester: string;
+    }[];
+    absensi: {
+      type: string;
+      siswa: string;
+      status: string;
+      tanggal: string;
+      keterangan: string | null;
+    }[];
+  };
+}
+
 export interface User {
   id: number;
   name: string;
