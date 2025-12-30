@@ -3,8 +3,7 @@ import path from "path";
 import fs from "fs";
 import { ENV } from "../config/env";
 
-// Ensure upload directory exists
-const uploadDir = ENV.UPLOAD_PATH;
+const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -13,8 +12,9 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let folder = "others";
 
+    // Ubah "profiles" menjadi "guru" agar sinkron dengan Frontend
     if (file.fieldname === "fotoProfil") {
-      folder = "profiles";
+      folder = "guru"; 
     } else if (file.fieldname === "dokumen") {
       folder = "documents";
     }
@@ -86,7 +86,7 @@ export const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: ENV.MAX_FILE_SIZE, // 5MB
+    fileSize: ENV.MAX_FILE_SIZE || 5 * 1024 * 1024, // 5MB Fallback
   },
 });
 

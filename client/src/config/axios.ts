@@ -2,9 +2,9 @@ import axios from "axios";
 
 const apiClient = axios.create({
   baseURL: `${import.meta.env.VITE_URL_API}/api`,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // headers: {                         <-- HAPUS BAGIAN INI
+  //   "Content-Type": "application/json", 
+  // },                                 <-- SAMPAI SINI
   withCredentials: true,
 });
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,36 +16,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { User, Camera, Save } from "lucide-react";
 import Swal from "sweetalert2";
 import apiClient from "@/config/axios";
-import { User, Camera, Save } from "lucide-react";
 import defaultAvatar from "../../../../assets/avatar.png";
-
-// --- PERBAIKAN 1: Import Tipe Guru dari DetailGuruModal ---
 import type { Guru } from "./DetailGuruModal"; 
 
-// --- PERBAIKAN 2: Hapus Interface Lokal agar tidak bentrok ---
-/* interface Guru {
-  id_guru: number;
-  nama: string;
-  nip?: string;
-  noHP?: string;
-  jenisKelamin?: string;
-  alamat?: string;
-  jabatan?: string;
-  fotoProfil?: string;
-  user?: { email: string; role: string };
-}
-*/
-
 interface Props {
-  guru: Guru | null; // Sekarang ini mengacu pada tipe dari DetailGuruModal
+  guru: Guru | null;
   isOpen: boolean;
   onClose: () => void;
   onUpdated: (guru: Guru) => void;
 }
 
-// Pindahkan FormField keluar dari komponen utama
+interface UserOption {
+  id: number;
+  email: string;
+  role: string;
+}
+
 const FormField = ({
   label,
   children,
@@ -55,7 +44,7 @@ const FormField = ({
   children: React.ReactNode;
   required?: boolean;
 }) => (
-  <div className="space-y-2">
+  <div className="space-y-2 relative"> {}
     <Label className="text-sm font-medium text-gray-700">
       {label}
       {required && <span className="text-red-500 ml-1">*</span>}
@@ -83,7 +72,30 @@ export default function EditGuruModal({
   });
 
   const [previewImage, setPreviewImage] = useState<string>("");
+  const [userOptions, setUserOptions] = useState<UserOption[]>([]);
+  const BACKEND_URL = import.meta.env.VITE_URL_API || "http://localhost:5000";
+  // STATE UNTUK AUTOCOMPLETE
+  const [showEmailSuggestions, setShowEmailSuggestions] = useState(false);
+  const [filteredEmails, setFilteredEmails] = useState<UserOption[]>([]);
 
+  // 1. FETCH DATA USERS
+  useEffect(() => {
+    if (isOpen) {
+        const fetchUsers = async () => {
+            try {
+                const res = await apiClient.get("/users"); 
+                const users = res.data.data || [];
+                setUserOptions(users);
+                setFilteredEmails(users); // Init filtered dengan semua user
+            } catch (error) {
+                console.error("Gagal mengambil daftar user:", error);
+            }
+        };
+        fetchUsers();
+    }
+  }, [isOpen]);
+
+  // 2. SET DATA FORM
   useEffect(() => {
     if (guru) {
       setForm({
@@ -98,9 +110,8 @@ export default function EditGuruModal({
         role: guru.user?.role || "GURU",
       });
 
-      // Set preview image
       if (guru.fotoProfil) {
-        setPreviewImage(`http://localhost:3000/uploads/${guru.fotoProfil}`);
+        setPreviewImage(`${BACKEND_URL}/uploads/guru/${guru.fotoProfil}`);
       } else {
         setPreviewImage(defaultAvatar);
       }
@@ -109,6 +120,23 @@ export default function EditGuruModal({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // LOGIKA AUTOCOMPLETE EMAIL
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setForm({ ...form, email: value });
+    
+    const filtered = userOptions.filter(u => 
+        u.email.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredEmails(filtered);
+    setShowEmailSuggestions(true);
+  };
+
+  const handleSelectEmail = (email: string) => {
+    setForm({ ...form, email: email });
+    setShowEmailSuggestions(false);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,13 +152,11 @@ export default function EditGuruModal({
     }
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!guru) return;
 
     const formData = new FormData();
-
-    // --- LOGIKA PEMBERSIHAN DATA (DATA CLEANING) ---
     Object.entries(form).forEach(([key, value]) => {
       if (value === null || value === undefined) return;
       if (key === "fotoProfil") {
@@ -139,7 +165,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         }
         return; 
       }
-
       if (typeof value === "string") {
         const cleanValue = value.trim(); 
         if (cleanValue !== "") {
@@ -147,7 +172,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         }
         return;
       }
-
       formData.append(key, String(value));
     });
 
@@ -158,7 +182,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         didOpen: () => Swal.showLoading(),
       });
 
-      // API Call (Tanpa header manual Content-Type)
       const res = await apiClient.put(`/guru/${guru.id_guru}`, formData);
 
       Swal.close();
@@ -168,14 +191,8 @@ const handleSubmit = async (e: React.FormEvent) => {
       onClose?.();
     } catch (error: any) {
       Swal.close();
-      // Debugging: Cek error detail di Console (F12)
       console.error("Update error detail:", error.response?.data);
-      
-      Swal.fire(
-        "Gagal!",
-        error.response?.data?.message || "Terjadi kesalahan saat validasi data.",
-        "error"
-      );
+      Swal.fire("Gagal!", error.response?.data?.message || "Terjadi kesalahan.", "error");
     }
   };
 
@@ -254,15 +271,49 @@ const handleSubmit = async (e: React.FormEvent) => {
                 />
               </FormField>
 
-              <FormField label="Email" required>
-                <Input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  placeholder="contoh@email.com"
-                  required
-                />
+              {/* --- BAGIAN AUTOCOMPLETE EMAIL --- */}
+              <FormField label="Email Akun" required>
+                <div className="relative">
+                    <Input
+                        type="text" 
+                        name="email"
+                        value={form.email}
+                        onChange={handleEmailChange}
+                        onFocus={() => {
+                            const filtered = userOptions.filter(u => 
+                                u.email.toLowerCase().includes(form.email.toLowerCase())
+                            );
+                            setFilteredEmails(filtered);
+                            setShowEmailSuggestions(true);
+                        }}
+                        onBlur={() => setTimeout(() => setShowEmailSuggestions(false), 200)}
+                        placeholder="Masukan Email"
+                        autoComplete="off"
+                    />
+                    
+                    {/* DROPDOWN CUSTOM */}
+                    {showEmailSuggestions && filteredEmails.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                            {filteredEmails.map((user) => (
+                                <div
+                                    key={user.id}
+                                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+                                    onMouseDown={() => handleSelectEmail(user.email)}
+                                >
+                                    <span>{user.email}</span>
+                                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">{user.role}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Pesan jika input ada isinya tapi tidak cocok dengan data apapun */}
+                    {showEmailSuggestions && filteredEmails.length === 0 && form.email && (
+                         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-2 text-sm text-gray-500 text-center">
+                            Email baru (belum terdaftar)
+                        </div>
+                    )}
+                </div>
               </FormField>
 
               <FormField label="No. Handphone">
@@ -327,7 +378,6 @@ const handleSubmit = async (e: React.FormEvent) => {
             </FormField>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button type="button" variant="outline" onClick={onClose}>
               Batal

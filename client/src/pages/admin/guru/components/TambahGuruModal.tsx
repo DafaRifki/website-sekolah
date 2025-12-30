@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,13 @@ interface Props {
   onAdded: () => void;
 }
 
-// Komponen Helper untuk Form Field
+// --- [TAMBAHAN 1] Interface untuk User Option ---
+interface UserOption {
+  id: number;
+  email: string;
+  role: string;
+}
+
 const FormField = ({
   label,
   children,
@@ -37,7 +43,8 @@ const FormField = ({
   children: React.ReactNode;
   required?: boolean;
 }) => (
-  <div className="space-y-2">
+  // Tambahkan relative agar dropdown bisa muncul dengan benar
+  <div className="space-y-2 relative">
     <Label className="text-sm font-medium text-gray-700">
       {label}
       {required && <span className="text-red-500 ml-1">*</span>}
@@ -61,8 +68,48 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [previewImage, setPreviewImage] = useState<string>(defaultAvatar);
 
+  // --- [TAMBAHAN 2] State untuk Autocomplete ---
+  const [userOptions, setUserOptions] = useState<UserOption[]>([]);
+  const [filteredEmails, setFilteredEmails] = useState<UserOption[]>([]);
+  const [showEmailSuggestions, setShowEmailSuggestions] = useState(false);
+
+  // --- [TAMBAHAN 3] Fetch Data User saat Modal Dibuka ---
+  useEffect(() => {
+    if (isOpen) {
+      const fetchUsers = async () => {
+        try {
+          const res = await apiClient.get("/users");
+          const users = res.data.data || [];
+          setUserOptions(users);
+          setFilteredEmails(users);
+        } catch (error) {
+          console.error("Gagal ambil user:", error);
+        }
+      };
+      fetchUsers();
+    }
+  }, [isOpen]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // --- [TAMBAHAN 4] Handler Khusus Email ---
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setForm({ ...form, email: value });
+
+    // Filter data user berdasarkan ketikan
+    const filtered = userOptions.filter((u) =>
+      u.email.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredEmails(filtered);
+    setShowEmailSuggestions(true);
+  };
+
+  const handleSelectEmail = (email: string) => {
+    setForm({ ...form, email: email });
+    setShowEmailSuggestions(false);
   };
 
   const handleSelectGender = (value: string) => {
@@ -74,7 +121,6 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
       const file = e.target.files[0];
       setForm({ ...form, fotoProfil: file });
 
-      // Create preview URL
       const reader = new FileReader();
       reader.onload = () => {
         setPreviewImage(reader.result as string);
@@ -103,38 +149,23 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
     e.preventDefault();
     const formData = new FormData();
 
-    // --- LOGIKA PEMBERSIHAN DATA (Agar tidak Validation Error) ---
     Object.entries(form).forEach(([key, value]) => {
-      // 1. Abaikan null/undefined
       if (value === null || value === undefined) return;
-
-      // 2. Handle Foto
       if (key === "fotoProfil") {
         if (value instanceof File) {
           formData.append(key, value);
         }
         return;
       }
-
-      // 3. Handle String (Sangat Penting untuk NIP/Jabatan)
       if (typeof value === "string") {
         const cleanValue = value.trim();
-        // Hanya kirim jika string TIDAK kosong
-        // Backend sering error jika field unik (NIP) dikirim ""
         if (cleanValue !== "") {
           formData.append(key, cleanValue);
         }
         return;
       }
-
-      // 4. Handle tipe lain
       formData.append(key, String(value));
     });
-
-    // Debugging: Cek di console apa yang dikirim
-    // for (let pair of formData.entries()) {
-    //   console.log(pair[0] + ': ' + pair[1]);
-    // }
 
     try {
       Swal.fire({
@@ -143,7 +174,6 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
         didOpen: () => Swal.showLoading(),
       });
 
-      // PERBAIKAN: Hapus headers manual, biarkan Axios handle multipart
       await apiClient.post("/guru", formData);
 
       Swal.close();
@@ -155,14 +185,12 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
     } catch (error: any) {
       Swal.close();
       console.error("Add error detail:", error.response?.data);
-      
-      const pesanError = error.response?.data?.message || "Gagal menambahkan guru (Validation Error)";
-      
-      Swal.fire(
-        "Gagal!",
-        pesanError,
-        "error"
-      );
+
+      const pesanError =
+        error.response?.data?.message ||
+        "Gagal menambahkan guru (Validation Error)";
+
+      Swal.fire("Gagal!", pesanError, "error");
     }
   };
 
@@ -225,15 +253,51 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              {/* --- Field Email dengan Dropdown Autocomplete --- */}
               <FormField label="Email" required>
-                <Input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  placeholder="contoh@sekolah.com"
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    type="text" 
+                    name="email"
+                    value={form.email}
+                    onChange={handleEmailChange}
+                    onFocus={() => {
+                        const filtered = userOptions.filter(u => 
+                            u.email.toLowerCase().includes(form.email.toLowerCase())
+                        );
+                        setFilteredEmails(filtered);
+                        setShowEmailSuggestions(true);
+                    }}
+                    onBlur={() => setTimeout(() => setShowEmailSuggestions(false), 200)}
+                    placeholder="Ketik email baru atau pilih dari list..."
+                    autoComplete="off"
+                    required
+                  />
+                  
+                  {/* Dropdown Suggestions */}
+                  {showEmailSuggestions && filteredEmails.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        {filteredEmails.map((user) => (
+                            <div
+                                key={user.id}
+                                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+                                onMouseDown={() => handleSelectEmail(user.email)}
+                            >
+                                <span>{user.email}</span>
+                                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">{user.role}</span>
+                            </div>
+                        ))}
+                    </div>
+                  )}
+
+                  {/* Info jika email baru */}
+                  {showEmailSuggestions && filteredEmails.length === 0 && form.email && (
+                     <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-2 text-sm text-gray-500 text-center">
+                        Email baru (akan dibuatkan akun)
+                    </div>
+                  )}
+                </div>
               </FormField>
 
               <FormField label="Password" required>
@@ -250,7 +314,8 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600">
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+                  >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
                     ) : (
@@ -303,12 +368,12 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
               <FormField label="Jenis Kelamin">
                 <Select
                   onValueChange={handleSelectGender}
-                  value={form.jenisKelamin}>
+                  value={form.jenisKelamin}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih jenis kelamin" />
                   </SelectTrigger>
                   <SelectContent>
-                    {/* PERBAIKAN PENTING: Gunakan Value 'L' dan 'P' */}
                     <SelectItem value="L">Laki-laki</SelectItem>
                     <SelectItem value="P">Perempuan</SelectItem>
                   </SelectContent>

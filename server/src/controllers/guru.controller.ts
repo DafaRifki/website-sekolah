@@ -93,13 +93,18 @@ export class GuruController {
     }
   }
 
-  /**
+/**
    * POST /api/guru
    * Create new guru
    */
   static async create(req: Request, res: Response) {
     try {
-      const guru = await GuruService.create(req.body);
+      const guruData = {
+        ...req.body,
+        fotoProfil: req.file ? req.file.filename : undefined,
+      };
+
+      const guru = await GuruService.create(guruData);
 
       res.status(201).json({
         success: true,
@@ -111,17 +116,9 @@ export class GuruController {
         error.message === "NIP already exists" ||
         error.message === "Email already exists"
       ) {
-        return res.status(400).json({
-          success: false,
-          message: error.message,
-        });
+        return res.status(400).json({ success: false, message: error.message });
       }
-
-      res.status(500).json({
-        success: false,
-        message: "Failed to create guru",
-        error: error.message,
-      });
+      res.status(500).json({ success: false, message: "Failed to create guru", error: error.message });
     }
   }
 
@@ -132,7 +129,16 @@ export class GuruController {
   static async update(req: Request, res: Response) {
     try {
       const id = parseInt(req.params.id);
-      const guru = await GuruService.update(id, req.body);
+
+      const guruData = {
+        ...req.body,
+      };
+
+      if (req.file) {
+        guruData.fotoProfil = req.file.filename;
+      }
+
+      const guru = await GuruService.update(id, guruData);
 
       res.status(200).json({
         success: true,
@@ -140,31 +146,12 @@ export class GuruController {
         data: guru,
       });
     } catch (error: any) {
-      if (error.message === "Guru not found") {
-        return res.status(404).json({
-          success: false,
-          message: error.message,
-        });
+       if (error.message === "Guru not found") {
+        return res.status(404).json({ success: false, message: error.message });
       }
-
-      if (
-        error.message === "NIP already exists" ||
-        error.message === "Email already exists"
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: error.message,
-        });
-      }
-
-      res.status(500).json({
-        success: false,
-        message: "Failed to update guru",
-        error: error.message,
-      });
+      res.status(500).json({ success: false, message: "Failed to update guru", error: error.message });
     }
   }
-
   /**
    * POST /api/guru/:id/upload
    * Upload foto profil

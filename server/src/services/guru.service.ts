@@ -5,7 +5,9 @@ import {
   buildPaginationResult,
   buildSearchFilter,
 } from "../utils/database.util";
-import { Prisma } from "@prisma/client";
+// [PERBAIKAN 1] Import Role dari @prisma/client
+import { Prisma, Role } from "@prisma/client"; 
+import bcrypt from "bcrypt";
 
 interface CreateGuruData {
   nip: string;
@@ -14,7 +16,11 @@ interface CreateGuruData {
   alamat?: string;
   noHP: string;
   email?: string;
+  password?: string;
+  // [PERBAIKAN 2] Pastikan tipe role fleksibel (bisa string atau Role)
+  role?: Role | string; 
   jabatan?: string;
+  fotoProfil?: string;
 }
 
 interface UpdateGuruData {
@@ -145,42 +151,75 @@ export class GuruService {
    * Create new guru
    */
   static async create(data: CreateGuruData) {
-    // Check if NIP already exists
-    const existingGuru = await prisma.guru.findUnique({
-      where: { nip: data.nip },
-    });
+    const { password, role, ...guruData } = data;
 
-    if (existingGuru) {
-      throw new Error("NIP already exists");
-    }
-
-    // Check if email already exists (if provided)
-    if (data.email) {
-      const existingEmail = await prisma.guru.findFirst({
-        where: { email: data.email },
+    return await prisma.$transaction(async (tx) => {
+      // 1. Cek NIP
+      const existingGuru = await tx.guru.findUnique({
+        where: { nip: guruData.nip },
       });
 
-      if (existingEmail) {
-        throw new Error("Email already exists");
+      if (existingGuru) {
+        throw new Error("NIP already exists");
       }
-    }
 
-    const guru = await prisma.guru.create({
-      data: {
-        nip: data.nip,
-        nama: data.nama,
-        jenisKelamin: data.jenisKelamin,
-        alamat: data.alamat,
-        noHP: data.noHP,
-        email: data.email,
-        jabatan: data.jabatan,
-      },
-      include: {
-        user: true,
-      },
+      let userId: number | null = null;
+
+      // 2. Logika User
+      if (guruData.email) {
+        const existingUser = await tx.user.findUnique({
+          where: { email: guruData.email },
+        });
+
+        if (existingUser) {
+          userId = existingUser.id;
+          
+          // Cek apakah user sudah terpakai (opsional, tergantung relasi)
+          // const linkedGuru = await tx.guru.findFirst({ where: { userId: userId } });
+          // if (linkedGuru) throw new Error("Email account already linked to another guru");
+
+        } else {
+          // Buat User Baru
+          const hashedPassword = await bcrypt.hash(password || "123456", 10);
+
+          // [PERBAIKAN 3] Gunakan Casting ke Role Enum
+          // Jika 'role' dikirim string "GURU", ubah jadi Role.GURU
+          // Jika tidak ada, default ke Role.GURU
+          const userRole = role ? (role as Role) : Role.GURU;
+
+          const newUser = await tx.user.create({
+            data: {
+              email: guruData.email,
+              password: hashedPassword,
+              role: userRole, 
+            },
+          });
+          userId = newUser.id;
+        }
+      }
+
+      // 3. Buat Guru
+      // Jika error "Unknown arg user", ganti logika di bawah sesuai schema Anda
+      const newGuru = await tx.guru.create({
+        data: {
+          nip: guruData.nip,
+          nama: guruData.nama,
+          jenisKelamin: guruData.jenisKelamin,
+          alamat: guruData.alamat,
+          noHP: guruData.noHP,
+          email: guruData.email,
+          jabatan: guruData.jabatan,
+          fotoProfil: guruData.fotoProfil,
+          // Sambungkan user (pastikan relasi di schema.prisma mendukung connect ini)
+          user: userId ? { connect: { id: userId } } : undefined,
+        },
+        include: {
+          user: true,
+        },
+      });
+
+      return newGuru;
     });
-
-    return guru;
   }
 
   /**
@@ -195,26 +234,18 @@ export class GuruService {
       throw new Error("Guru not found");
     }
 
-    // Check if new NIP already exists (if changing NIP)
     if (data.nip && data.nip !== existing.nip) {
       const existingNIP = await prisma.guru.findUnique({
         where: { nip: data.nip },
       });
-
-      if (existingNIP) {
-        throw new Error("NIP already exists");
-      }
+      if (existingNIP) throw new Error("NIP already exists");
     }
 
-    // Check if new email already exists (if changing email)
     if (data.email && data.email !== existing.email) {
       const existingEmail = await prisma.guru.findFirst({
         where: { email: data.email },
       });
-
-      if (existingEmail) {
-        throw new Error("Email already exists");
-      }
+      if (existingEmail) throw new Error("Email already exists");
     }
 
     const updated = await prisma.guru.update({
@@ -230,23 +261,16 @@ export class GuruService {
   }
 
   /**
-   * Upload/update foto profil
+   * Upload Photo
    */
   static async uploadPhoto(id: number, photoPath: string) {
-    const guru = await prisma.guru.findUnique({
-      where: { id_guru: id },
-    });
+    const guru = await prisma.guru.findUnique({ where: { id_guru: id } });
+    if (!guru) throw new Error("Guru not found");
 
-    if (!guru) {
-      throw new Error("Guru not found");
-    }
-
-    const updated = await prisma.guru.update({
+    return await prisma.guru.update({
       where: { id_guru: id },
       data: { fotoProfil: photoPath },
     });
-
-    return updated;
   }
 
   /**
@@ -255,39 +279,32 @@ export class GuruService {
   static async delete(id: number) {
     const guru = await prisma.guru.findUnique({
       where: { id_guru: id },
-      include: {
-        waliKelas: true,
-        user: true,
-      },
+      include: { waliKelas: true, user: true },
     });
 
-    if (!guru) {
-      throw new Error("Guru not found");
-    }
+    if (!guru) throw new Error("Guru not found");
 
-    // Check if guru is wali kelas
     if (guru.waliKelas && guru.waliKelas.length > 0) {
-      throw new Error(
-        "Cannot delete guru who is assigned as wali kelas. Remove wali kelas assignment first."
-      );
+      throw new Error("Cannot delete guru who is assigned as wali kelas.");
     }
 
-    // Check if guru has user account
-    if (guru.user) {
-      throw new Error(
-        "Cannot delete guru with user account. Delete user account first."
-      );
-    }
+    const userIdToDelete = guru.user?.id;
 
-    await prisma.guru.delete({
-      where: { id_guru: id },
-    });
+    await prisma.guru.delete({ where: { id_guru: id } });
+
+    // Hapus user jika role GURU
+    if (userIdToDelete && guru.user?.role === Role.GURU) {
+      try {
+        await prisma.user.delete({ where: { id: userIdToDelete } });
+      } catch (e) {
+      }
+    }
 
     return { message: "Guru deleted successfully" };
   }
 
   /**
-   * Get statistics
+   * Get Stats
    */
   static async getStats() {
     const [total, totalLaki, totalPerempuan, totalWaliKelas, withUserAccount] =
@@ -295,36 +312,18 @@ export class GuruService {
         prisma.guru.count(),
         prisma.guru.count({ where: { jenisKelamin: "L" } }),
         prisma.guru.count({ where: { jenisKelamin: "P" } }),
-        prisma.guru.count({
-          where: {
-            waliKelas: {
-              some: {},
-            },
-          },
-        }),
-        prisma.guru.count({
-          where: {
-            user: {
-              isNot: null,
-            },
-          },
-        }),
+        prisma.guru.count({ where: { waliKelas: { some: {} } } }),
+        prisma.guru.count({ where: { user: { isNot: null } } }),
       ]);
 
-    // Get jabatan distribution
     const jabatanStats = await prisma.guru.groupBy({
       by: ["jabatan"],
-      _count: {
-        jabatan: true,
-      },
+      _count: { jabatan: true },
     });
 
     return {
       total,
-      byGender: {
-        laki: totalLaki,
-        perempuan: totalPerempuan,
-      },
+      byGender: { laki: totalLaki, perempuan: totalPerempuan },
       totalWaliKelas,
       withUserAccount,
       byJabatan: jabatanStats.map((item) => ({
@@ -335,83 +334,52 @@ export class GuruService {
   }
 
   /**
-   * Get guru who are not wali kelas (available for assignment)
+   * Available for Wali Kelas
    */
   static async getAvailableForWaliKelas() {
-    const guru = await prisma.guru.findMany({
-      where: {
-        waliKelas: {
-          none: {},
-        },
-      },
-      select: {
-        id_guru: true,
-        nip: true,
-        nama: true,
-        jabatan: true,
-      },
+    return await prisma.guru.findMany({
+      where: { waliKelas: { none: {} } },
+      select: { id_guru: true, nip: true, nama: true, jabatan: true },
       orderBy: { nama: "asc" },
     });
-
-    return guru;
   }
 
   /**
-   * Link guru to user account
+   * Link User
    */
   static async linkToUser(guruId: number, userId: number) {
     const guru = await prisma.guru.findUnique({
       where: { id_guru: guruId },
       include: { user: true },
     });
+    if (!guru) throw new Error("Guru not found");
+    if (guru.user) throw new Error("Guru already has a user account");
 
-    if (!guru) {
-      throw new Error("Guru not found");
-    }
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error("User not found");
 
-    if (guru.user) {
-      throw new Error("Guru already has a user account");
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    if (user.guruId || user.siswaId) {
-      throw new Error("User already linked to another guru or siswa");
-    }
-
+    // Asumsi update dilakukan di sisi User
+    // Pastikan schema.prisma Anda memiliki relasi guruId di tabel User
+    // Jika relasi ada di tabel Guru, gunakan prisma.guru.update
     const updated = await prisma.user.update({
       where: { id: userId },
-      data: { guruId },
-      include: {
-        guru: true,
-      },
+      data: { guruId: guruId }, 
+      include: { guru: true },
     });
 
     return updated;
   }
 
   /**
-   * Unlink guru from user account
+   * Unlink User
    */
   static async unlinkFromUser(guruId: number) {
     const guru = await prisma.guru.findUnique({
       where: { id_guru: guruId },
       include: { user: true },
     });
-
-    if (!guru) {
-      throw new Error("Guru not found");
-    }
-
-    if (!guru.user) {
-      throw new Error("Guru does not have a user account");
-    }
+    if (!guru) throw new Error("Guru not found");
+    if (!guru.user) throw new Error("Guru does not have a user account");
 
     await prisma.user.update({
       where: { id: guru.user.id },
