@@ -25,8 +25,11 @@ import dashboardGuruRoutes from "./routes/dashboard-guru.routes";
 
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// 1. Security & Base Middleware
+app.use(helmet({
+  crossOriginResourcePolicy: false, // IZINKAN GAMBAR DILOAD DARI ORIGIN BERBEDA
+}));
+
 app.use(
   cors({
     origin:
@@ -37,32 +40,36 @@ app.use(
   })
 );
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: ENV.NODE_ENV === "development" ? 1000 : 100,
-  message: {
-    success: false,
-    message: "Terlalu banyak request, coba lagi nanti",
-  },
-});
-app.use("/api", limiter);
-
-// Body parsing middleware
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-
-// Static files (untuk upload)
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-
-// Logging
+// 2. Logging
 if (ENV.NODE_ENV === "development") {
   app.use(morgan("dev"));
 } else {
   app.use(morgan("combined"));
 }
 
-// Health check
+// 3. Static Files (PRIORITAS TINGGI - SEBELUM RATE LIMITER)
+// Gunakan path.resolve agar lebih robust
+const uploadsPath = path.join(process.cwd(), "uploads");
+console.log("📂 Serving static files from:", uploadsPath); // Cek log ini nanti!
+app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
+
+// 4. Rate Limiting (Hanya untuk API, jangan limit gambar)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: ENV.NODE_ENV === "development" ? 1000 : 100,
+  message: {
+    success: false,
+    message: "Terlalu banyak request, coba lagi nanti",
+  },
+});
+// Terapkan limiter HANYA ke routes /api, bukan ke /uploads
+app.use("/api", limiter);
+
+// 5. Body Parsing
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// 6. Health Check
 app.get("/health", (req, res) => {
   res.json({
     success: true,
@@ -79,21 +86,11 @@ app.get("/api", (req, res) => {
     success: true,
     message: "School Management API",
     version: "1.0.0",
-    documentation: "/api/docs", // Nanti untuk Swagger
-    endpoints: {
-      health: "/health",
-      auth: "/api/auth",
-      guru: "/api/guru",
-      siswa: "/api/siswa",
-      user: "/api/users",
-      tahunajaran: "/api/tahun-ajaran",
-      pendaftaran: "/api/pendaftaran",
-      // akan ditambah seiring development
-    },
+    // ...
   });
 });
 
-// Routes akan ditambahkan di sini
+// 7. Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/tahun-ajaran", tahunAjaranRoutes);
@@ -111,11 +108,11 @@ app.use("/api/pembayaran", pembayaranRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/dashboard-guru", dashboardGuruRoutes);
 
-// Error handling
+// 8. Error Handling
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-const PORT = ENV.PORT;
+const PORT = ENV.PORT || 5000; // Fallback port
 
 app.listen(PORT, () => {
   console.log("🎓 ================================");
@@ -123,6 +120,7 @@ app.listen(PORT, () => {
   console.log("🎓 ================================");
   console.log(`🚀 Server: http://localhost:${PORT}`);
   console.log(`📖 API Info: http://localhost:${PORT}/api`);
+  console.log(`📂 Static: http://localhost:${PORT}/uploads`);
   console.log(`💚 Health: http://localhost:${PORT}/health`);
   console.log(`🌍 Environment: ${ENV.NODE_ENV}`);
   console.log("🎓 ================================");

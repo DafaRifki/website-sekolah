@@ -17,7 +17,6 @@ router.use(authenticateToken);
 /**
  * GET /api/guru/stats
  * Get guru statistics
- * Must be before /:id route
  */
 router.get("/stats", GuruController.getStats);
 
@@ -48,12 +47,10 @@ router.get("/:id", GuruController.getById);
 /**
  * POST /api/guru
  * Create new guru
- * PERBAIKAN: Tambahkan upload.single("fotoProfil") SEBELUM validasi
- * Agar req.body terisi dan req.file terdeteksi
  */
 router.post(
   "/", 
-  upload.single("fotoProfil"), // <--- TAMBAHKAN INI
+  upload.single("fotoProfil"), 
   validate(guruValidation), 
   GuruController.create
 );
@@ -61,14 +58,26 @@ router.post(
 /**
  * PUT /api/guru/:id
  * Update guru
+ * [PERBAIKAN 1 - FATAL] Tambahkan upload.single("fotoProfil") disini!
+ * Tanpa ini, edit foto tidak akan pernah masuk ke controller.
  */
-router.put("/:id", validate(updateGuruValidation), GuruController.update);
+router.put(
+  "/:id", 
+  upload.single("fotoProfil"), // <--- WAJIB DITAMBAHKAN
+  validate(updateGuruValidation), 
+  GuruController.update
+);
 
 /**
  * POST /api/guru/:id/upload
- * Upload foto profil guru
+ * Upload foto profil guru (Standalone)
+ * [PERBAIKAN 2] Ubah "photo" menjadi "fotoProfil" agar konsisten dengan middleware
  */
-router.post("/:id/upload", upload.single("photo"), GuruController.uploadPhoto);
+router.post(
+  "/:id/upload", 
+  upload.single("fotoProfil"), // <--- Ganti "photo" jadi "fotoProfil"
+  GuruController.uploadPhoto
+);
 
 /**
  * DELETE /api/guru/:id
