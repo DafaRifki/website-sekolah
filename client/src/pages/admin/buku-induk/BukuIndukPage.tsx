@@ -19,22 +19,59 @@ export default function BukuIndukPage() {
   const [siswaList, setSiswaList] = useState<Siswa[]>([]);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalData, setTotalData] = useState(0);
+  const [loading, setLoading] = useState(false);
   const perPage = 10;
   const navigate = useNavigate();
 
+  // Fetch when page changes (skip if triggered by search to avoid double fetch, controlled by check?)
+  // Actually, easiest way is to separate the "fetch" function and call it from effects.
+  // But due to the cleanup nature of debounce, it's a bit tricky to mix.
+  // Let's use a simpler pattern:
+  // 1. One effect for fetching that depends on [currentPage, debouncedSearch]
+  // We need a debouncedSearch state.
+
+  // Refactored approach in this block:
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
   useEffect(() => {
-    apiClient.get("/siswa").then((res) => setSiswaList(res.data.data));
-  }, []);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  // Filter
-  const filtered = siswaList.filter((s) =>
-    s.nama.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    fetchData();
+  }, [currentPage, debouncedSearch]);
 
-  // Pagination
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const startIndex = (currentPage - 1) * perPage;
-  const paginated = filtered.slice(startIndex, startIndex + perPage);
+  const fetchData = React.useCallback(() => {
+    setLoading(true);
+    apiClient
+      .get("/siswa", {
+        params: {
+          page: currentPage,
+          limit: perPage,
+          // Only send search if it has value
+          ...(debouncedSearch ? { search: debouncedSearch } : {}),
+        },
+      })
+      .then((res) => {
+        setSiswaList(res.data.data);
+        if (res.data.pagination) {
+          setTotalPages(res.data.pagination.totalPages);
+          setTotalData(res.data.pagination.total);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching siswa:", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [currentPage, debouncedSearch]);
 
   return (
     <div className="container mx-auto p-6">
@@ -58,9 +95,19 @@ export default function BukuIndukPage() {
             {/* Table Section */}
             <div>
               <SiswaTable
-                siswaList={paginated}
+                siswaList={siswaList}
                 onDetail={(id) => navigate(`/buku-induk/${id}`)}
               />
+              {loading && (
+                <div className="text-center py-4 text-gray-500">
+                  Memuat data...
+                </div>
+              )}
+              {!loading && siswaList.length === 0 && (
+                <div className="text-center py-4 text-gray-500">
+                  Tidak ada data siswa ditemukan.
+                </div>
+              )}
             </div>
 
             {/* Pagination Section */}
@@ -70,7 +117,7 @@ export default function BukuIndukPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={currentPage === 1}
+                    disabled={currentPage === 1 || loading}
                     onClick={() => setCurrentPage((p) => p - 1)}
                     className="h-8 px-3">
                     Sebelumnya
@@ -78,7 +125,7 @@ export default function BukuIndukPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={currentPage === totalPages}
+                    disabled={currentPage === totalPages || loading}
                     onClick={() => setCurrentPage((p) => p + 1)}
                     className="h-8 px-3">
                     Selanjutnya
@@ -86,8 +133,8 @@ export default function BukuIndukPage() {
                 </div>
 
                 <div className="text-sm text-gray-600">
-                  Halaman {currentPage} dari {totalPages} ({filtered.length}{" "}
-                  total data)
+                  Halaman {currentPage} dari {totalPages} ({totalData} total
+                  data)
                 </div>
               </div>
             )}

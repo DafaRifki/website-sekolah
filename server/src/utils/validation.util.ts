@@ -266,6 +266,14 @@ export const pendaftaranValidation = Joi.object({
     "any.required": "Tahun ajaran wajib dipilih",
     "number.base": "Tahun ajaran harus berupa angka",
   }),
+
+  // Optional Status (untuk admin)
+  statusDokumen: Joi.string()
+    .valid("BELUM_DITERIMA", "LENGKAP", "KURANG")
+    .optional(),
+  statusPembayaran: Joi.string()
+    .valid("BELUM_BAYAR", "LUNAS", "CICIL")
+    .optional(),
 });
 
 export const updatePendaftaranValidation = Joi.object({

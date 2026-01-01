@@ -64,6 +64,16 @@ export class AuthService {
         role: true,
         guruId: true,
         siswaId: true,
+        siswa: {
+          select: {
+            pendaftaran: {
+              select: {
+                statusDokumen: true,
+                statusPembayaran: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -85,11 +95,26 @@ export class AuthService {
       role: user.role,
     });
 
+    let statusPendaftaran: string | undefined;
+    if (user.role === "SISWA" && user.siswa?.pendaftaran?.[0]) {
+      const pendaftaran = user.siswa.pendaftaran[0];
+      // Logic: If document is missing OR payment is installment -> PENDING
+      if (
+        pendaftaran.statusDokumen !== "LENGKAP" ||
+        pendaftaran.statusPembayaran === "CICIL"
+      ) {
+        statusPendaftaran = "PENDING_VERIFIKASI";
+      } else {
+        statusPendaftaran = "DITERIMA";
+      }
+    }
+
     return {
       user: {
         id: user.id,
         email: user.email,
         role: user.role,
+        statusPendaftaran,
       },
       tokens,
     };

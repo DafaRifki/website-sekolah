@@ -18,6 +18,7 @@ import delay from "@/lib/delay";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import apiClient from "@/config/axios";
+import { Eye, EyeOff } from "lucide-react";
 
 // ----------------- VALIDASI -----------------
 const formSchema = z.object({
@@ -30,11 +31,9 @@ const formSchema = z.object({
 });
 
 // ----------------- LOGIN FORM -----------------
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"form">) {
+export function LoginForm({ className }: React.ComponentProps<"form">) {
   const [loading, setLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -76,12 +75,9 @@ export function LoginForm({
         }
       }
 
-      toast.success("Login berhasil", {
-        onAutoClose: () => {
-          navigate("/dashboard");
-          setLoading(false);
-        },
-      });
+      toast.success("Login berhasil");
+      navigate("/dashboard");
+      setLoading(false);
     } catch (err: unknown) {
       // log the error for debugging
       console.error("Login error:", err);
@@ -102,9 +98,7 @@ export function LoginForm({
         errorMessage = err.message;
       }
 
-      toast.error(errorMessage, {
-        onAutoClose: () => setLoading(false),
-      });
+      toast.error(errorMessage);
       setLoading(false);
     }
     // console.log(values);
@@ -158,12 +152,29 @@ export function LoginForm({
                 <FormItem>
                   <FormLabel className="text-gray-700">Password</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Masukan Password"
-                      {...field}
-                      className="rounded-xl border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-400 transition-all"
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Masukan Password"
+                        {...field}
+                        className="rounded-xl border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-400 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                        aria-label={
+                          showPassword
+                            ? "Sembunyikan Password"
+                            : "Lihat Password"
+                        }>
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
                   </FormControl>
                   <FormMessage className="text-red-500 text-xs" />
                 </FormItem>

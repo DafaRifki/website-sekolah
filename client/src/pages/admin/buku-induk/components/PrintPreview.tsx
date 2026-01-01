@@ -1,5 +1,5 @@
 import React, { forwardRef } from "react";
-import AvatarDefault from "../../../../assets/avatar.png";
+import AvatarDefault from "@/assets/avatar.png";
 
 interface PrintPreviewProps {
   siswa: {
@@ -29,9 +29,14 @@ interface PrintPreviewProps {
 
 const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
   ({ siswa, semesterFilter }, ref) => {
-    const filteredNilaiRapor = (siswa.nilaiRapor || []).filter((n) =>
-      n.semester.toLowerCase().includes(semesterFilter.toLowerCase())
-    );
+    const filteredNilaiRapor = (siswa.nilaiRapor || []).filter((n) => {
+      const sem = n.semester.toString();
+      if (semesterFilter === "Ganjil") {
+        return sem === "1" || sem.toLowerCase() === "ganjil";
+      } else {
+        return sem === "2" || sem.toLowerCase() === "genap";
+      }
+    });
 
     const activeTahunAjaran =
       siswa.kelas?.tahunRel?.filter((tr) => tr.isActive) || [];
@@ -304,7 +309,11 @@ const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
                             {n.mapel.namaMapel}
                           </td>
                           <td className="border border-black p-0.5 text-center">
-                            {n.semester}
+                            {n.semester === "1"
+                              ? "Ganjil"
+                              : n.semester === "2"
+                              ? "Genap"
+                              : n.semester}
                           </td>
                           <td className="border border-black p-0.5 text-center font-medium">
                             {n.nilai}

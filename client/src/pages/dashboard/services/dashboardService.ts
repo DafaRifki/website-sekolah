@@ -36,6 +36,33 @@ export const getDashboardSiswa = async (): Promise<DashboardSiswa> => {
   }
 };
 
+export const getTagihanSummarySiswa = async () => {
+  try {
+    const res = await apiClient.get("/tagihan/siswa-summary");
+    return res.data.data;
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      // Endpoint belum ada → fallback aman
+      return {
+        totalSisaPembayaran: 0,
+        jumlahTagihanBelumLunas: 0,
+        tagihanTerbaru: null,
+      };
+    }
+    throw error;
+  }
+};
+
+export const getMyTagihan = async () => {
+  try {
+    const res = await apiClient.get("/tagihan/my-bills");
+    return res.data.data;
+  } catch (error) {
+    console.error("Error fetching my tagihan:", error);
+    throw error;
+  }
+};
+
 // ==================== GURU DASHBOARD ====================
 export const getDashboardGuru = async (): Promise<DashboardGuru> => {
   try {

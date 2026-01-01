@@ -180,7 +180,7 @@ export default function PembayaranPage() {
                     Total Amount
                   </p>
                   <p className="text-2xl font-bold text-green-600">
-                    Rp{(stats.totalBayar / 1000000).toFixed(1)}M
+                    Rp {stats.totalBayar.toLocaleString("id-ID")}
                   </p>
                 </div>
               </CardContent>
@@ -196,8 +196,7 @@ export default function PembayaranPage() {
                     Rata-rata
                   </p>
                   <p className="text-2xl font-bold text-purple-600">
-                    Rp
-                    {Math.round(stats.rataRataBayar / 1000)}K
+                    Rp {Math.round(stats.rataRataBayar).toLocaleString("id-ID")}
                   </p>
                 </div>
               </CardContent>

@@ -33,6 +33,8 @@ import PembayaranPage from "./pages/admin/pembayaran/PembayaranPage.tsx";
 import React from "react";
 // import App from "./App";
 import "./index.css";
+import TagihanPage from "./pages/admin/tagihan/TagihanPage.tsx";
+import TagihanSiswaPage from "./pages/dashboard/siswa/TagihanSiswaPage.tsx";
 // ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 //   <React.StrictMode>
 //     {/* <App /> */}
@@ -77,6 +79,7 @@ ReactDOM.createRoot(root).render(
       {/* Grup dengan AuthLayout */}
       <Route element={<AuthLayout />}>
         <Route path="/dashboard" element={<DashboardPageIndex />} />
+        <Route path="/dashboard/tagihan" element={<TagihanSiswaPage />} />
 
         {/* Data Siswa */}
         <Route path="/siswa" element={<DataSiswaPage />} />
@@ -86,6 +89,7 @@ ReactDOM.createRoot(root).render(
         <Route path="/siswa-baru" element={<SiswaBaruLayout />}>
           <Route index element={<Navigate to="pendaftaran" replace />} />
           <Route path="pendaftaran" element={<PendaftaranPage />} />
+          <Route path="tagihan" element={<TagihanPage />} />
           <Route path="pembayaran" element={<PembayaranPage />} />
         </Route>
 

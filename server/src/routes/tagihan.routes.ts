@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { TagihanController } from "../controllers/tagihan.controller";
-import { authenticateToken } from "../middleware/auth.middleware";
+import { authenticateToken, requireRole } from "../middleware/auth.middleware";
 import { validate, validateQuery } from "../middleware/validation.middleware";
 import {
   tagihanValidation,
@@ -22,6 +22,21 @@ router.get("/stats", TagihanController.getStats);
 
 // Get by bulan (monthly report)
 router.get("/bulan/:bulan", TagihanController.getByBulan);
+
+router.get(
+  "/siswa-summary",
+  authenticateToken,
+  requireRole("SISWA"),
+  TagihanController.getSiswaSummary
+);
+
+// Get my bills (must be before /:id)
+router.get(
+  "/my-bills",
+  authenticateToken,
+  requireRole("SISWA"),
+  TagihanController.getMyTagihan
+);
 
 // Get by siswa
 router.get("/siswa/:siswaId", TagihanController.getBySiswa);

@@ -5,6 +5,8 @@ export interface PaginationQuery {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   kelasId?: string;
+  tahunAjaranId?: number | string;
+  status?: string;
 }
 
 export interface PaginationResult<T> {
