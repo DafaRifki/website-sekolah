@@ -71,6 +71,9 @@ interface CreatePendaftaranData {
   noHp?: string;
   asalSekolah?: string;
   tahunAjaranId: number;
+  // Optional status fields for admin to set during creation
+  statusDokumen?: StatusDokumen;
+  statusPembayaran?: StatusPembayaranPendaftaran;
 }
 
 interface UpdatePendaftaranData {
@@ -190,6 +193,10 @@ export class PendaftaranService {
       throw new Error("Tahun ajaran not found");
     }
 
+    // Determine status from input or use defaults
+    const statusDokumen = data.statusDokumen || StatusDokumen.BELUM_DITERIMA;
+    const statusPembayaran = data.statusPembayaran || StatusPembayaranPendaftaran.BELUM_BAYAR;
+
     const pendaftaran = await prisma.pendaftaran.create({
       data: {
         ...data,
@@ -208,8 +215,8 @@ export class PendaftaranService {
         tanggalLahirWali: data.tanggalLahirWali
           ? new Date(data.tanggalLahirWali)
           : undefined,
-        statusDokumen: StatusDokumen.BELUM_DITERIMA,
-        statusPembayaran: StatusPembayaranPendaftaran.BELUM_BAYAR,
+        statusDokumen,
+        statusPembayaran,
       },
       include: {
         tahunAjaran: {
@@ -220,6 +227,21 @@ export class PendaftaranService {
         },
       },
     });
+
+    // Auto-approve if statusDokumen is LENGKAP and statusPembayaran is not BELUM_BAYAR
+    if (
+      statusDokumen === StatusDokumen.LENGKAP &&
+      statusPembayaran !== StatusPembayaranPendaftaran.BELUM_BAYAR
+    ) {
+      try {
+        const approvalResult = await this.approve(pendaftaran.id_pendaftaran);
+        return approvalResult.pendaftaran;
+      } catch (error) {
+        // If auto-approve fails, return the pendaftaran without approval
+        console.error("Auto-approve failed:", error);
+        return pendaftaran;
+      }
+    }
 
     return pendaftaran;
   }

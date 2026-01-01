@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { AxiosError } from "axios";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +31,9 @@ import {
   MapPin,
   UserPlus,
   GraduationCap,
+  AlertCircle,
 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import apiClient from "@/config/axios";
 
 interface TambahPendaftaranModalProps {
@@ -41,7 +44,7 @@ interface FormValues {
   nama: string;
   alamat: string;
   tanggalLahir: string;
-  jenisKelamin: "Laki-laki" | "Perempuan";
+  jenisKelamin: "L" | "P";
   noHp: string;
   email: string;
   tahunAjaranId: number;
@@ -58,40 +61,115 @@ export default function TambahPendaftaranModal({
   const [open, setOpen] = useState(false);
   const [tahunAjaranList, setTahunAjaranList] = useState<TahunAjaran[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>("");
 
-  const { register, handleSubmit, reset, setValue, watch } =
-    useForm<FormValues>();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<FormValues>();
 
   useEffect(() => {
     const fetchTahunAjaran = async () => {
       try {
-        const res = await apiClient.get("/tahun-ajaran"); // ganti endpoint sesuai backend-mu
-        setTahunAjaranList(res.data.data);
+        const res = await apiClient.get("/tahun-ajaran");
+        setTahunAjaranList(res.data.data || []);
       } catch (err) {
         console.error("Gagal mengambil data tahun ajaran", err);
+        setError("Gagal memuat data tahun ajaran");
       }
     };
 
-    fetchTahunAjaran();
-  }, []);
+    if (open) {
+      fetchTahunAjaran();
+      setError(""); // Reset error saat modal dibuka
+    }
+  }, [open]);
 
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
+    setError("");
+
     try {
-      await apiClient.post("/pendaftaran/admin", values);
+      // Pastikan semua field required terisi
+      if (!values.nama || !values.tahunAjaranId) {
+        throw new Error("Nama dan Tahun Ajaran wajib diisi");
+      }
+
+      // Format data sesuai dengan backend validation schema
+      const payload = {
+        // Required fields
+        nama: values.nama.trim(),
+        tahunAjaranId: Number(values.tahunAjaranId),
+
+        // Optional personal data
+        alamat: values.alamat?.trim() || "",
+        tanggalLahir: values.tanggalLahir || null,
+        jenisKelamin: values.jenisKelamin || "",
+
+        // Optional contact
+        email: values.email?.trim() || "",
+        noHp: values.noHp?.trim() || "",
+
+        // Set default status values (backend akan menggunakan default jika tidak dikirim)
+        // Tapi lebih baik eksplisit kirim untuk clarity
+        statusDokumen: "BELUM_DITERIMA",
+        statusPembayaran: "BELUM_BAYAR",
+      };
+
+      const response = await apiClient.post("/pendaftaran", payload);
+
+      // Reset form dan tutup modal
       reset();
       setOpen(false);
+
+      // Panggil callback success
       onSuccess();
+
+      // Show success message (bisa diganti dengan toast notification)
+      alert(`Pendaftaran berhasil ditambahkan untuk ${values.nama}!`);
     } catch (error) {
       console.error("Gagal menambah pendaftaran", error);
-      alert("Terjadi kesalahan saat menambahkan pendaftaran.");
+
+      // Handle error dengan lebih detail
+      const axiosError = error as AxiosError<{
+        error?: string;
+        message?: string;
+        details?: any;
+      }>;
+
+      let errorMessage = "Terjadi kesalahan saat menambahkan pendaftaran.";
+
+      if (axiosError.response?.data) {
+        const errorData = axiosError.response.data;
+        errorMessage = errorData.error || errorData.message || errorMessage;
+
+        // Jika ada detail validasi error
+        if (errorData.details) {
+          console.error("Validation details:", errorData.details);
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDialogClose = (newOpen: boolean) => {
+    if (!newOpen && !loading) {
+      reset();
+      setError("");
+    }
+    setOpen(newOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogTrigger asChild>
         <Button className="bg-blue-600 hover:bg-blue-700">
           <UserPlus className="h-4 w-4 mr-2" />
@@ -107,6 +185,13 @@ export default function TambahPendaftaranModal({
           <Separator />
         </DialogHeader>
 
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <Card className="border-0 shadow-sm bg-slate-50/50 dark:bg-slate-800/50">
             <CardContent className="p-6 space-y-4">
@@ -120,15 +205,19 @@ export default function TambahPendaftaranModal({
                   <Label
                     htmlFor="nama"
                     className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Nama Lengkap
+                    Nama Lengkap <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="nama"
                     placeholder="Masukkan nama lengkap"
-                    {...register("nama")}
-                    required
+                    {...register("nama", { required: "Nama wajib diisi" })}
                     className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                   />
+                  {errors.nama && (
+                    <p className="text-sm text-red-500">
+                      {errors.nama.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -142,7 +231,6 @@ export default function TambahPendaftaranModal({
                     id="tanggalLahir"
                     type="date"
                     {...register("tanggalLahir")}
-                    required
                     className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
@@ -158,7 +246,6 @@ export default function TambahPendaftaranModal({
                     id="alamat"
                     placeholder="Masukkan alamat lengkap"
                     {...register("alamat")}
-                    required
                     className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
@@ -169,18 +256,14 @@ export default function TambahPendaftaranModal({
                   </Label>
                   <Select
                     onValueChange={(value) =>
-                      setValue(
-                        "jenisKelamin",
-                        value as "Laki-laki" | "Perempuan"
-                      )
-                    }
-                    required>
+                      setValue("jenisKelamin", value as "L" | "P")
+                    }>
                     <SelectTrigger className="border-slate-300 focus:border-blue-500 focus:ring-blue-500">
                       <SelectValue placeholder="Pilih jenis kelamin" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Laki-laki">Laki-laki</SelectItem>
-                      <SelectItem value="Perempuan">Perempuan</SelectItem>
+                      <SelectItem value="L">Laki-laki</SelectItem>
+                      <SelectItem value="P">Perempuan</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -207,7 +290,6 @@ export default function TambahPendaftaranModal({
                     id="noHp"
                     placeholder="Masukkan nomor HP"
                     {...register("noHp")}
-                    required
                     className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
@@ -224,7 +306,6 @@ export default function TambahPendaftaranModal({
                     type="email"
                     placeholder="Masukkan alamat email"
                     {...register("email")}
-                    required
                     className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
@@ -241,7 +322,7 @@ export default function TambahPendaftaranModal({
 
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Tahun Ajaran
+                  Tahun Ajaran <span className="text-red-500">*</span>
                 </Label>
                 <Select
                   onValueChange={(value) =>
@@ -252,13 +333,19 @@ export default function TambahPendaftaranModal({
                     <SelectValue placeholder="Pilih tahun ajaran" />
                   </SelectTrigger>
                   <SelectContent>
-                    {tahunAjaranList.map((tahun) => (
-                      <SelectItem
-                        key={tahun.id_tahun}
-                        value={tahun.id_tahun.toString()}>
-                        {tahun.namaTahun}
+                    {tahunAjaranList.length > 0 ? (
+                      tahunAjaranList.map((tahun) => (
+                        <SelectItem
+                          key={tahun.id_tahun}
+                          value={tahun.id_tahun.toString()}>
+                          {tahun.namaTahun}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="0" disabled>
+                        Tidak ada data tahun ajaran
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -269,17 +356,15 @@ export default function TambahPendaftaranModal({
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                reset();
-                setOpen(false);
-              }}
+              onClick={() => handleDialogClose(false)}
+              disabled={loading}
               className="px-6">
               Batal
             </Button>
             <Button
               type="submit"
-              disabled={loading}
-              className="px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+              disabled={loading || tahunAjaranList.length === 0}
+              className="px-6 bg-blue-600 hover:bg-blue-700">
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

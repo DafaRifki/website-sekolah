@@ -150,6 +150,17 @@ export class SiswaService {
             orangtua: true,
           },
         },
+        nilaiRapor: {
+          select: {
+            semester: true,
+            nilai: true,
+            mapel: {
+              select: {
+                namaMapel: true,
+              },
+            },
+          },
+        },
         _count: {
           select: {
             nilaiRapor: true,

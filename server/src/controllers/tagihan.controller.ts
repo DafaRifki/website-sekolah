@@ -15,6 +15,10 @@ export class TagihanController {
         page: parseInt(req.query.page as string) || 1,
         limit: parseInt(req.query.limit as string) || 10,
         search: req.query.search as string,
+        tahunAjaranId: req.query.tahunAjaranId
+          ? parseInt(req.query.tahunAjaranId as string)
+          : undefined,
+        status: req.query.status as string,
       };
 
       const result = await TagihanService.getAll(query);
@@ -226,6 +230,68 @@ export class TagihanController {
       return sendSuccess(res, result.message, null);
     } catch (error: any) {
       return sendError(res, "Failed to delete tagihan", error.message, 400);
+    }
+  }
+  /**
+   * GET /api/tagihan/siswa-summary
+   * Get summary for siswa dashboard
+   */
+  static async getSiswaSummary(req: Request, res: Response) {
+    try {
+      // Must be authenticated as SISWA
+      if (!req.user || req.user.role !== "SISWA") {
+        return sendError(res, "Unauthorized", null, 401);
+      }
+
+      const siswaId = req.user.siswaId;
+
+      if (!siswaId) {
+        // Fallback if somehow siswaId is missing from token/user
+        return sendError(res, "Siswa profile not found", null, 400); // 400 or 404
+      }
+
+      const summary = await TagihanService.getSiswaSummary(siswaId);
+
+      return sendSuccess(res, "Tagihan summary retrieved", summary);
+    } catch (error: any) {
+      return sendError(
+        res,
+        "Failed to get tagihan summary",
+        error.message,
+        500
+      );
+    }
+  }
+
+  /**
+   * GET /api/tagihan/my-bills
+   * Get all tagihan for the logged-in student
+   */
+  static async getMyTagihan(req: Request, res: Response) {
+    try {
+      if (!req.user || req.user.role !== "SISWA") {
+        return sendError(res, "Unauthorized", null, 401);
+      }
+
+      const siswaId = req.user.siswaId;
+      if (!siswaId) {
+        return sendError(res, "Siswa profile not found", null, 400);
+      }
+
+      const tahunAjaranId = req.query.tahunAjaranId
+        ? parseInt(req.query.tahunAjaranId as string)
+        : undefined;
+      const status = req.query.status as StatusTagihan | undefined;
+
+      const tagihan = await TagihanService.getBySiswa(
+        siswaId,
+        tahunAjaranId,
+        status
+      );
+
+      return sendSuccess(res, "My tagihan retrieved successfully", tagihan);
+    } catch (error: any) {
+      return sendError(res, "Failed to get my tagihan", error.message, 500);
     }
   }
 }

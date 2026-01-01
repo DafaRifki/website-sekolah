@@ -56,6 +56,16 @@ export class TagihanService {
       ];
     }
 
+    // Filter by tahunAjaranId if provided
+    if (query.tahunAjaranId) {
+      where.tahunAjaranId = parseInt(query.tahunAjaranId as string);
+    }
+
+    // Filter by status if provided
+    if (query.status && query.status !== "all") {
+      where.status = query.status as StatusTagihan;
+    }
+
     const [tagihan, total] = await Promise.all([
       prisma.tagihan.findMany({
         where,
@@ -649,5 +659,60 @@ export class TagihanService {
         sisaPembayaran: t.tarif.nominal - totalBayar,
       };
     });
+  }
+  /**
+   * Get summary for siswa dashboard
+   */
+  static async getSiswaSummary(siswaId: number) {
+    // 1. Get all outstanding bills
+    const outstanding = await prisma.tagihan.findMany({
+      where: {
+        id_siswa: siswaId,
+        status: {
+          in: [StatusTagihan.BELUM_BAYAR, StatusTagihan.CICIL],
+        },
+      },
+      include: {
+        tarif: true,
+        tahunAjaran: true,
+        pembayaran: true,
+      },
+      orderBy: { id_tagihan: "desc" },
+    });
+
+    let totalSisaPembayaran = 0;
+
+    outstanding.forEach((t) => {
+      const bayar = t.pembayaran.reduce((sum, p) => sum + p.jumlahBayar, 0);
+      totalSisaPembayaran += t.tarif.nominal - bayar;
+    });
+
+    // 2. Get latest bill (could be one of the outstanding, or just the latest created)
+    // If we want "tagihan terbaru", we just take the first from outstanding if exists,
+    // or checks all tagihan. Usually we care about the pending ones first.
+    // If no pending, maybe show "All paid".
+
+    // For the UI "Tagihan Terbaru" card:
+    let tagihanTerbaru = null;
+    if (outstanding.length > 0) {
+      const latest = outstanding[0];
+      const bayarLatest = latest.pembayaran.reduce(
+        (sum, p) => sum + p.jumlahBayar,
+        0
+      );
+
+      tagihanTerbaru = {
+        namaTagihan: latest.tarif.namaTagihan,
+        bulan: latest.bulan,
+        tahunAjaran: latest.tahunAjaran.namaTahun,
+        sisa: latest.tarif.nominal - bayarLatest,
+      };
+    }
+
+    return {
+      totalSisaPembayaran,
+      jumlahTagihanBelumLunas: outstanding.length,
+      tagihanTerbaru,
+    };
   }
 }

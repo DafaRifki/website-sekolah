@@ -8,6 +8,8 @@ import {
   Archive,
   Notebook,
   FileUser,
+  DollarSign,
+  Banknote,
 } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
@@ -76,7 +78,7 @@ const menuItems: Record<Role, MenuSection[]> = {
     },
     {
       type: "link",
-      title: "Pendaftaran",
+      title: "Administrasi & Keuangan",
       links: [
         {
           name: "Siswa Baru & Pembayaran",
@@ -138,6 +140,11 @@ const menuItems: Record<Role, MenuSection[]> = {
           ],
         },
       ],
+    },
+    {
+      type: "link",
+      title: "Riwayat Pembayaran",
+      links: [{ name: "Invoice", url: "/dashboard/tagihan", icon: Banknote }],
     },
     {
       type: "link",

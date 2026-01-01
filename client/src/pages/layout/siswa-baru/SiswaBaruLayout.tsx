@@ -24,6 +24,16 @@ export default function SiswaBaruLayout() {
             Pendaftaran
           </Link>
           <Link
+            to="/siswa-baru/tagihan"
+            className={cn(
+              "px-3 py-2 text-sm font-medium",
+              location.pathname.includes("/siswa-baru/tagihan")
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+            )}>
+            Tagihan
+          </Link>
+          <Link
             to="/siswa-baru/pembayaran"
             className={cn(
               "px-3 py-2 text-sm font-medium",

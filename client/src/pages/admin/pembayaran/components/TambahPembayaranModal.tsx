@@ -14,7 +14,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -22,20 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import {
-  Plus,
-  CreditCard,
-  User,
-  Receipt,
-  Banknote,
-  AlertCircle,
-  Users,
-  Tag,
-  Calendar,
-} from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import apiClient from "@/config/axios";
 
 interface Siswa {
@@ -45,14 +32,15 @@ interface Siswa {
 
 interface Tarif {
   id_tarif: number;
-  nominal: number;
   namaTagihan: string;
+  nominal: number;
 }
 
 interface TahunAjaran {
   id_tahun: number;
   namaTahun: string;
-  semester: string;
+  semester: number;
+  isActive: boolean;
 }
 
 interface TambahPembayaranModalProps {
@@ -65,9 +53,11 @@ export default function TambahPembayaranModal({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
+
   const [siswaList, setSiswaList] = useState<Siswa[]>([]);
   const [tarifList, setTarifList] = useState<Tarif[]>([]);
   const [tahunAjaranList, setTahunAjaranList] = useState<TahunAjaran[]>([]);
+
   const [form, setForm] = useState({
     siswaId: "",
     tarifId: "",
@@ -77,9 +67,9 @@ export default function TambahPembayaranModal({
     keterangan: "",
   });
 
-  const metodePembayaran = ["Transfer Bank", "Cash", "Virtual Account"];
+  const metodePembayaran = ["Transfer Bank", "Cash", "QRIS", "Virtual Account"];
 
-  // fetch data saat modal dibuka
+  // Fetch data saat modal dibuka
   useEffect(() => {
     if (open) {
       const fetchData = async () => {
@@ -90,15 +80,23 @@ export default function TambahPembayaranModal({
             apiClient.get("/tarif-pembayaran"),
             apiClient.get("/tahun-ajaran"),
           ]);
+
           setSiswaList(siswaRes.data.data || []);
           setTarifList(tarifRes.data.data || []);
-          setTahunAjaranList(tahunRes.data.data || []);
-        } catch (error: any) {
-          console.error(error);
-          toast.error("Gagal memuat data", {
-            description:
-              "Tidak dapat memuat data siswa, tarif, dan tahun ajaran",
-          });
+
+          const years = tahunRes.data.data || [];
+          setTahunAjaranList(years);
+
+          // Auto select active year
+          const activeYear = years.find((y: TahunAjaran) => y.isActive);
+          if (activeYear) {
+            setForm((prev) => ({
+              ...prev,
+              tahunAjaranId: String(activeYear.id_tahun),
+            }));
+          }
+        } catch {
+          toast.error("Gagal memuat data pendukung");
         } finally {
           setFetchLoading(false);
         }
@@ -107,77 +105,74 @@ export default function TambahPembayaranModal({
     }
   }, [open]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSelectChange = (value: string, name: string) => {
-    setForm({ ...form, [name]: value });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (
+      !form.siswaId ||
+      !form.tarifId ||
+      !form.tahunAjaranId ||
+      !form.jumlahBayar ||
+      !form.metode
+    ) {
+      toast.error("Mohon lengkapi semua field yang wajib diisi");
+      return;
+    }
+
     try {
       setLoading(true);
-
-      // ✅ Step 1: Cek apakah sudah ada tagihan untuk siswa + tarif + tahun ajaran ini
       let tagihanId: number;
 
+      // STEP 1: Cek apakah tagihan sudah ada
       try {
-        const checkTagihan = await apiClient.get(
-          `/tagihan/check?siswaId=${form.siswaId}&tarifId=${form.tarifId}&tahunAjaranId=${form.tahunAjaranId}`
+        const res = await apiClient.get(`/tagihan/siswa/${form.siswaId}`, {
+          params: {
+            tahunAjaranId: form.tahunAjaranId,
+          },
+        });
+
+        const existingTagihan = res.data.data.find(
+          (t: any) => t.tarif.id_tarif === Number(form.tarifId)
         );
 
-        if (checkTagihan.data.data) {
-          tagihanId = checkTagihan.data.data.id_tagihan;
-          toast.info("Tagihan sudah ada", {
-            description: "Menggunakan tagihan yang sudah ada",
-          });
+        if (existingTagihan) {
+          tagihanId = existingTagihan.id_tagihan;
         } else {
-          // Step 2: Buat tagihan baru jika belum ada
-          const createTagihan = await apiClient.post("/tagihan", {
-            id_siswa: Number(form.siswaId),
-            tarifId: Number(form.tarifId),
-            tahunAjaranId: Number(form.tahunAjaranId),
-            status: "BELUM_BAYAR",
-          });
-
-          tagihanId = createTagihan.data.data.id_tagihan;
+          throw new Error("Tagihan belum ada");
         }
-      } catch (error: any) {
-        // Jika endpoint check tidak ada, langsung buat tagihan baru
-        const createTagihan = await apiClient.post("/tagihan", {
+      } catch {
+        // Buat tagihan baru jika belum ada
+        const createRes = await apiClient.post("/tagihan", {
           id_siswa: Number(form.siswaId),
           tarifId: Number(form.tarifId),
           tahunAjaranId: Number(form.tahunAjaranId),
-          status: "BELUM_BAYAR",
         });
 
-        tagihanId = createTagihan.data.data.id_tagihan;
+        tagihanId = createRes.data.data.id_tagihan;
       }
 
-      // ✅ Step 3: Buat pembayaran dengan tagihanId
+      // STEP 2: Buat pembayaran
       await apiClient.post("/pembayaran", {
-        tagihanId: tagihanId,
-        jumlahBayar: Number(form.jumlahBayar),
+        tagihanId,
+        jumlahBayar: Number(form.jumlahBayar.replace(/\D/g, "")),
         metode: form.metode,
-        keterangan: form.keterangan,
+        keterangan: form.keterangan || undefined,
       });
 
-      toast.success("Pembayaran berhasil disimpan! 🎉", {
-        description: "Status pembayaran siswa telah diperbarui",
-      });
+      // STEP 3: Auto update status tagihan
+      await apiClient.put(`/tagihan/${tagihanId}/auto-update-status`);
 
-      // Reset form
-      setForm({
+      toast.success("Pembayaran berhasil disimpan");
+
+      // Reset form (keep active year if possible)
+      setForm((prev) => ({
+        ...prev,
         siswaId: "",
         tarifId: "",
-        tahunAjaranId: "",
         jumlahBayar: "",
         metode: "",
         keterangan: "",
-      });
+      }));
 
       setOpen(false);
       onSuccess();
@@ -185,314 +180,204 @@ export default function TambahPembayaranModal({
       console.error(error);
       toast.error("Gagal menyimpan pembayaran", {
         description:
-          error.response?.data?.message ||
-          "Terjadi kesalahan saat menyimpan pembayaran",
+          error.response?.data?.message || "Terjadi kesalahan sistem",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  // Get selected tarif info
   const selectedTarif = tarifList.find(
     (t) => t.id_tarif === Number(form.tarifId)
   );
 
-  // Auto-fill jumlah bayar when tarif selected
+  const handleJumlahChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, "");
+    const formatted = raw ? Number(raw).toLocaleString("id-ID") : "";
+    setForm({ ...form, jumlahBayar: formatted });
+  };
+
   const handleTarifChange = (value: string) => {
     const tarif = tarifList.find((t) => t.id_tarif === Number(value));
     setForm({
       ...form,
       tarifId: value,
-      jumlahBayar: tarif ? String(tarif.nominal) : form.jumlahBayar,
+      jumlahBayar: tarif
+        ? String(tarif.nominal.toLocaleString("id-ID"))
+        : form.jumlahBayar,
     });
-  };
-
-  const formatCurrency = (value: string) => {
-    const number = value.replace(/\D/g, "");
-    return new Intl.NumberFormat("id-ID").format(Number(number));
-  };
-
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, "");
-    setForm({ ...form, jumlahBayar: value });
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button>
           <Plus className="h-4 w-4 mr-2" />
           Tambah Pembayaran
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="space-y-2">
-          <DialogTitle className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-blue-600" />
-            Tambah Pembayaran Baru
-          </DialogTitle>
-          <DialogDescription className="text-slate-600 dark:text-slate-400">
-            Pilih siswa, tarif, dan tahun ajaran untuk mencatat pembayaran
+      <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle>Tambah Pembayaran</DialogTitle>
+          <DialogDescription>
+            Masukkan data pembayaran siswa baru. Tagihan akan dibuat otomatis
+            jika belum tersedia.
           </DialogDescription>
-          <Separator />
         </DialogHeader>
 
+        <Separator />
+
         {fetchLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
-            <span className="ml-2 text-sm text-slate-600 dark:text-slate-400">
-              Memuat data...
-            </span>
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Memuat data...</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Student Selection */}
-            <Card className="bg-slate-50/50 dark:bg-slate-800/50 border-0">
-              <CardContent className="p-4 space-y-3">
-                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                  <Users className="h-4 w-4 text-blue-600" />
-                  Pilih Siswa
-                </h4>
-
-                <div className="space-y-1">
-                  <Label className="text-sm font-medium">Nama Siswa</Label>
+          <form onSubmit={handleSubmit}>
+            <div className="p-6 space-y-6">
+              {/* Grid 2 Kolom: Siswa & Tahun Ajaran */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>
+                    Siswa <span className="text-red-500">*</span>
+                  </Label>
                   <Select
                     value={form.siswaId}
-                    onValueChange={(value) =>
-                      handleSelectChange(value, "siswaId")
-                    }>
+                    onValueChange={(v) => setForm({ ...form, siswaId: v })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih siswa..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {siswaList.map((siswa) => (
-                        <SelectItem
-                          key={siswa.id_siswa}
-                          value={String(siswa.id_siswa)}>
-                          <div className="flex items-center gap-2">
-                            <User className="h-3 w-3" />
-                            {siswa.nama}
-                          </div>
+                      {siswaList.map((s) => (
+                        <SelectItem key={s.id_siswa} value={String(s.id_siswa)}>
+                          {s.nama}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {siswaList.length === 0 && (
-                    <p className="text-xs text-amber-600">
-                      Tidak ada data siswa tersedia
-                    </p>
-                  )}
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Tahun Ajaran Selection */}
-            <Card className="bg-slate-50/50 dark:bg-slate-800/50 border-0">
-              <CardContent className="p-4 space-y-3">
-                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-purple-600" />
-                  Tahun Ajaran
-                </h4>
-
-                <div className="space-y-1">
-                  <Label className="text-sm font-medium">
-                    Pilih Tahun Ajaran
+                <div className="space-y-2">
+                  <Label>
+                    Tahun Ajaran <span className="text-red-500">*</span>
                   </Label>
                   <Select
                     value={form.tahunAjaranId}
-                    onValueChange={(value) =>
-                      handleSelectChange(value, "tahunAjaranId")
+                    onValueChange={(v) =>
+                      setForm({ ...form, tahunAjaranId: v })
                     }>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih tahun ajaran..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {tahunAjaranList.map((tahun) => (
+                      {tahunAjaranList.map((ta) => (
                         <SelectItem
-                          key={tahun.id_tahun}
-                          value={String(tahun.id_tahun)}>
-                          {tahun.namaTahun} - {tahun.semester}
+                          key={ta.id_tahun}
+                          value={String(ta.id_tahun)}>
+                          {ta.namaTahun} (
+                          {ta.semester === 1 ? "Ganjil" : "Genap"})
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Tariff Selection */}
-            <Card className="bg-slate-50/50 dark:bg-slate-800/50 border-0">
-              <CardContent className="p-4 space-y-3">
-                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-green-600" />
-                  Pilih Tarif
-                </h4>
-
-                <div className="space-y-1">
-                  <Label className="text-sm font-medium">Jenis Tarif</Label>
+              {/* Grid 2 Kolom: Tarif & Metode */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>
+                    Kategori Tagihan <span className="text-red-500">*</span>
+                  </Label>
                   <Select
                     value={form.tarifId}
                     onValueChange={handleTarifChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih tarif..." />
+                      <SelectValue placeholder="Pilih kategori..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {tarifList.map((tarif) => (
-                        <SelectItem
-                          key={tarif.id_tarif}
-                          value={String(tarif.id_tarif)}>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">
-                              {tarif.namaTagihan}
-                            </span>
-                            <span className="text-xs text-slate-500">
-                              - Rp{tarif.nominal.toLocaleString("id-ID")}
-                            </span>
-                          </div>
+                      {tarifList.map((t) => (
+                        <SelectItem key={t.id_tarif} value={String(t.id_tarif)}>
+                          {t.namaTagihan}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {tarifList.length === 0 && (
-                    <p className="text-xs text-amber-600">
-                      Tidak ada data tarif tersedia
+                  {selectedTarif && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Nominal baku: Rp{" "}
+                      {selectedTarif.nominal.toLocaleString("id-ID")}
                     </p>
                   )}
                 </div>
 
-                {selectedTarif && (
-                  <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/10 rounded border border-green-200">
-                    <Badge
-                      variant="outline"
-                      className="bg-white text-green-700 border-green-300">
-                      {selectedTarif.namaTagihan} - Rp
-                      {selectedTarif.nominal.toLocaleString("id-ID")}
-                    </Badge>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Payment Details */}
-            <Card className="bg-slate-50/50 dark:bg-slate-800/50 border-0">
-              <CardContent className="p-4 space-y-3">
-                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                  <Receipt className="h-4 w-4 text-purple-600" />
-                  Detail Pembayaran
-                </h4>
-
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <Label className="text-sm font-medium">Jumlah Bayar</Label>
-                    <div className="relative">
-                      <Banknote className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <Input
-                        placeholder="0"
-                        value={
-                          form.jumlahBayar
-                            ? formatCurrency(form.jumlahBayar)
-                            : ""
-                        }
-                        onChange={handleAmountChange}
-                        required
-                        className="pl-10 h-9"
-                      />
-                    </div>
-                    {form.jumlahBayar && (
-                      <p className="text-xs text-slate-500">
-                        Total: Rp{formatCurrency(form.jumlahBayar)}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-sm font-medium">
-                      Metode Pembayaran
-                    </Label>
-                    <Select
-                      value={form.metode}
-                      onValueChange={(value) =>
-                        handleSelectChange(value, "metode")
-                      }>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih metode pembayaran..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {metodePembayaran.map((metode) => (
-                          <SelectItem key={metode} value={metode}>
-                            {metode}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-sm font-medium">
-                      Keterangan (Opsional)
-                    </Label>
-                    <Input
-                      name="keterangan"
-                      placeholder="Catatan pembayaran..."
-                      value={form.keterangan}
-                      onChange={handleChange}
-                      className="h-9"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label>
+                    Metode Pembayaran <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={form.metode}
+                    onValueChange={(v) => setForm({ ...form, metode: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih metode..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {metodePembayaran.map((m) => (
+                        <SelectItem key={m} value={m}>
+                          {m}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Alert className="bg-blue-50 border-blue-200">
-              <AlertCircle className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-sm text-blue-800">
-                Sistem akan otomatis membuat tagihan jika belum ada, dan
-                mengupdate status pembayaran siswa
-              </AlertDescription>
-            </Alert>
+              <Separator className="my-2" />
 
-            <DialogFooter className="gap-3 pt-4">
+              {/* Input Nominal Pembayaran (Highlight) */}
+              <div className="space-y-2">
+                <Label className="text-base">
+                  Nominal yang Dibayarkan (Rp)
+                </Label>
+                <div className="relative">
+                  <Input
+                    placeholder="0"
+                    value={form.jumlahBayar}
+                    onChange={handleJumlahChange}
+                    className="text-lg font-medium h-12 pl-4"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Pastikan nominal sesuai dengan bukti pembayaran.
+                </p>
+              </div>
+
+              {/* Keterangan */}
+              <div className="space-y-2">
+                <Label>Keterangan (Opsional)</Label>
+                <Input
+                  placeholder="Contoh: Lunas, Cicilan pertama, dll"
+                  value={form.keterangan}
+                  onChange={(e) =>
+                    setForm({ ...form, keterangan: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="p-6 pt-2">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => {
-                  setForm({
-                    siswaId: "",
-                    tarifId: "",
-                    tahunAjaranId: "",
-                    jumlahBayar: "",
-                    metode: "",
-                    keterangan: "",
-                  });
-                  setOpen(false);
-                }}
+                onClick={() => setOpen(false)}
                 disabled={loading}>
                 Batal
               </Button>
-              <Button
-                type="submit"
-                disabled={
-                  loading ||
-                  !form.siswaId ||
-                  !form.tarifId ||
-                  !form.tahunAjaranId ||
-                  !form.jumlahBayar ||
-                  !form.metode
-                }
-                className="bg-blue-600 hover:bg-blue-700">
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Menyimpan...
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    Simpan Pembayaran
-                  </div>
-                )}
+              <Button type="submit" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Simpan Pembayaran
               </Button>
             </DialogFooter>
           </form>

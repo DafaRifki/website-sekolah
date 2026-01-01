@@ -18,6 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/useAuth";
 
 import {
   Dialog,
@@ -44,6 +45,7 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const { logout } = useAuth();
   const [openDialog, setOpenDialog] = useState(false);
   const navigate = useNavigate();
 
@@ -63,32 +65,21 @@ export function NavUser({
         console.log("Logout API call failed (non-critical):", apiError);
       }
 
-      // Clear all authentication data from localStorage
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
+      // Clear all authentication data (cache & localStorage) API call handled by hook logic if needed, but we do it manually here for the hook state update
+      logout(false); // pass false to prevent window.location.href, we use navigate instead
 
       setOpenDialog(false);
 
-      toast.success("Logout berhasil", {
-        onAutoClose: () => {
-          navigate("/login", { replace: true });
-        },
-      });
+      toast.success("Logout berhasil");
+      navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
 
       // Even if there's an error, clear localStorage and redirect
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
-
+      logout(false);
       setOpenDialog(false);
-      toast.error("Terjadi kesalahan saat logout", {
-        onAutoClose: () => {
-          navigate("/login", { replace: true });
-        },
-      });
+      toast.error("Terjadi kesalahan saat logout");
+      navigate("/login", { replace: true });
     }
   };
 

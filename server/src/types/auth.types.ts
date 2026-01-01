@@ -14,6 +14,7 @@ export interface AuthResponse {
     id: number;
     email: string;
     role: string;
+    statusPendaftaran?: string;
   };
   tokens: {
     accessToken: string;

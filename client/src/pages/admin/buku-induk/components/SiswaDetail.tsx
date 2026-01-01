@@ -110,9 +110,14 @@ export default function DetailSiswaPage() {
     );
   }
 
-  const filteredNilaiRapor = (siswa.nilaiRapor || []).filter((n) =>
-    n.semester.toLowerCase().includes(semesterFilter.toLowerCase())
-  );
+  const filteredNilaiRapor = (siswa.nilaiRapor || []).filter((n) => {
+    const sem = n.semester.toString();
+    if (semesterFilter === "Ganjil") {
+      return sem === "1" || sem.toLowerCase() === "ganjil";
+    } else {
+      return sem === "2" || sem.toLowerCase() === "genap";
+    }
+  });
 
   const handlePrint = () => {
     if (printRef.current) {
@@ -320,7 +325,11 @@ export default function DetailSiswaPage() {
                     {filteredNilaiRapor.map((n, i) => (
                       <TableRow key={i} className="hover:bg-gray-50">
                         <TableCell className="font-medium">
-                          {n.semester}
+                          {n.semester === "1"
+                            ? "Ganjil"
+                            : n.semester === "2"
+                            ? "Genap"
+                            : n.semester}
                         </TableCell>
                         <TableCell>{n.mapel.namaMapel}</TableCell>
                         <TableCell className="text-center font-medium">
