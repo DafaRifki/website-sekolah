@@ -237,4 +237,62 @@ export class AuthService {
 
     return { message: "Password changed successfully" };
   }
+
+  static async updateProfile(
+    userId: number,
+    data: { email?: string; name?: string }
+  ) {
+    // Get current user
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        guruId: true,
+        siswaId: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Check email uniqueness if email is being updated
+    if (data.email && data.email !== user.email) {
+      const emailExists = await prisma.user.findUnique({
+        where: { email: data.email },
+      });
+
+      if (emailExists) {
+        throw new Error("Email already exists");
+      }
+    }
+
+    // Update user email if provided
+    if (data.email) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { email: data.email },
+      });
+    }
+
+    // Update name in guru or siswa record if applicable
+    if (data.name) {
+      if (user.role === "GURU" && user.guruId) {
+        await prisma.guru.update({
+          where: { id_guru: user.guruId },
+          data: { nama: data.name },
+        });
+      } else if (user.role === "SISWA" && user.siswaId) {
+        await prisma.siswa.update({
+          where: { id_siswa: user.siswaId },
+          data: { nama: data.name },
+        });
+      }
+    }
+
+    // Return updated profile
+    return await this.getProfile(userId);
+  }
 }

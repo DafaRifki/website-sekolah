@@ -1,46 +1,48 @@
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import LoginPage from "./pages/LoginPage.tsx";
 import { Toaster } from "sonner";
-import SignUpPage from "./pages/SignUpPage.tsx";
-import AuthLayout from "./pages/layout/AuthLayout.tsx";
-import PublicRoute from "./routes/PublicRoute.tsx";
-import ProfilePage from "./pages/settings/ProfilePage.tsx";
-import PasswordPage from "./pages/settings/PasswordPage.tsx";
-import NotFoundPage from "./pages/NotFoundPage.tsx";
-import LandingPage from "./pages/landingPage/LandingPage.tsx";
-import DataSiswaPage from "./pages/admin/siswa/DataSiswaPage.tsx";
-import EditSiswaPage from "./pages/admin/siswa/EditSiswaPage.tsx";
-import DataGuruPage from "./pages/admin/guru/DataGuruPage.tsx";
-import ProfileSekolah from "./pages/landingPage/components/ProfileSekolah.tsx";
-import KepalaSekolah from "./pages/landingPage/guru/KepalaSekolah.tsx";
-import Fasilitas from "./pages/landingPage/fasilitas/Fasilitas.tsx";
-import StrukturOrganisasi from "./pages/landingPage/guru/StrukturOrganisasi.tsx";
-import BukuIndukPage from "./pages/admin/buku-induk/BukuIndukPage.tsx";
-import SiswaDetail from "./pages/admin/buku-induk/components/SiswaDetail.tsx";
-import DataKelasPage from "./pages/admin/kelas/DataKelasPage.tsx";
-import Berita from "./pages/landingPage/berita/Berita.tsx";
-import DashboardPageIndex from "./pages/dashboard/index.tsx";
-import PendaftaranPage from "./pages/admin/pendaftaran/PendaftaranPage.tsx";
-import CekStatusPage from "./pages/CekStatusPage.tsx";
-import TahunAjaranPage from "./pages/admin/tahun-ajaran/TahunAjaranPage.tsx";
-import SiswaBaruLayout from "./pages/layout/siswa-baru/SiswaBaruLayout.tsx";
+import { Suspense, lazy } from "react";
 import ScrollToTop from "./components/ScrollToTop.tsx";
-import Pendaftaran from "./pages/landingPage/pendaftaran/Pendaftaran.tsx";
-import TenagaKependidikan from "./pages/landingPage/guru/TenagaKependidikan.tsx";
-import PembayaranPage from "./pages/admin/pembayaran/PembayaranPage.tsx";
-import React from "react";
-// import App from "./App";
-import "./index.css";
-import TagihanPage from "./pages/admin/tagihan/TagihanPage.tsx";
-import TagihanSiswaPage from "./pages/dashboard/siswa/TagihanSiswaPage.tsx";
-// ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-//   <React.StrictMode>
-//     {/* <App /> */}
-//     <Toaster position="top-right" richColors closeButton />
-//   </React.StrictMode>
-// );
+import Loading from "./components/Loading.tsx";
+
+// Lazy load all page components
+const LoginPage = lazy(() => import("./pages/LoginPage.tsx"));
+const SignUpPage = lazy(() => import("./pages/SignUpPage.tsx"));
+const AuthLayout = lazy(() => import("./pages/layout/AuthLayout.tsx"));
+const PublicRoute = lazy(() => import("./routes/PublicRoute.tsx"));
+const ProfilePage = lazy(() => import("./pages/settings/ProfilePage.tsx"));
+const PasswordPage = lazy(() => import("./pages/settings/PasswordPage.tsx"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage.tsx"));
+const LandingPage = lazy(() => import("./pages/landingPage/LandingPage.tsx"));
+const DataSiswaPage = lazy(() => import("./pages/admin/siswa/DataSiswaPage.tsx"));
+const EditSiswaPage = lazy(() => import("./pages/admin/siswa/EditSiswaPage.tsx"));
+const DataGuruPage = lazy(() => import("./pages/admin/guru/DataGuruPage.tsx"));
+const ProfileSekolah = lazy(() => import("./pages/landingPage/components/ProfileSekolah.tsx"));
+const KepalaSekolah = lazy(() => import("./pages/landingPage/guru/KepalaSekolah.tsx"));
+const Fasilitas = lazy(() => import("./pages/landingPage/fasilitas/Fasilitas.tsx"));
+const StrukturOrganisasi = lazy(() => import("./pages/landingPage/guru/StrukturOrganisasi.tsx"));
+const BukuIndukPage = lazy(() => import("./pages/admin/buku-induk/BukuIndukPage.tsx"));
+const SiswaDetail = lazy(() => import("./pages/admin/buku-induk/components/SiswaDetail.tsx"));
+const DataKelasPage = lazy(() => import("./pages/admin/kelas/DataKelasPage.tsx"));
+const Berita = lazy(() => import("./pages/landingPage/berita/Berita.tsx"));
+const DashboardPageIndex = lazy(() => import("./pages/dashboard/index.tsx"));
+const PendaftaranPage = lazy(() => import("./pages/admin/pendaftaran/PendaftaranPage.tsx"));
+const CekStatusPage = lazy(() => import("./pages/CekStatusPage.tsx"));
+const TahunAjaranPage = lazy(() => import("./pages/admin/tahun-ajaran/TahunAjaranPage.tsx"));
+const SiswaBaruLayout = lazy(() => import("./pages/layout/siswa-baru/SiswaBaruLayout.tsx"));
+const Pendaftaran = lazy(() => import("./pages/landingPage/pendaftaran/Pendaftaran.tsx"));
+const TenagaKependidikan = lazy(() => import("./pages/landingPage/guru/TenagaKependidikan.tsx"));
+const PembayaranPage = lazy(() => import("./pages/admin/pembayaran/PembayaranPage.tsx"));
+const TagihanPage = lazy(() => import("./pages/admin/tagihan/TagihanPage.tsx"));
+const TagihanSiswaPage = lazy(() => import("./pages/dashboard/siswa/TagihanSiswaPage.tsx"));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <Loading />
+  </div>
+);
 
 const root = document.getElementById("root") as HTMLElement;
 
@@ -57,61 +59,61 @@ ReactDOM.createRoot(root).render(
     <ScrollToTop />
     <Toaster duration={2000} position="top-right" />
 
-    <Routes>
-      {publicRoute.map(({ path, element }) => (
-        <Route
-          path={path}
-          element={<PublicRoute>{element}</PublicRoute>}
-          key={path}
-        />
-      ))}
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {publicRoute.map(({ path, element }) => (
+          <Route
+            path={path}
+            element={<PublicRoute>{element}</PublicRoute>}
+            key={path}
+          />
+        ))}
 
-      {/* duplikat signup ini sebenarnya bisa dihapus karena sudah ada di publicRoute */}
-      <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/profil-sekolah" element={<ProfileSekolah />} />
+        <Route path="/kepala-sekolah" element={<KepalaSekolah />} />
+        <Route path="/fasilitas" element={<Fasilitas />} />
+        <Route path="/struktur-organisasi" element={<StrukturOrganisasi />} />
+        <Route path="/berita" element={<Berita />} />
+        <Route path="/pendaftaran" element={<Pendaftaran />} />
+        <Route path="/tenaga-kependidikan" element={<TenagaKependidikan />} />
 
-      <Route path="/profil-sekolah" element={<ProfileSekolah />} />
-      <Route path="/kepala-sekolah" element={<KepalaSekolah />} />
-      <Route path="/fasilitas" element={<Fasilitas />} />
-      <Route path="/struktur-organisasi" element={<StrukturOrganisasi />} />
-      <Route path="/berita" element={<Berita />} />
-      <Route path="/pendaftaran" element={<Pendaftaran />} />
-      <Route path="/tenaga-kependidikan" element={<TenagaKependidikan />} />
-      {/* Grup dengan AuthLayout */}
-      <Route element={<AuthLayout />}>
-        <Route path="/dashboard" element={<DashboardPageIndex />} />
-        <Route path="/dashboard/tagihan" element={<TagihanSiswaPage />} />
+        {/* Grup dengan AuthLayout */}
+        <Route element={<AuthLayout />}>
+          <Route path="/dashboard" element={<DashboardPageIndex />} />
+          <Route path="/dashboard/tagihan" element={<TagihanSiswaPage />} />
 
-        {/* Data Siswa */}
-        <Route path="/siswa" element={<DataSiswaPage />} />
-        <Route path="/siswa/:id/edit" element={<EditSiswaPage />} />
+          {/* Data Siswa */}
+          <Route path="/siswa" element={<DataSiswaPage />} />
+          <Route path="/siswa/:id/edit" element={<EditSiswaPage />} />
 
-        {/* Pendaftaran siswa baru */}
-        <Route path="/siswa-baru" element={<SiswaBaruLayout />}>
-          <Route index element={<Navigate to="pendaftaran" replace />} />
-          <Route path="pendaftaran" element={<PendaftaranPage />} />
-          <Route path="tagihan" element={<TagihanPage />} />
-          <Route path="pembayaran" element={<PembayaranPage />} />
+          {/* Pendaftaran siswa baru */}
+          <Route path="/siswa-baru" element={<SiswaBaruLayout />}>
+            <Route index element={<Navigate to="pendaftaran" replace />} />
+            <Route path="pendaftaran" element={<PendaftaranPage />} />
+            <Route path="tagihan" element={<TagihanPage />} />
+            <Route path="pembayaran" element={<PembayaranPage />} />
+          </Route>
+
+          {/* Data Guru */}
+          <Route path="/guru" element={<DataGuruPage />} />
+
+          {/* Data Kelas */}
+          <Route path="/kelas" element={<DataKelasPage />} />
+
+          {/* Data Tahun Ajaran */}
+          <Route path="/tahun-ajaran" element={<TahunAjaranPage />} />
+
+          {/* Buku Induk */}
+          <Route path="/buku-induk" element={<BukuIndukPage />} />
+          <Route path="/buku-induk/:id" element={<SiswaDetail />} />
+
+          {/* Settings */}
+          <Route path="/settings/profile" element={<ProfilePage />} />
+          <Route path="/settings/password" element={<PasswordPage />} />
         </Route>
 
-        {/* Data Guru */}
-        <Route path="/guru" element={<DataGuruPage />} />
-
-        {/* Data Kelas */}
-        <Route path="/kelas" element={<DataKelasPage />} />
-
-        {/* Data Tahun Ajaran */}
-        <Route path="/tahun-ajaran" element={<TahunAjaranPage />} />
-
-        {/* Buku Induk */}
-        <Route path="/buku-induk" element={<BukuIndukPage />} />
-        <Route path="/buku-induk/:id" element={<SiswaDetail />} />
-
-        {/* Settings */}
-        <Route path="/settings/profile" element={<ProfilePage />} />
-        <Route path="/settings/password" element={<PasswordPage />} />
-      </Route>
-
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Suspense>
   </BrowserRouter>
 );

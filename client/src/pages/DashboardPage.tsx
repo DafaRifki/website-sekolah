@@ -39,7 +39,7 @@ const colorMap: Record<string, string> = {
   blue: "hover:bg-blue-100 active:bg-blue-200 text-blue-600",
 };
 
-const CardStat: React.FC<CardStatProps> = ({
+const CardStat: React.FC<CardStatProps> = React.memo(({
   title,
   value,
   description,
@@ -61,7 +61,7 @@ const CardStat: React.FC<CardStatProps> = ({
       <p className="text-xs text-gray-500">{description}</p>
     </CardContent>
   </Card>
-);
+));
 
 const DashboardPage: React.FC = () => {
   const { user } = useOutletContext<{ user: User }>();

@@ -13,6 +13,11 @@ router.post("/refresh", AuthController.refreshToken);
 
 // protected routes
 router.get("/profile", authenticateToken, AuthController.getProfile);
+router.patch(
+  "/update-profile",
+  authenticateToken,
+  AuthController.updateProfile
+);
 router.post(
   "/change-password",
   authenticateToken,

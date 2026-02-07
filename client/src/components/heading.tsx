@@ -1,4 +1,6 @@
-export default function Heading({
+import { memo } from "react";
+
+const Heading = memo(function Heading({
   title,
   description,
 }: {
@@ -13,4 +15,6 @@ export default function Heading({
       )}
     </div>
   );
-}
+});
+
+export default Heading;

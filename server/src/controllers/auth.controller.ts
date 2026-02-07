@@ -91,6 +91,22 @@ export class AuthController {
     }
   }
 
+  static async updateProfile(req: Request, res: Response) {
+    try {
+      if (!req.user) {
+        return sendError(res, "Authentication required", null, 401);
+      }
+
+      const { email, name } = req.body;
+
+      const result = await AuthService.updateProfile(req.user.id, { email, name });
+
+      sendSuccess(res, "Profile updated successfully", result);
+    } catch (error: any) {
+      sendError(res, "Failed to update profile", error.message, 400);
+    }
+  }
+
   static async logout(req: Request, res: Response) {
     try {
       // In stateless JWT, logout is handled client-side
