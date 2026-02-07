@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import SettingsLayout from "../layout/settings/layout";
 import {
   Card,
@@ -19,7 +19,7 @@ import { AlertCircleIcon } from "lucide-react";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod/src/zod.js";
-import delay from "@/lib/delay";
+
 import {
   Form,
   FormControl,
@@ -33,8 +33,14 @@ import Swal from "sweetalert2";
 
 interface User {
   id: number;
-  name: string;
   email: string;
+  role: string;
+  guru?: {
+    nama: string;
+  };
+  siswa?: {
+    nama: string;
+  };
 }
 
 const formSchema = z.object({
@@ -54,52 +60,48 @@ const ProfilePage = () => {
     },
   });
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const { data } = await apiClient.get("/auth/whoami", {
-          withCredentials: true,
-        });
-        setUser(data.user);
+  const fetchUser = useCallback(async () => {
+    try {
+      const { data } = await apiClient.get("/auth/profile", {
+        withCredentials: true,
+      });
+      const profile = data.data;
+      setUser(profile);
 
-        // reset form values
-        form.reset({
-          name: data.user.name || "",
-          email: data.user.email || "",
-        });
-      } catch (error) {
-        toast.error("Gagal mengambil user");
-      } finally {
-        setLoading(false);
-      }
-    };
+      // Get name from guru or siswa data
+      const name = profile.guru?.nama || profile.siswa?.nama || "";
+
+      // reset form values
+      form.reset({
+        name: name,
+        email: profile.email || "",
+      });
+    } catch {
+      toast.error("Gagal mengambil user");
+    } finally {
+      setLoading(false);
+    }
+  }, [form]);
+
+  useEffect(() => {
     fetchUser();
-  }, []);
+  }, [fetchUser]);
 
   const handleUpdate = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
     try {
-      await delay(500);
-      // hit api
-      const { data } = await apiClient.patch(`/user/${user?.id}`, values, {
+      // hit api - using auth/update-profile endpoint
+      await apiClient.patch("/auth/update-profile", values, {
         withCredentials: true,
       });
-      // console.log(values);
-      toast.success("Update Berhasil", {
-        onAutoClose: () => {
-          setLoading(false);
-        },
-      });
-    } catch (error: any) {
-      toast.error("Gagal update profil user", {
-        onAutoClose: () => {
-          setLoading(false);
-        },
-      });
+      toast.success("Update Berhasil");
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const msg = error.response?.data?.message || "Gagal update profil user";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
-    // console.log(values);
   };
 
   const handleDelete = async () => {
@@ -119,8 +121,8 @@ const ProfilePage = () => {
         console.log(user);
         // toast.success("Hapus data user berhasil");
         Swal.fire("Terhapus!", "Akun anda sudah dihapus.", "success");
-      } catch (error) {
-        //
+      } catch {
+        // Handle error silently
       }
     }
   };

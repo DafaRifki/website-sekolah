@@ -1,5 +1,5 @@
 // src/pages/dashboard/DashboardPageIndex.tsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import CardStat from "./components/CardStat";
@@ -38,7 +38,7 @@ const DashboardPageIndex: React.FC = () => {
   const [guruData, setGuruData] = useState<DashboardGuru | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const hasShownAlert = useRef(false);
+
 
   // Ambil user dari localStorage
   useEffect(() => {
@@ -105,8 +105,8 @@ const DashboardPageIndex: React.FC = () => {
     if (
       user?.role === "SISWA" &&
       siswaData?.tagihanSummary &&
-      !loading &&
-      !hasShownAlert.current
+      !loading
+
     ) {
       // Jika siswa sudah diterima (bukan pending verifikasi)
       // atau logika ini juga berlaku untuk siswa pending jika mereka punya tagihan
@@ -114,25 +114,31 @@ const DashboardPageIndex: React.FC = () => {
         siswaData.tagihanSummary;
 
       if (jumlahTagihanBelumLunas > 0) {
-        hasShownAlert.current = true;
-        Swal.fire({
-          title: "Pembayaran Tertunggak",
-          text: `Halo ${
-            siswaData.biodata?.nama || "Siswa"
-          }, Anda memiliki ${jumlahTagihanBelumLunas} tagihan belum lunas sebesar ${formatRupiah(
-            totalSisaPembayaran
-          )}.`,
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonText: "Lihat Detail",
-          cancelButtonText: "Tutup",
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-        }).then((result) => {
-          if (result.isConfirmed) {
-            navigate("/dashboard/tagihan");
-          }
-        });
+        // Check if alert has been shown in this session for this user
+        const alertShownKey = `overdue_alert_shown_${user.id}`;
+        const hasShownThisSession = sessionStorage.getItem(alertShownKey);
+
+        if (!hasShownThisSession) {
+          sessionStorage.setItem(alertShownKey, "true");
+          Swal.fire({
+            title: "Pembayaran Tertunggak",
+            text: `Halo ${
+              siswaData.biodata?.nama || "Siswa"
+            }, Anda memiliki ${jumlahTagihanBelumLunas} tagihan belum lunas sebesar ${formatRupiah(
+              totalSisaPembayaran
+            )}.`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Lihat Detail",
+            cancelButtonText: "Tutup",
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              navigate("/dashboard/tagihan");
+            }
+          });
+        }
       }
     }
   }, [user, siswaData, loading, navigate]);

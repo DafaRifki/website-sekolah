@@ -28,6 +28,16 @@ export interface DashboardSiswa {
     tahunAjaran: { namaTahun: string };
     tarif: { nominal: number; keterangan: string | null } | null;
   };
+  tagihanSummary?: {
+    totalSisaPembayaran: number;
+    jumlahTagihanBelumLunas: number;
+    tagihanTerbaru: {
+      namaTagihan: string;
+      bulan: string | null;
+      tahunAjaran: string;
+      sisa: number;
+    } | null;
+  };
 }
 
 export interface DashboardGuru {

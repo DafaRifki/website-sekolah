@@ -51,6 +51,12 @@ const fetchUser = async (): Promise<User | null> => {
     if ([401, 403, 429].includes(err.response?.status)) {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("user");
+      // Clear alert flags from sessionStorage so they show up again on next login
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith("overdue_alert_shown_")) {
+          sessionStorage.removeItem(key);
+        }
+      });
     }
     console.error("Auth check failed:", err);
     return null;
@@ -93,6 +99,14 @@ export const useAuth = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
+
+    // Clear alert flags from sessionStorage so they show up again on next login
+    Object.keys(sessionStorage).forEach((key) => {
+      if (key.startsWith("overdue_alert_shown_")) {
+        sessionStorage.removeItem(key);
+      }
+    });
+
     cachedUser = null;
     setUser(null);
     if (redirectToLogin) {
