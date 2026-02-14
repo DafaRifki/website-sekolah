@@ -23,6 +23,7 @@ interface Pendaftaran {
   tahunAjaran: TahunAjaran;
   statusDokumen: string;
   statusPembayaran: string;
+  siswaId: number | null;
 }
 
 interface Props {
@@ -30,7 +31,7 @@ interface Props {
   onUpdate: (
     id: number,
     field: "statusDokumen" | "statusPembayaran",
-    value: string
+    value: string,
   ) => void;
   onDelete: (id: number) => void;
 }
@@ -67,6 +68,7 @@ export default function PendaftaranTable({ data, onUpdate, onDelete }: Props) {
                 <EditableSelect
                   value={row.statusDokumen}
                   options={dokumenOptions}
+                  disabled={row.siswaId !== null}
                   onChange={(val) =>
                     onUpdate(row.id_pendaftaran, "statusDokumen", val)
                   }
@@ -80,6 +82,7 @@ export default function PendaftaranTable({ data, onUpdate, onDelete }: Props) {
                 <EditableSelect
                   value={row.statusPembayaran}
                   options={pembayaranOptions}
+                  disabled={row.siswaId !== null}
                   onChange={(val) =>
                     onUpdate(row.id_pendaftaran, "statusPembayaran", val)
                   }

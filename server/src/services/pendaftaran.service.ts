@@ -195,7 +195,8 @@ export class PendaftaranService {
 
     // Determine status from input or use defaults
     const statusDokumen = data.statusDokumen || StatusDokumen.BELUM_DITERIMA;
-    const statusPembayaran = data.statusPembayaran || StatusPembayaranPendaftaran.BELUM_BAYAR;
+    const statusPembayaran =
+      data.statusPembayaran || StatusPembayaranPendaftaran.BELUM_BAYAR;
 
     const pendaftaran = await prisma.pendaftaran.create({
       data: {
@@ -246,293 +247,25 @@ export class PendaftaranService {
     return pendaftaran;
   }
 
-  static async importFromCSV(
-    data: Array<Record<string, any>>,
-    tahunAjaranId: number
-  ): Promise<ImportResult> {
-    const result: ImportResult = {
-      total: data.length,
-      imported: 0,
-      failed: 0,
-      errors: [],
-    };
-
-    const tahunAjaran = await prisma.tahunAjaran.findUnique({
-      where: { id_tahun: tahunAjaranId },
-    });
-
-    if (!tahunAjaran) {
-      throw new Error("Tahun ajaran not found");
-    }
-
-    for (let i = 0; i < data.length; i++) {
-      const row = data[i];
-      const rowNumber = i + 2;
-
-      try {
-        const nama = this.extractField(row, ["nama lengkap", "nama", "name"]);
-        if (!nama) {
-          throw new Error("Nama is required");
-        }
-
-        const parseDate = (dateStr: string | undefined): Date | undefined => {
-          if (!dateStr) return undefined;
-          const date = new Date(dateStr);
-          return isNaN(date.getTime()) ? undefined : date;
-        };
-
-        const pendaftaranData: any = {
-          // Informasi Pendaftaran
-          unitPendidikan: this.extractField(row, [
-            "unit pendidikan",
-            "unitPendidikan",
-          ]),
-          jenisPendaftaran: this.extractField(row, [
-            "jenis pendaftaran",
-            "jenisPendaftaran",
-          ]),
-          noIndukPesertaDidik: this.extractField(row, [
-            "no induk peserta didik",
-            "noIndukPesertaDidik",
-            "nipd",
-          ]),
-          jurusan: this.extractField(row, ["jurusan", "jurusan (opsional)"]),
-          tanggalPendaftaran: parseDate(
-            this.extractField(row, [
-              "tanggal pendaftaran",
-              "tanggalPendaftaran",
-            ])
-          ),
-
-          // Data Siswa - Identitas
-          nama: nama,
-          jenisKelamin: this.normalizeGender(
-            this.extractField(row, ["jenis kelamin", "gender", "jenisKelamin"])
-          ),
-          nisn: this.extractField(row, ["nisn"]),
-          nik: this.extractField(row, ["nik"]),
-          noKK: this.extractField(row, ["no. kk", "no kk", "nomor kk", "noKK"]),
-          tempatLahir: this.extractField(row, ["tempat lahir", "tempatLahir"]),
-          tanggalLahir: parseDate(
-            this.extractField(row, ["tanggal lahir", "tanggalLahir"])
-          ),
-          agama: this.extractField(row, ["agama"]),
-
-          // Data Siswa - Alamat & Kontak
-          alamat: this.extractField(row, ["alamat lengkap", "alamat"]),
-          noHandphonAktif: this.extractField(row, [
-            "no. handphon aktif",
-            "noHandphonAktif",
-            "no handphone aktif",
-            "hp aktif",
-          ]),
-          tempatTinggal: this.extractField(row, [
-            "tempat tinggal",
-            "tempatTinggal",
-          ]),
-          transportasi: this.extractField(row, ["transportasi"]),
-
-          // Data Siswa - Keluarga
-          anakKe: this.extractField(row, ["anak ke", "anakKe"]),
-          penerimaKIP: this.extractField(row, [
-            "penerima kip/pkh/kps (opsional)",
-            "penerima kip",
-            "penerimaKIP",
-            "kip",
-          ]),
-          noKIP: this.extractField(row, [
-            "no. kip/pkh/kps (opsi)",
-            "no kip",
-            "noKIP",
-            "nomor kip",
-          ]),
-
-          // Data Ayah
-          namaAyah: this.extractField(row, [
-            "nama ayah kandung",
-            "nama ayah",
-            "namaAyah",
-          ]),
-          nikAyah: this.extractField(row, [
-            "nik ayah",
-            "nikAyah",
-            "nik (ayah)",
-          ]),
-          tempatLahirAyah: this.extractField(row, [
-            "tempat lahir ayah",
-            "tempatLahirAyah",
-            "tempat lahir (ayah)",
-          ]),
-          tanggalLahirAyah: parseDate(
-            this.extractField(row, [
-              "tanggal lahir ayah",
-              "tanggalLahirAyah",
-              "tanggal lahir (ayah)",
-            ])
-          ),
-          pendidikanAyah: this.extractField(row, [
-            "pendidikan terakhir ayah",
-            "pendidikan ayah",
-            "pendidikanAyah",
-          ]),
-          noHPAyah: this.extractField(row, [
-            "no hp ayah",
-            "no. hp ayah",
-            "noHPAyah",
-          ]),
-          pekerjaanAyah: this.extractField(row, [
-            "pekerjaan ayah",
-            "pekerjaanAyah",
-            "pekerjaan (ayah)",
-          ]),
-          penghasilanAyah: this.extractField(row, [
-            "penghasilan bulanan ayah",
-            "penghasilan ayah",
-            "penghasilanAyah",
-          ]),
-
-          // Data Ibu
-          namaIbu: this.extractField(row, [
-            "nama ibu kandung",
-            "nama ibu",
-            "namaIbu",
-          ]),
-          nikIbu: this.extractField(row, ["nik ibu", "nikIbu", "nik (ibu)"]),
-          tempatLahirIbu: this.extractField(row, [
-            "tempat lahir ibu",
-            "tempatLahirIbu",
-            "tempat lahir (ibu)",
-          ]),
-          tanggalLahirIbu: parseDate(
-            this.extractField(row, [
-              "tanggal lahir ibu",
-              "tanggal lahir (ibu)",
-              "tanggalLahirIbu",
-            ])
-          ),
-          pendidikanIbu: this.extractField(row, [
-            "pendidikan terakhir ibu",
-            "pendidikan ibu",
-            "pendidikanIbu",
-          ]),
-          noHPIbu: this.extractField(row, [
-            "no hp ibu",
-            "no. hp ibu",
-            "noHPIbu",
-          ]),
-          pekerjaanIbu: this.extractField(row, [
-            "pekerjaan ibu",
-            "pekerjaanIbu",
-            "pekerjaan (ibu)",
-          ]),
-          penghasilanIbu: this.extractField(row, [
-            "penghasilan bulanan ibu",
-            "penghasilan ibu",
-            "penghasilanIbu",
-          ]),
-
-          // Data Wali
-          namaWali: this.extractField(row, ["nama wali", "namaWali"]),
-          nikWali: this.extractField(row, [
-            "nik wali",
-            "nikWali",
-            "nik (wali)",
-          ]),
-          tempatLahirWali: this.extractField(row, [
-            "tempat lahir wali",
-            "tempatLahirWali",
-          ]),
-          tanggalLahirWali: parseDate(
-            this.extractField(row, ["tanggal lahir wali", "tanggalLahirWali"])
-          ),
-          pendidikanWali: this.extractField(row, [
-            "pendidikan terakhir wali",
-            "pendidikan wali",
-            "pendidikanWali",
-          ]),
-          noWali: this.extractField(row, ["no wali", "no. wali", "noWali"]),
-          pekerjaanWali: this.extractField(row, [
-            "pekerjaan wali",
-            "pekerjaanWali",
-          ]),
-          penghasilanWali: this.extractField(row, [
-            "penghasilan bulanan wali",
-            "penghasilan wali",
-            "penghasilanWali",
-          ]),
-
-          // Data Fisik & Lainnya
-          tinggiBadan: this.extractField(row, [
-            "tinggi badan",
-            "tinggiBadan",
-            "tinggi badan (cm)",
-          ]),
-          beratBadan: this.extractField(row, [
-            "berat badan",
-            "beratBadan",
-            "berat badan (kg)",
-          ]),
-          jarakSekolah: this.extractField(row, [
-            "jarak tempuh ke sekolah (km)",
-            "jarak sekolah",
-            "jarakSekolah",
-          ]),
-          waktuTempuh: this.extractField(row, ["waktu tempuh", "waktuTempuh"]),
-          jumlahSaudara: this.extractField(row, [
-            "jumlah saudara kandung",
-            "jumlah saudara",
-            "jumlahSaudara",
-          ]),
-
-          // Dokumen
-          ijazah: this.extractField(row, ["ijazah"]),
-          skhun: this.extractField(row, ["skhun"]),
-          kartuKeluarga: this.extractField(row, [
-            "kartu keluarga",
-            "kartuKeluarga",
-            "kk",
-            "akta kelahiran",
-          ]),
-          aktaKelahiran: this.extractField(row, [
-            "akta kelahiran",
-            "aktaKelahiran",
-          ]),
-          ktpOrangTua: this.extractField(row, ["ktp orang tua", "ktpOrangTua"]),
-
-          // Contact & Asal
-          email: this.extractField(row, ["email", "e-mail"]),
-          noHp: this.extractField(row, ["no hp", "nomor hp", "noHp"]),
-          asalSekolah: this.extractField(row, ["asal sekolah", "asalSekolah"]),
-
-          // System
-          tahunAjaranId: tahunAjaranId,
-          statusDokumen: StatusDokumen.BELUM_DITERIMA,
-          statusPembayaran: StatusPembayaranPendaftaran.BELUM_BAYAR,
-        };
-
-        await prisma.pendaftaran.create({ data: pendaftaranData });
-        result.imported++;
-      } catch (error: any) {
-        result.failed++;
-        result.errors.push({
-          row: rowNumber,
-          nama:
-            row["NAMA LENGKAP"] || row["Nama Lengkap"] || row.nama || "Unknown",
-          error: error.message,
-        });
-      }
-    }
-
-    return result;
+  private static normalizeEnum<T>(
+    val: string | undefined,
+    enumObject: any,
+    defaultValue: T,
+  ): T {
+    if (!val) return defaultValue;
+    const formatted = val.trim().toUpperCase().replace(/\s+/g, "_");
+    return Object.values(enumObject).includes(formatted)
+      ? (formatted as unknown as T)
+      : defaultValue;
   }
 
   private static extractField(
     row: Record<string, any>,
-    possibleNames: string[]
+    possibleNames: string[],
   ): string | undefined {
     for (const name of possibleNames) {
       const key = Object.keys(row).find(
-        (k) => k.toLowerCase().trim() === name.toLowerCase().trim()
+        (k) => k.toLowerCase().trim() === name.toLowerCase().trim(),
       );
       if (key && row[key]) {
         return row[key].toString().trim();
@@ -542,7 +275,7 @@ export class PendaftaranService {
   }
 
   private static normalizeGender(
-    value: string | undefined
+    value: string | undefined,
   ): string | undefined {
     if (!value) return undefined;
     const normalized = value.toLowerCase().trim();
@@ -565,107 +298,9 @@ export class PendaftaranService {
     return value;
   }
 
-  static async update(id: number, data: UpdatePendaftaranData) {
-    const existing = await prisma.pendaftaran.findUnique({
-      where: { id_pendaftaran: id },
-    });
-
-    if (!existing) {
-      throw new Error("Pendaftaran not found");
-    }
-
-    if (existing.siswaId) {
-      throw new Error("Cannot update approved pendaftaran");
-    }
-
-    const updated = await prisma.pendaftaran.update({
-      where: { id_pendaftaran: id },
-      data,
-      include: {
-        tahunAjaran: {
-          select: {
-            namaTahun: true,
-            semester: true,
-          },
-        },
-      },
-    });
-
-    // cek jika dokumen LENGKAP & pembayaran LUNAS
-    const shouldAutoApprove =
-      updated.statusDokumen === StatusDokumen.LENGKAP &&
-      updated.statusPembayaran === StatusPembayaranPendaftaran.LUNAS;
-
-    if (shouldAutoApprove && !updated.siswaId) {
-      try {
-        // Otomatis approve dan buat siswa
-        const siswa = await SiswaService.create({
-          nama: updated.nama,
-          nis: updated.nisn || undefined,
-          email: updated.email || `siswa${Date.now()}@sekolah.com`,
-          alamat: updated.alamat || undefined,
-          tanggalLahir: updated.tanggalLahir || undefined,
-          jenisKelamin: updated.jenisKelamin as "L" | "P" | undefined,
-          orangtuaNama:
-            updated.namaAyah ||
-            updated.namaIbu ||
-            updated.namaWali ||
-            undefined,
-          orangtuaHubungan: updated.namaAyah
-            ? "Ayah"
-            : updated.namaIbu
-            ? "Ibu"
-            : "Wali",
-          orangtuaPekerjaan:
-            updated.pekerjaanAyah ||
-            updated.pekerjaanIbu ||
-            updated.pekerjaanWali ||
-            undefined,
-          orangtuaNoHp:
-            updated.noHPAyah || updated.noHPIbu || updated.noWali || undefined,
-        });
-
-        // Update pendaftaran dengan siswaId
-        const finalPendaftaran = await prisma.pendaftaran.update({
-          where: { id_pendaftaran: id },
-          data: { siswaId: siswa.id_siswa },
-          include: {
-            tahunAjaran: {
-              select: {
-                namaTahun: true,
-                semester: true,
-              },
-            },
-            siswa: true,
-          },
-        });
-
-        return {
-          ...finalPendaftaran,
-          autoApproved: true,
-          siswa: siswa,
-        };
-      } catch (error: any) {
-        // Jika gagal auto-approve, kembalikan data yang sudah di-update saja
-        console.error("Auto-approve failed:", error.message);
-        return {
-          ...updated,
-          autoApproved: false,
-          autoApproveError: error.message,
-        };
-      }
-    }
-
-    return updated;
-  }
-
   static async approve(id: number) {
     const pendaftaran = await prisma.pendaftaran.findUnique({
       where: { id_pendaftaran: id },
-      include: {
-        tahunAjaran: true,
-        siswa: true,
-      },
     });
 
     if (!pendaftaran) {
@@ -679,22 +314,17 @@ export class PendaftaranService {
     if (pendaftaran.statusDokumen !== StatusDokumen.LENGKAP) {
       throw new Error("Cannot approve: Status dokumen must be LENGKAP");
     }
-
-    if (
-      pendaftaran.statusPembayaran === StatusPembayaranPendaftaran.BELUM_BAYAR
-    ) {
-      throw new Error("Cannot approve: Payment is required");
+    if (pendaftaran.statusPembayaran !== StatusPembayaranPendaftaran.LUNAS) {
+      throw new Error("Cannot approve: Payment must be LUNAS");
     }
 
     const siswa = await SiswaService.create({
       nama: pendaftaran.nama,
       nis: pendaftaran.nisn || undefined,
-      email: pendaftaran.email || `siswa${Date.now()}@sekolah.com`, // Fallback email if not provided
+      email: pendaftaran.email || `siswa${Date.now()}@sekolah.com`,
       alamat: pendaftaran.alamat || undefined,
       tanggalLahir: pendaftaran.tanggalLahir || undefined,
       jenisKelamin: pendaftaran.jenisKelamin as "L" | "P" | undefined,
-
-      // Parent Info
       orangtuaNama:
         pendaftaran.namaAyah ||
         pendaftaran.namaIbu ||
@@ -703,8 +333,8 @@ export class PendaftaranService {
       orangtuaHubungan: pendaftaran.namaAyah
         ? "Ayah"
         : pendaftaran.namaIbu
-        ? "Ibu"
-        : "Wali",
+          ? "Ibu"
+          : "Wali",
       orangtuaPekerjaan:
         pendaftaran.pekerjaanAyah ||
         pendaftaran.pekerjaanIbu ||
@@ -728,7 +358,487 @@ export class PendaftaranService {
 
     return {
       pendaftaran: updatedPendaftaran,
-      siswa: siswa,
+      siswa,
+    };
+  }
+
+  static async update(id: number, data: UpdatePendaftaranData) {
+    const existing = await prisma.pendaftaran.findUnique({
+      where: { id_pendaftaran: id },
+    });
+
+    if (!existing) {
+      throw new Error("Pendaftaran not found");
+    }
+
+    if (existing.siswaId) {
+      throw new Error("Cannot update approved pendaftaran");
+    }
+
+    const updated = await prisma.pendaftaran.update({
+      where: { id_pendaftaran: id },
+      data,
+      include: {
+        tahunAjaran: true,
+      },
+    });
+
+    // auto-approve
+    if (
+      updated.statusDokumen === StatusDokumen.LENGKAP &&
+      updated.statusPembayaran === StatusPembayaranPendaftaran.LUNAS
+    ) {
+      try {
+        return await this.approve(id);
+      } catch (error: any) {
+        console.error("Auto-approve failed during update:", error.message);
+        return { ...updated, autoApproved: false, error: error.message };
+      }
+    }
+
+    // cek jika dokumen LENGKAP & pembayaran LUNAS
+    // const isLengkap = updated.statusDokumen === StatusDokumen.LENGKAP;
+    // const isLunas =
+    //   updated.statusPembayaran === StatusPembayaranPendaftaran.LUNAS;
+
+    // if (isLengkap && isLunas && !updated.siswaId) {
+    //   try {
+    //     // Otomatis approve dan buat siswa
+    //     const siswa = await SiswaService.create({
+    //       nama: updated.nama,
+    //       nis: updated.nisn || undefined,
+    //       email: updated.email || `siswa${Date.now()}@sekolah.com`,
+    //       alamat: updated.alamat || undefined,
+    //       tanggalLahir: updated.tanggalLahir || undefined,
+    //       jenisKelamin: updated.jenisKelamin as "L" | "P" | undefined,
+    //       orangtuaNama:
+    //         updated.namaAyah ||
+    //         updated.namaIbu ||
+    //         updated.namaWali ||
+    //         undefined,
+    //       orangtuaHubungan: updated.namaAyah
+    //         ? "Ayah"
+    //         : updated.namaIbu
+    //           ? "Ibu"
+    //           : "Wali",
+    //       orangtuaPekerjaan:
+    //         updated.pekerjaanAyah ||
+    //         updated.pekerjaanIbu ||
+    //         updated.pekerjaanWali ||
+    //         undefined,
+    //       orangtuaNoHp:
+    //         updated.noHPAyah || updated.noHPIbu || updated.noWali || undefined,
+    //     });
+
+    //     // Update pendaftaran dengan siswaId
+    //     const finalPendaftaran = await prisma.pendaftaran.update({
+    //       where: { id_pendaftaran: id },
+    //       data: { siswaId: siswa.id_siswa },
+    //       include: {
+    //         tahunAjaran: {
+    //           select: {
+    //             namaTahun: true,
+    //             semester: true,
+    //           },
+    //         },
+    //         siswa: true,
+    //       },
+    //     });
+
+    //     const approvalResult = await this.approve(id);
+
+    //     return {
+    //       ...approvalResult.pendaftaran,
+    //       autoApproved: true,
+    //       siswa: approvalResult.siswa,
+    //     };
+    //   } catch (error: any) {
+    //     // Jika gagal auto-approve, kembalikan data yang sudah di-update saja
+    //     console.error("Auto-approve failed:", error.message);
+    //     return {
+    //       ...updated,
+    //       autoApproved: false,
+    //       autoApproveError: error.message,
+    //     };
+    //   }
+    // }
+
+    return updated;
+  }
+
+  static async importFromCSV(
+    data: Array<Record<string, any>>,
+    tahunAjaranId: number,
+  ): Promise<ImportResult> {
+    const result: ImportResult = {
+      total: data.length,
+      imported: 0,
+      failed: 0,
+      errors: [],
+    };
+
+    const tahunAjaran = await prisma.tahunAjaran.findUnique({
+      where: { id_tahun: tahunAjaranId },
+    });
+
+    if (!tahunAjaran) {
+      throw new Error("Tahun ajaran not found");
+    }
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      const rowNumber = i + 2;
+
+      try {
+        const pendaftaranData = this.mapCsvToPendaftaran(row, tahunAjaranId);
+
+        const pendaftaran = await prisma.pendaftaran.create({
+          data: pendaftaranData,
+        });
+
+        // cek auto-approve berdasarkan hasil create
+        if (
+          pendaftaran.statusDokumen === StatusDokumen.LENGKAP &&
+          pendaftaran.statusPembayaran === StatusPembayaranPendaftaran.LUNAS
+        ) {
+          try {
+            await this.approve(pendaftaran.id_pendaftaran);
+          } catch (approveErr: any) {
+            console.warn(
+              `Row ${rowNumber}: Data masuk tapi gagal jadi siswa: ${approveErr.message}`,
+            );
+          }
+        }
+        result.imported++;
+      } catch (error: any) {
+        result.failed++;
+        result.errors.push({
+          row: rowNumber,
+          nama: row.nama || "Unknown",
+          error: error.message,
+        });
+      }
+
+      // try {
+      //   const nama = this.extractField(row, ["nama lengkap", "nama", "name"]);
+      //   if (!nama) {
+      //     throw new Error("Nama is required");
+      //   }
+
+      //   const parseDate = (dateStr: string | undefined): Date | undefined => {
+      //     if (!dateStr) return undefined;
+      //     const date = new Date(dateStr);
+      //     return isNaN(date.getTime()) ? undefined : date;
+      //   };
+
+      //   // Ambil dan Normalisasi Status dari CSV
+      //   const rawDocStatus = this.extractField(row, [
+      //     "statusDokumen",
+      //     "status dokumen",
+      //   ]);
+      //   const rawPayStatus = this.extractField(row, [
+      //     "statusPembayaran",
+      //     "status pembayaran",
+      //   ]);
+
+      //   const statusDokumen = this.normalizeEnum<StatusDokumen>(
+      //     rawDocStatus,
+      //     StatusDokumen,
+      //     StatusDokumen.BELUM_DITERIMA,
+      //   );
+      //   const statusPembayaran =
+      //     this.normalizeEnum<StatusPembayaranPendaftaran>(
+      //       rawPayStatus,
+      //       StatusPembayaranPendaftaran,
+      //       StatusPembayaranPendaftaran.BELUM_BAYAR,
+      //     );
+
+      //   const pendaftaranData: any = {
+      //     // Informasi Pendaftaran
+      //     unitPendidikan: this.extractField(row, [
+      //       "unit pendidikan",
+      //       "unitPendidikan",
+      //     ]),
+      //     jenisPendaftaran: this.extractField(row, [
+      //       "jenis pendaftaran",
+      //       "jenisPendaftaran",
+      //     ]),
+      //     noIndukPesertaDidik: this.extractField(row, [
+      //       "no induk peserta didik",
+      //       "noIndukPesertaDidik",
+      //       "nipd",
+      //     ]),
+      //     jurusan: this.extractField(row, ["jurusan", "jurusan (opsional)"]),
+      //     tanggalPendaftaran: parseDate(
+      //       this.extractField(row, [
+      //         "tanggal pendaftaran",
+      //         "tanggalPendaftaran",
+      //       ]),
+      //     ),
+
+      //     // Data Siswa - Identitas
+      //     nama: nama,
+      //     jenisKelamin: this.normalizeGender(
+      //       this.extractField(row, ["jenis kelamin", "gender", "jenisKelamin"]),
+      //     ),
+      //     nisn: this.extractField(row, ["nisn"]),
+      //     nik: this.extractField(row, ["nik"]),
+      //     noKK: this.extractField(row, ["no. kk", "no kk", "nomor kk", "noKK"]),
+      //     tempatLahir: this.extractField(row, ["tempat lahir", "tempatLahir"]),
+      //     tanggalLahir: parseDate(
+      //       this.extractField(row, ["tanggal lahir", "tanggalLahir"]),
+      //     ),
+      //     agama: this.extractField(row, ["agama"]),
+
+      //     // Data Siswa - Alamat & Kontak
+      //     alamat: this.extractField(row, ["alamat lengkap", "alamat"]),
+      //     noHandphonAktif: this.extractField(row, [
+      //       "no. handphon aktif",
+      //       "noHandphonAktif",
+      //       "no handphone aktif",
+      //       "hp aktif",
+      //     ]),
+      //     tempatTinggal: this.extractField(row, [
+      //       "tempat tinggal",
+      //       "tempatTinggal",
+      //     ]),
+      //     transportasi: this.extractField(row, ["transportasi"]),
+
+      //     // Data Siswa - Keluarga
+      //     anakKe: this.extractField(row, ["anak ke", "anakKe"]),
+      //     penerimaKIP: this.extractField(row, [
+      //       "penerima kip/pkh/kps (opsional)",
+      //       "penerima kip",
+      //       "penerimaKIP",
+      //       "kip",
+      //     ]),
+      //     noKIP: this.extractField(row, [
+      //       "no. kip/pkh/kps (opsi)",
+      //       "no kip",
+      //       "noKIP",
+      //       "nomor kip",
+      //     ]),
+
+      //     // Data Ayah
+      //     namaAyah: this.extractField(row, [
+      //       "nama ayah kandung",
+      //       "nama ayah",
+      //       "namaAyah",
+      //     ]),
+      //     nikAyah: this.extractField(row, [
+      //       "nik ayah",
+      //       "nikAyah",
+      //       "nik (ayah)",
+      //     ]),
+      //     tempatLahirAyah: this.extractField(row, [
+      //       "tempat lahir ayah",
+      //       "tempatLahirAyah",
+      //       "tempat lahir (ayah)",
+      //     ]),
+      //     tanggalLahirAyah: parseDate(
+      //       this.extractField(row, [
+      //         "tanggal lahir ayah",
+      //         "tanggalLahirAyah",
+      //         "tanggal lahir (ayah)",
+      //       ]),
+      //     ),
+      //     pendidikanAyah: this.extractField(row, [
+      //       "pendidikan terakhir ayah",
+      //       "pendidikan ayah",
+      //       "pendidikanAyah",
+      //     ]),
+      //     noHPAyah: this.extractField(row, [
+      //       "no hp ayah",
+      //       "no. hp ayah",
+      //       "noHPAyah",
+      //     ]),
+      //     pekerjaanAyah: this.extractField(row, [
+      //       "pekerjaan ayah",
+      //       "pekerjaanAyah",
+      //       "pekerjaan (ayah)",
+      //     ]),
+      //     penghasilanAyah: this.extractField(row, [
+      //       "penghasilan bulanan ayah",
+      //       "penghasilan ayah",
+      //       "penghasilanAyah",
+      //     ]),
+
+      //     // Data Ibu
+      //     namaIbu: this.extractField(row, [
+      //       "nama ibu kandung",
+      //       "nama ibu",
+      //       "namaIbu",
+      //     ]),
+      //     nikIbu: this.extractField(row, ["nik ibu", "nikIbu", "nik (ibu)"]),
+      //     tempatLahirIbu: this.extractField(row, [
+      //       "tempat lahir ibu",
+      //       "tempatLahirIbu",
+      //       "tempat lahir (ibu)",
+      //     ]),
+      //     tanggalLahirIbu: parseDate(
+      //       this.extractField(row, [
+      //         "tanggal lahir ibu",
+      //         "tanggal lahir (ibu)",
+      //         "tanggalLahirIbu",
+      //       ]),
+      //     ),
+      //     pendidikanIbu: this.extractField(row, [
+      //       "pendidikan terakhir ibu",
+      //       "pendidikan ibu",
+      //       "pendidikanIbu",
+      //     ]),
+      //     noHPIbu: this.extractField(row, [
+      //       "no hp ibu",
+      //       "no. hp ibu",
+      //       "noHPIbu",
+      //     ]),
+      //     pekerjaanIbu: this.extractField(row, [
+      //       "pekerjaan ibu",
+      //       "pekerjaanIbu",
+      //       "pekerjaan (ibu)",
+      //     ]),
+      //     penghasilanIbu: this.extractField(row, [
+      //       "penghasilan bulanan ibu",
+      //       "penghasilan ibu",
+      //       "penghasilanIbu",
+      //     ]),
+
+      //     // Data Wali
+      //     namaWali: this.extractField(row, ["nama wali", "namaWali"]),
+      //     nikWali: this.extractField(row, [
+      //       "nik wali",
+      //       "nikWali",
+      //       "nik (wali)",
+      //     ]),
+      //     tempatLahirWali: this.extractField(row, [
+      //       "tempat lahir wali",
+      //       "tempatLahirWali",
+      //     ]),
+      //     tanggalLahirWali: parseDate(
+      //       this.extractField(row, ["tanggal lahir wali", "tanggalLahirWali"]),
+      //     ),
+      //     pendidikanWali: this.extractField(row, [
+      //       "pendidikan terakhir wali",
+      //       "pendidikan wali",
+      //       "pendidikanWali",
+      //     ]),
+      //     noWali: this.extractField(row, ["no wali", "no. wali", "noWali"]),
+      //     pekerjaanWali: this.extractField(row, [
+      //       "pekerjaan wali",
+      //       "pekerjaanWali",
+      //     ]),
+      //     penghasilanWali: this.extractField(row, [
+      //       "penghasilan bulanan wali",
+      //       "penghasilan wali",
+      //       "penghasilanWali",
+      //     ]),
+
+      //     // Data Fisik & Lainnya
+      //     tinggiBadan: this.extractField(row, [
+      //       "tinggi badan",
+      //       "tinggiBadan",
+      //       "tinggi badan (cm)",
+      //     ]),
+      //     beratBadan: this.extractField(row, [
+      //       "berat badan",
+      //       "beratBadan",
+      //       "berat badan (kg)",
+      //     ]),
+      //     jarakSekolah: this.extractField(row, [
+      //       "jarak tempuh ke sekolah (km)",
+      //       "jarak sekolah",
+      //       "jarakSekolah",
+      //     ]),
+      //     waktuTempuh: this.extractField(row, ["waktu tempuh", "waktuTempuh"]),
+      //     jumlahSaudara: this.extractField(row, [
+      //       "jumlah saudara kandung",
+      //       "jumlah saudara",
+      //       "jumlahSaudara",
+      //     ]),
+
+      //     // Dokumen
+      //     ijazah: this.extractField(row, ["ijazah"]),
+      //     skhun: this.extractField(row, ["skhun"]),
+      //     kartuKeluarga: this.extractField(row, [
+      //       "kartu keluarga",
+      //       "kartuKeluarga",
+      //       "kk",
+      //       "akta kelahiran",
+      //     ]),
+      //     aktaKelahiran: this.extractField(row, [
+      //       "akta kelahiran",
+      //       "aktaKelahiran",
+      //     ]),
+      //     ktpOrangTua: this.extractField(row, ["ktp orang tua", "ktpOrangTua"]),
+
+      //     // Contact & Asal
+      //     email: this.extractField(row, ["email", "e-mail"]),
+      //     noHp: this.extractField(row, ["no hp", "nomor hp", "noHp"]),
+      //     asalSekolah: this.extractField(row, ["asal sekolah", "asalSekolah"]),
+
+      //     // System
+      //     statusDokumen,
+      //     statusPembayaran,
+      //     tahunAjaranId: { connect: { id_tahun: tahunAjaranId } },
+      //   };
+
+      //   const pendaftaran = await prisma.pendaftaran.create({
+      //     data: pendaftaranData,
+      //   });
+
+      //   // cek jika siswa sudah memenuhi syarat
+      //   if (
+      //     pendaftaran.statusDokumen === StatusDokumen.LENGKAP &&
+      //     pendaftaran.statusPembayaran === StatusPembayaranPendaftaran.LUNAS
+      //   ) {
+      //     try {
+      //       await this.approve(pendaftaran.id_pendaftaran);
+      //     } catch (approveErr: any) {
+      //       console.error(
+      //         `Row ${rowNumber}: Gagal auto-approve menjadi siswa: ${approveErr.message}`,
+      //       );
+      //     }
+      //   }
+
+      //   result.imported++;
+      // } catch (error: any) {
+      //   result.failed++;
+      //   result.errors.push({
+      //     row: rowNumber,
+      //     nama:
+      //       row["NAMA LENGKAP"] || row["Nama Lengkap"] || row.nama || "Unknown",
+      //     error: error.message,
+      //   });
+      // }
+    }
+
+    return result;
+  }
+
+  // Helper untuk merapikan kode Import
+  private static mapCsvToPendaftaran(row: any, tahunAjaranId: number) {
+    const rawDoc = this.extractField(row, ["statusDokumen", "status dokumen"]);
+    const rawPay = this.extractField(row, [
+      "statusPembayaran",
+      "status pembayaran",
+    ]);
+
+    return {
+      nama: this.extractField(row, ["nama lengkap", "nama"]) || "Tanpa Nama",
+      nisn: this.extractField(row, ["nisn"]),
+      email: this.extractField(row, ["email"]),
+      // ... (masukkan mapping field lainnya dari kode asli Anda di sini) ...
+      statusDokumen: this.normalizeEnum<StatusDokumen>(
+        rawDoc,
+        StatusDokumen,
+        StatusDokumen.BELUM_DITERIMA,
+      ),
+      statusPembayaran: this.normalizeEnum<StatusPembayaranPendaftaran>(
+        rawPay,
+        StatusPembayaranPendaftaran,
+        StatusPembayaranPendaftaran.BELUM_BAYAR,
+      ),
+      tahunAjaran: { connect: { id_tahun: tahunAjaranId } },
     };
   }
 

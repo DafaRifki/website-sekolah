@@ -11,12 +11,14 @@ interface EditableSelectProps {
   value: string;
   options: string[];
   onChange: (val: string) => void;
+  disabled?: boolean;
 }
 
 export function EditableSelect({
   value,
   options,
   onChange,
+  disabled,
 }: EditableSelectProps) {
   const [selected, setSelected] = useState(value);
 
@@ -26,7 +28,7 @@ export function EditableSelect({
   };
 
   return (
-    <Select value={selected} onValueChange={handleChange}>
+    <Select value={selected} onValueChange={handleChange} disabled={disabled}>
       <SelectTrigger className="w-[140px]">
         <SelectValue placeholder="Pilih status" />
       </SelectTrigger>

@@ -292,6 +292,202 @@ async function main() {
 
   console.log(`✅ ${allMapel.length} mata pelajaran created`);
 
+  // ==================== GURU MAPEL ====================
+
+  console.log("\n👨‍🏫📚 Seeding guru mapel...");
+
+  const guruMapelData = [
+    // Guru 1 (Budi) - Matematika untuk semua kelas
+    { guru: guru1, mapel: allMapel[0], kelas: kelasXIPA1 }, // Matematika X IPA 1
+    { guru: guru1, mapel: allMapel[0], kelas: kelasXIPA2 }, // Matematika X IPA 2
+    { guru: guru1, mapel: allMapel[0], kelas: kelasXIIPA1 }, // Matematika XI IPA 1
+
+    // Guru 2 (Siti) - Bahasa Indonesia untuk semua kelas
+    { guru: guru2, mapel: allMapel[1], kelas: kelasXIPA1 }, // B.Indonesia X IPA 1
+    { guru: guru2, mapel: allMapel[1], kelas: kelasXIPA2 }, // B.Indonesia X IPA 2
+    { guru: guru2, mapel: allMapel[1], kelas: kelasXIIPA1 }, // B.Indonesia XI IPA 1
+
+    // Guru 3 (Ahmad) - Fisika, Kimia, Biologi untuk kelas IPA
+    { guru: guru3, mapel: allMapel[3], kelas: kelasXIPA1 }, // Fisika X IPA 1
+    { guru: guru3, mapel: allMapel[3], kelas: kelasXIPA2 }, // Fisika X IPA 2
+    { guru: guru3, mapel: allMapel[4], kelas: kelasXIIPA1 }, // Kimia XI IPA 1
+    { guru: guru3, mapel: allMapel[5], kelas: kelasXIPA1 }, // Biologi X IPA 1
+  ];
+
+  const allGuruMapel = [];
+  for (const gm of guruMapelData) {
+    const guruMapel = await prisma.guruMapel.create({
+      data: {
+        id_guru: gm.guru.id_guru,
+        id_mapel: gm.mapel.id_mapel,
+        id_kelas: gm.kelas.id_kelas,
+        tahunAjaranId: tahunAjaran2024S2.id_tahun,
+      },
+    });
+    allGuruMapel.push(guruMapel);
+  }
+
+  console.log(`✅ ${allGuruMapel.length} guru mapel created`);
+
+  // ==================== JADWAL ====================
+  console.log("\n🗓️ Seeding jadwal...");
+
+  const jadwalData = [
+    // SENIN
+    {
+      guruMapelIndex: 0,
+      hari: "Senin",
+      jamMulai: "07:00",
+      jamSelesai: "08:30",
+      ruangan: "R-101",
+    }, // Matematika X IPA 1
+    {
+      guruMapelIndex: 3,
+      hari: "Senin",
+      jamMulai: "08:30",
+      jamSelesai: "10:00",
+      ruangan: "R-101",
+    }, // B.Indonesia X IPA 1
+    {
+      guruMapelIndex: 6,
+      hari: "Senin",
+      jamMulai: "10:15",
+      jamSelesai: "11:45",
+      ruangan: "Lab Fisika",
+    }, // Fisika X IPA 1
+
+    // SELASA
+    {
+      guruMapelIndex: 1,
+      hari: "Selasa",
+      jamMulai: "07:00",
+      jamSelesai: "08:30",
+      ruangan: "R-102",
+    }, // Matematika X IPA 2
+    {
+      guruMapelIndex: 4,
+      hari: "Selasa",
+      jamMulai: "08:30",
+      jamSelesai: "10:00",
+      ruangan: "R-102",
+    }, // B.Indonesia X IPA 2
+    {
+      guruMapelIndex: 7,
+      hari: "Selasa",
+      jamMulai: "10:15",
+      jamSelesai: "11:45",
+      ruangan: "Lab Fisika",
+    }, // Fisika X IPA 2
+
+    // RABU
+    {
+      guruMapelIndex: 2,
+      hari: "Rabu",
+      jamMulai: "07:00",
+      jamSelesai: "08:30",
+      ruangan: "R-201",
+    }, // Matematika XI IPA 1
+    {
+      guruMapelIndex: 5,
+      hari: "Rabu",
+      jamMulai: "08:30",
+      jamSelesai: "10:00",
+      ruangan: "R-201",
+    }, // B.Indonesia XI IPA 1
+    {
+      guruMapelIndex: 8,
+      hari: "Rabu",
+      jamMulai: "10:15",
+      jamSelesai: "11:45",
+      ruangan: "Lab Kimia",
+    }, // Kimia XI IPA 1
+
+    // KAMIS
+    {
+      guruMapelIndex: 0,
+      hari: "Kamis",
+      jamMulai: "07:00",
+      jamSelesai: "08:30",
+      ruangan: "R-101",
+    }, // Matematika X IPA 1
+    {
+      guruMapelIndex: 9,
+      hari: "Kamis",
+      jamMulai: "08:30",
+      jamSelesai: "10:00",
+      ruangan: "Lab Biologi",
+    }, // Biologi X IPA 1
+    {
+      guruMapelIndex: 1,
+      hari: "Kamis",
+      jamMulai: "10:15",
+      jamSelesai: "11:45",
+      ruangan: "R-102",
+    }, // Matematika X IPA 2
+
+    // JUMAT
+    {
+      guruMapelIndex: 3,
+      hari: "Jumat",
+      jamMulai: "07:00",
+      jamSelesai: "08:30",
+      ruangan: "R-101",
+    }, // B.Indonesia X IPA 1
+    {
+      guruMapelIndex: 4,
+      hari: "Jumat",
+      jamMulai: "08:30",
+      jamSelesai: "10:00",
+      ruangan: "R-102",
+    }, // B.Indonesia X IPA 2
+    {
+      guruMapelIndex: 2,
+      hari: "Jumat",
+      jamMulai: "10:15",
+      jamSelesai: "11:00",
+      ruangan: "R-201",
+    }, // Matematika XI IPA 1
+
+    // SABTU
+    {
+      guruMapelIndex: 6,
+      hari: "Sabtu",
+      jamMulai: "07:00",
+      jamSelesai: "08:30",
+      ruangan: "Lab Fisika",
+    }, // Fisika X IPA 1
+    {
+      guruMapelIndex: 7,
+      hari: "Sabtu",
+      jamMulai: "08:30",
+      jamSelesai: "10:00",
+      ruangan: "Lab Fisika",
+    }, // Fisika X IPA 2
+    {
+      guruMapelIndex: 5,
+      hari: "Sabtu",
+      jamMulai: "10:15",
+      jamSelesai: "11:45",
+      ruangan: "R-201",
+    }, // B.Indonesia XI IPA 1
+  ];
+
+  let jadwalCount = 0;
+  for (const jd of jadwalData) {
+    await prisma.jadwal.create({
+      data: {
+        guruMapelId: allGuruMapel[jd.guruMapelIndex].id,
+        hari: jd.hari,
+        jamMulai: jd.jamMulai,
+        jamSelesai: jd.jamSelesai,
+        ruangan: jd.ruangan,
+      },
+    });
+    jadwalCount++;
+  }
+
+  console.log(`✅ ${jadwalCount} jadwal created`);
+
   // ==================== 8. TARIF PEMBAYARAN ====================
   console.log("\n💰 Seeding tarif pembayaran...");
 
@@ -468,8 +664,8 @@ async function main() {
             status === StatusAbsensi.SAKIT
               ? "Sakit demam"
               : status === StatusAbsensi.IZIN
-              ? "Keperluan keluarga"
-              : null,
+                ? "Keperluan keluarga"
+                : null,
           id_tahun: tahunAjaran2024S2.id_tahun,
         },
       });
@@ -542,6 +738,8 @@ async function main() {
     siswa: await prisma.siswa.count(),
     orangTua: await prisma.orangTua.count(),
     mataPelajaran: await prisma.mataPelajaran.count(),
+    guruMapel: await prisma.guruMapel.count(),
+    jadwal: await prisma.jadwal.count(),
     tarifPembayaran: await prisma.tarifPembayaran.count(),
     tagihan: await prisma.tagihan.count(),
     pembayaran: await prisma.pembayaran.count(),

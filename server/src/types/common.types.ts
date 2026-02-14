@@ -7,6 +7,7 @@ export interface PaginationQuery {
   kelasId?: string;
   tahunAjaranId?: number | string;
   status?: string;
+  kelompokMapel?: string;
 }
 
 export interface PaginationResult<T> {
@@ -39,7 +40,12 @@ export interface AuthUser {
   email: string;
   role: UserRole;
   guruId?: number;
+  isWaliKelas?: boolean;
+  kelasWaliIds?: number[];
+  mengajarMapel?: number[];
+  mengajarKelas?: number[];
   siswaId?: number;
+  siswaKelasId?: number;
 }
 
 export interface UserManagementData {

@@ -19,7 +19,7 @@ export const registerValidation = Joi.object({
 
 export const paginationValidation = Joi.object({
   page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(10),
+  limit: Joi.number().integer().min(1).max(1000).default(10),
   search: Joi.string().optional(),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("asc", "desc").default("asc"),

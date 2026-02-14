@@ -12,8 +12,9 @@ import {
   DollarSign,
   FolderOpen,
   UserCircle,
+  PieChart,
 } from "lucide-react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import apiClient from "@/config/axios";
 
 interface User {
@@ -30,6 +31,7 @@ interface CardStatProps {
   description: string;
   icon: React.ReactNode;
   color: string;
+  url?: string;
 }
 
 const colorMap: Record<string, string> = {
@@ -39,29 +41,30 @@ const colorMap: Record<string, string> = {
   blue: "hover:bg-blue-100 active:bg-blue-200 text-blue-600",
 };
 
-const CardStat: React.FC<CardStatProps> = React.memo(({
-  title,
-  value,
-  description,
-  icon,
-  color,
-}) => (
-  <Card
-    className={`cursor-pointer transition-all duration-200 hover:shadow-md active:scale-95 ${colorMap[color]}`}>
-    <CardHeader className="flex flex-row items-center justify-between pb-2">
-      <CardTitle className="text-sm font-medium text-gray-600">
-        {title}
-      </CardTitle>
-      {icon}
-    </CardHeader>
-    <CardContent>
-      <p className={`text-2xl font-bold ${colorMap[color].split(" ")[2]}`}>
-        {value}
-      </p>
-      <p className="text-xs text-gray-500">{description}</p>
-    </CardContent>
-  </Card>
-));
+const CardStat: React.FC<CardStatProps> = React.memo(
+  ({ title, value, description, icon, color, url }) => {
+    const navigate = useNavigate();
+
+    return (
+      <Card
+        onClick={() => url && navigate(url)}
+        className={`cursor-pointer transition-all duration-200 hover:shadow-md active:scale-95 ${colorMap[color]}`}>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium text-gray-600">
+            {title}
+          </CardTitle>
+          {icon}
+        </CardHeader>
+        <CardContent>
+          <p className={`text-2xl font-bold ${colorMap[color].split(" ")[2]}`}>
+            {value}
+          </p>
+          <p className="text-xs text-gray-500">{description}</p>
+        </CardContent>
+      </Card>
+    );
+  },
+);
 
 const DashboardPage: React.FC = () => {
   const { user } = useOutletContext<{ user: User }>();
@@ -98,6 +101,7 @@ const DashboardPage: React.FC = () => {
         description: "Menunggu verifikasi",
         icon: <ClipboardList className="text-blue-600" />,
         color: "blue" as const,
+        url: "/siswa-baru/pendaftaran",
       },
       {
         title: "Total Siswa Aktif",
@@ -105,6 +109,7 @@ const DashboardPage: React.FC = () => {
         description: "Data siswa aktif",
         icon: <Users className="text-green-600" />,
         color: "green" as const,
+        url: "/siswa",
       },
       {
         title: "Total Guru",
@@ -112,20 +117,23 @@ const DashboardPage: React.FC = () => {
         description: "Data guru aktif",
         icon: <BookOpen className="text-yellow-600" />,
         color: "yellow" as const,
+        url: "/guru",
       },
       {
-        title: "Total Kelas",
+        title: "Data Kelas",
         value: summary.totalKelas ?? "-",
-        description: "Jumlah kelas",
-        icon: <Calendar className="text-green-500" />,
-        color: "green" as const,
+        description: "Kelas tersedia",
+        icon: <PieChart className="text-red-600" />,
+        color: "red" as const,
+        url: "/kelas",
       },
       {
         title: "Tahun Ajaran Aktif",
         value: summary.tahunAjaran ?? "-",
-        description: "Informasi tahun ajaran",
-        icon: <Calendar className="text-blue-500" />,
-        color: "blue" as const,
+        description: "Periode akademik",
+        icon: <Calendar className="text-green-500" />,
+        color: "green" as const,
+        url: "/tahun-ajaran",
       },
       {
         title: "Tarif Tahunan",
@@ -158,6 +166,7 @@ const DashboardPage: React.FC = () => {
         description: "Kelas aktif",
         icon: <Users />,
         color: "green",
+        url: "/kelas",
       },
       {
         title: "Jadwal Mengajar",
@@ -165,6 +174,7 @@ const DashboardPage: React.FC = () => {
         description: "Pertemuan minggu ini",
         icon: <Calendar />,
         color: "blue",
+        url: "/guru/jadwal",
       },
       {
         title: "Absensi Harian",
@@ -172,6 +182,7 @@ const DashboardPage: React.FC = () => {
         description: "Input absensi",
         icon: <UserCheck />,
         color: "red",
+        url: "/absensi",
       },
       {
         title: "Nilai Rapor",
@@ -179,6 +190,7 @@ const DashboardPage: React.FC = () => {
         description: "Input nilai",
         icon: <Award />,
         color: "yellow",
+        url: "/guru/nilai",
       },
       {
         title: "Profil Guru",
@@ -186,6 +198,7 @@ const DashboardPage: React.FC = () => {
         description: "Data guru",
         icon: <UserCircle />,
         color: "blue",
+        url: "/settings/profile",
       },
       ...(user?.isWaliKelas
         ? [
@@ -209,6 +222,7 @@ const DashboardPage: React.FC = () => {
               description: "Kelas yang Anda wali",
               icon: <FileText />,
               color: "yellow",
+              url: "/e-rapor",
             },
           ]
         : []),
@@ -221,6 +235,7 @@ const DashboardPage: React.FC = () => {
         description: "Menunggu verifikasi admin",
         icon: <ClipboardList />,
         color: "red",
+        url: "/cek-status",
       },
       {
         title: "Tarif Pendaftaran",
@@ -228,6 +243,7 @@ const DashboardPage: React.FC = () => {
         description: "Biaya pendaftaran",
         icon: <DollarSign />,
         color: "green",
+        url: "/cek-status",
       },
       {
         title: "Dokumen",
@@ -235,6 +251,7 @@ const DashboardPage: React.FC = () => {
         description: "Dokumen sudah diupload",
         icon: <FolderOpen />,
         color: "blue",
+        url: "/cek-status",
       },
     ],
 
@@ -245,6 +262,7 @@ const DashboardPage: React.FC = () => {
         description: "Data pribadi Anda",
         icon: <UserCircle />,
         color: "green",
+        url: "/settings/profile",
       },
       {
         title: "Kelas & Wali",
@@ -252,6 +270,7 @@ const DashboardPage: React.FC = () => {
         description: "Wali kelas",
         icon: <Users />,
         color: "blue",
+        url: "/siswa/jadwal",
       },
       {
         title: "Absensi",
@@ -266,6 +285,7 @@ const DashboardPage: React.FC = () => {
         description: "Rata-rata semester ini",
         icon: <Award />,
         color: "yellow",
+        url: "/siswa/e-rapor",
       },
       {
         title: "Tarif Tahunan",
@@ -273,6 +293,7 @@ const DashboardPage: React.FC = () => {
         description: "Biaya sekolah",
         icon: <DollarSign />,
         color: "red",
+        url: "/dashboard/tagihan",
       },
       {
         title: "Pengumuman & Jadwal",
@@ -280,6 +301,7 @@ const DashboardPage: React.FC = () => {
         description: "Informasi terbaru",
         icon: <Bell />,
         color: "blue",
+        url: "/siswa/jadwal",
       },
     ],
   };

@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  // output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -14,84 +13,169 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  password String
-  role     Role   @default(SISWA)
+// ============================================================================
+// 1. USER & AUTHENTICATION
+// ============================================================================
 
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      Role     @default(SISWA)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations (Existing direction maintained for BE compatibility)
   guruId Int?  @unique
   guru   Guru? @relation(fields: [guruId], references: [id_guru])
 
   siswaId Int?   @unique
   siswa   Siswa? @relation(fields: [siswaId], references: [id_siswa])
+
+  @@map("users")
 }
+
+// ============================================================================
+// 2. GURU
+// ============================================================================
 
 model Guru {
-  id_guru      Int     @id @default(autoincrement())
-  nip          String  @unique
-  nama         String
-  jenisKelamin String?
-  alamat       String?
-  noHP         String
-  email        String?
-  jabatan      String?
-  fotoProfil   String?
-  user         User?
+  id_guru           Int       @id @default(autoincrement())
+  nip               String    @unique
+  nama              String
+  jenisKelamin      String?
+  tempatLahir       String?
+  tanggalLahir      DateTime?
+  alamat            String?   @db.Text
+  noHP              String? // Mapped to noTelepon in new requirements
+  email             String?
+  pendidikan        String?
+  jabatan           String?
+  statusKepegawaian String? // PNS, PPPK, Honorer
+  fotoProfil        String? // Mapped to photo
 
+  // NEW: Wali Kelas Status
+  isWaliKelas Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User?
+
+  // Existing relation (One guru can be wali for multiple classes in history, or 1 active)
   waliKelas Kelas[]
+
+  // NEW: Many-to-Many dengan MataPelajaran via GuruMapel
+  mengajarMapel GuruMapel[]
+
+  @@map("guru")
 }
 
-model Siswa {
-  id_siswa     Int       @id @default(autoincrement())
-  nis          String?   @unique
-  nama         String
-  alamat       String?
-  tanggalLahir DateTime?
-  jenisKelamin String?
-  fotoProfil   String?
-  user         User?
+// ============================================================================
+// 3. SISWA
+// ============================================================================
 
-  kelasId Int?
-  kelas   Kelas? @relation(fields: [kelasId], references: [id_kelas])
+model Siswa {
+  id_siswa      Int       @id @default(autoincrement())
+  nis           String?   @unique
+  nisn          String?   @unique
+  nama          String
+  jenisKelamin  String? // L/P
+  tempatLahir   String?
+  tanggalLahir  DateTime?
+  agama         String?
+  alamat        String?   @db.Text
+  noHP          String? // Mapped from noTelepon
+  email         String?
+  namaAyah      String?
+  namaIbu       String?
+  pekerjaanAyah String?
+  pekerjaanIbu  String?
+  noTeleponOrtu String?
+
+  kelasId    Int?
+  tahunMasuk Int?
+  status     String  @default("AKTIF") // AKTIF, LULUS, PINDAH, KELUAR
+  fotoProfil String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user  User?
+  kelas Kelas? @relation(fields: [kelasId], references: [id_kelas])
 
   nilaiRapor     NilaiRapor[]
   Siswa_Orangtua Siswa_Orangtua[]
   absensi        Absensi[]
   pendaftaran    Pendaftaran[]
   tagihan        Tagihan[]
+  pembayaran     Pembayaran[]
+
+  // NEW: Rapor relation
+  rapor Rapor[]
+
+  @@index([kelasId])
+  @@map("siswa")
 }
 
-model OrangTua {
-  id_orangtua Int    @id @default(autoincrement())
-  nama        String
-  hubungan    String
-  pekerjaan   String
-  alamat      String
-  noHp        String
+// ============================================================================
+// 4. ORANG TUA
+// ============================================================================
 
+model OrangTua {
+  id_orangtua Int      @id @default(autoincrement())
+  nama        String
+  hubungan    String // Ayah, Ibu, Wali
+  pekerjaan   String?
+  noHp        String?
+  alamat      String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
   siswa Siswa_Orangtua[]
+
+  @@map("orang_tua")
 }
 
 model Siswa_Orangtua {
   id_siswa    Int
   id_orangtua Int
-  status      String
+  status      String? // Added to match existing schema if needed
 
-  siswa    Siswa    @relation(fields: [id_siswa], references: [id_siswa])
-  orangtua OrangTua @relation(fields: [id_orangtua], references: [id_orangtua])
+  siswa    Siswa    @relation(fields: [id_siswa], references: [id_siswa], onDelete: Cascade)
+  orangtua OrangTua @relation(fields: [id_orangtua], references: [id_orangtua], onDelete: Cascade)
 
   @@id([id_siswa, id_orangtua])
+  @@map("siswa_orangtua")
 }
 
+// ============================================================================
+// 5. KELAS
+// ============================================================================
+
 model Kelas {
-  id_kelas  Int                @id @default(autoincrement())
+  id_kelas  Int     @id @default(autoincrement())
   namaKelas String
-  tingkat   String
-  waliId    Int?
-  guru      Guru?              @relation(fields: [waliId], references: [id_guru])
-  siswa     Siswa[]
-  tahunRel  KelasTahunAjaran[]
+  tingkat   String // Changed from Int to String to match existing schema (e.g. "X", "10")
+  jurusan   String? // IPA, IPS, etc.
+
+  waliId Int?
+  guru   Guru? @relation(fields: [waliId], references: [id_guru])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  siswa    Siswa[]
+  tahunRel KelasTahunAjaran[] // Maintain compatibility with TahunAjaranService
+
+  // NEW: GuruMapel relation
+  guruMapel GuruMapel[]
+
+  @@map("kelas")
 }
 
 model KelasTahunAjaran {
@@ -106,71 +190,166 @@ model KelasTahunAjaran {
   @@unique([kelasId, tahunAjaranId])
 }
 
+// ============================================================================
+// 6. MATA PELAJARAN
+// ============================================================================
+
 model MataPelajaran {
-  id_mapel      Int          @id @default(autoincrement())
+  id_mapel      Int      @id @default(autoincrement())
+  kodeMapel     String?  @unique
   namaMapel     String
-  kelompokMapel String?
-  nilai         NilaiRapor[]
+  kelompokMapel String? // Kelompok A, B, C
+  deskripsi     String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  nilai NilaiRapor[]
+
+  // NEW: GuruMapel relation
+  guruMapel GuruMapel[]
+
+  @@map("mata_pelajaran")
 }
+
+// ============================================================================
+// 7. GURU_MAPEL & JADWAL (NEW)
+// ============================================================================
+
+model GuruMapel {
+  id            Int @id @default(autoincrement())
+  id_guru       Int
+  id_mapel      Int
+  id_kelas      Int
+  tahunAjaranId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  guru        Guru          @relation(fields: [id_guru], references: [id_guru], onDelete: Cascade)
+  mapel       MataPelajaran @relation(fields: [id_mapel], references: [id_mapel], onDelete: Cascade)
+  kelas       Kelas         @relation(fields: [id_kelas], references: [id_kelas], onDelete: Cascade)
+  tahunAjaran TahunAjaran   @relation(fields: [tahunAjaranId], references: [id_tahun], onDelete: Cascade)
+  jadwal      Jadwal[]
+
+  // Constraint: satu guru tidak bisa mengajar mapel yang sama di kelas yang sama di tahun ajaran yang sama
+  @@unique([id_guru, id_mapel, id_kelas, tahunAjaranId])
+  @@index([id_guru])
+  @@index([id_mapel])
+  @@index([id_kelas])
+  @@index([tahunAjaranId])
+  @@map("guru_mapel")
+}
+
+model Jadwal {
+  id_jadwal   Int     @id @default(autoincrement())
+  guruMapelId Int
+  hari        String // Senin, Selasa, Rabu, Kamis, Jumat, Sabtu, Minggu
+  jamMulai    String // Format: "07:00"
+  jamSelesai  String // Format: "08:30"
+  ruangan     String? // Opsional: Ruang kelas/lab
+  keterangan  String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  guruMapel GuruMapel @relation(fields: [guruMapelId], references: [id], onDelete: Cascade)
+
+  @@index([guruMapelId])
+  @@index([hari])
+  @@map("jadwal")
+}
+
+// ============================================================================
+// 8. NILAI RAPOR
+// ============================================================================
 
 model NilaiRapor {
   id_nilai      Int    @id @default(autoincrement())
   id_siswa      Int
   id_mapel      Int
   tahunAjaranId Int
-  semester      String // "1" or "2"
-  nilai         Int // 0-100
+  semester      String // "1" atau "2"
+  nilai         Float // Changed to Float to support decimal grades
 
-  siswa       Siswa         @relation(fields: [id_siswa], references: [id_siswa])
-  mapel       MataPelajaran @relation(fields: [id_mapel], references: [id_mapel])
-  tahunAjaran TahunAjaran   @relation(fields: [tahunAjaranId], references: [id_tahun])
+  // Optional: breakdown nilai
+  nilaiTugas Float?
+  nilaiUTS   Float?
+  nilaiUAS   Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  siswa       Siswa         @relation(fields: [id_siswa], references: [id_siswa], onDelete: Cascade)
+  mapel       MataPelajaran @relation(fields: [id_mapel], references: [id_mapel], onDelete: Cascade)
+  tahunAjaran TahunAjaran   @relation(fields: [tahunAjaranId], references: [id_tahun], onDelete: Cascade)
 
   @@unique([id_siswa, id_mapel, tahunAjaranId, semester])
   @@index([id_siswa])
   @@index([id_mapel])
   @@index([tahunAjaranId])
+  @@map("nilai_rapor")
 }
+
+// ============================================================================
+// 9. ABSENSI
+// ============================================================================
+
+model Absensi {
+  id_absensi Int           @id @default(autoincrement())
+  id_siswa   Int
+  id_tahun   Int
+  tanggal    DateTime      @default(now())
+  status     StatusAbsensi
+  keterangan String?       @db.Text
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  // Relations
+  siswa       Siswa       @relation(fields: [id_siswa], references: [id_siswa], onDelete: Cascade)
+  tahunAjaran TahunAjaran @relation(fields: [id_tahun], references: [id_tahun], onDelete: Cascade)
+
+  @@unique([id_siswa, id_tahun, tanggal])
+  @@index([id_siswa])
+  @@index([id_tahun])
+  @@index([tanggal])
+  @@map("absensi")
+}
+
+// ============================================================================
+// 10. TAHUN AJARAN
+// ============================================================================
 
 model TahunAjaran {
   id_tahun  Int      @id @default(autoincrement())
-  namaTahun String // "2024/2025"
-  startDate DateTime // Start date of semester
-  endDate   DateTime // End date of semester
-  semester  Int      @default(1) // 1 or 2
-
+  namaTahun String // e.g., "2024/2025"
+  semester  Int // 1 atau 2
+  startDate DateTime // Mapped from tanggalMulai
+  endDate   DateTime // Mapped from tanggalSelesai
   isActive  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  absensi    Absensi[]
-  kelasRel   KelasTahunAjaran[]
-  tarif      TarifPembayaran[]
-  daftar     Pendaftaran[]
-  tagihan    Tagihan[]
-  NilaiRapor NilaiRapor[]
+  // Relations
+  kelasRel  KelasTahunAjaran[]
+  nilai     NilaiRapor[]
+  absensi   Absensi[]
+  daftar    Pendaftaran[]
+  tagihan   Tagihan[]
+  tarif     TarifPembayaran[]
+  rapor     Rapor[]
+  guruMapel GuruMapel[]
 
   @@unique([namaTahun, semester])
-  @@index([isActive])
-  @@index([startDate, endDate])
+  @@map("tahun_ajaran")
 }
 
-model Absensi {
-  id_absensi Int           @id @default(autoincrement())
-  tanggal    DateTime      @default(now())
-  status     StatusAbsensi
-  keterangan String?
-
-  id_siswa Int
-  id_tahun Int
-
-  siswa       Siswa       @relation(fields: [id_siswa], references: [id_siswa])
-  tahunAjaran TahunAjaran @relation(fields: [id_tahun], references: [id_tahun])
-
-  @@unique([id_siswa, tanggal, id_tahun])
-  @@index([id_siswa])
-  @@index([tanggal])
-  @@index([id_tahun])
-}
+// ============================================================================
+// 11. PENDAFTARAN (Maintained Existing Model)
+// ============================================================================
 
 model Pendaftaran {
   id_pendaftaran Int @id @default(autoincrement())
@@ -246,6 +425,8 @@ model Pendaftaran {
   kartuKeluarga String?
   aktaKelahiran String?
   ktpOrangTua   String?
+  // New JSON document field if needed
+  dokumen       Json?
 
   // Contact & Asal Sekolah
   email       String?
@@ -269,51 +450,150 @@ model Pendaftaran {
   @@index([tahunAjaranId])
   @@index([statusDokumen])
   @@index([statusPembayaran])
+  @@map("pendaftaran")
 }
+
+// ============================================================================
+// 12. TARIF PEMBAYARAN
+// ============================================================================
 
 model TarifPembayaran {
   id_tarif      Int     @id @default(autoincrement())
   tahunAjaranId Int
-  namaTagihan   String // misal "SPP Januari 2024"
-  nominal       Int
-  keterangan    String?
+  namaTagihan   String // Mapped from jenisPembayaran? Keep namaTagihan.
+  nominal       Float // Changed to Float
+  keterangan    String? // Mapped from deskripsi
 
+  // Relations
   tahunAjaran TahunAjaran @relation(fields: [tahunAjaranId], references: [id_tahun])
   tagihan     Tagihan[]
+
+  @@map("tarif_pembayaran")
 }
+
+// ============================================================================
+// 13. TAGIHAN
+// ============================================================================
 
 model Tagihan {
   id_tagihan    Int           @id @default(autoincrement())
   id_siswa      Int
-  tarifId       Int
+  tarifId       Int // Mapped to id_tarif
   tahunAjaranId Int
   bulan         String?
   status        StatusTagihan @default(BELUM_BAYAR)
 
-  siswa       Siswa           @relation(fields: [id_siswa], references: [id_siswa])
+  // New fields
+  jumlah     Float? // Copied from tarif if needed
+  sisaBayar  Float?
+  jatuhTempo DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  siswa       Siswa           @relation(fields: [id_siswa], references: [id_siswa], onDelete: Cascade)
   tarif       TarifPembayaran @relation(fields: [tarifId], references: [id_tarif])
   tahunAjaran TahunAjaran     @relation(fields: [tahunAjaranId], references: [id_tahun])
   pembayaran  Pembayaran[]
 
-  @@unique([id_siswa, tarifId, tahunAjaranId, bulan])
   @@index([id_siswa])
   @@index([tarifId])
   @@index([tahunAjaranId])
   @@index([status])
+  @@map("tagihan")
 }
+
+// ============================================================================
+// 14. PEMBAYARAN
+// ============================================================================
 
 model Pembayaran {
   id_pembayaran Int      @id @default(autoincrement())
   tagihanId     Int
-  jumlahBayar   Int
+  jumlahBayar   Float // Changed to Float
   tanggal       DateTime @default(now())
   metode        String?
   keterangan    String?
 
-  tagihan Tagihan @relation(fields: [tagihanId], references: [id_tagihan])
+  // New fields
+  noBukti String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tagihan Tagihan @relation(fields: [tagihanId], references: [id_tagihan], onDelete: Cascade)
+
+  // Optional: Siswa relation if strictly required by new schema
+  id_siswa Int?
+  siswa    Siswa? @relation(fields: [id_siswa], references: [id_siswa])
 
   @@index([tagihanId])
+  @@map("pembayaran")
 }
+
+// ============================================================================
+// 15. RAPOR (NEW)
+// ============================================================================
+
+model Rapor {
+  id_rapor      Int    @id @default(autoincrement())
+  id_siswa      Int
+  tahunAjaranId Int
+  semester      String // "1" atau "2"
+
+  // Kehadiran Summary (Auto-calculated dari Absensi)
+  totalHadir Int @default(0)
+  totalSakit Int @default(0)
+  totalIzin  Int @default(0)
+  totalAlpha Int @default(0)
+
+  // Penilaian Sikap (Input by Wali Kelas)
+  sikapSpritual     String? // A, B, C, D
+  sikapSosial       String? // A, B, C, D
+  deskripsiSpritual String? @db.Text
+  deskripsiSosial   String? @db.Text
+
+  // Catatan Wali Kelas
+  catatanWaliKelas String? @db.Text
+
+  // Ekstrakurikuler (JSON Array)
+  // Format: [{nama: "Pramuka", nilai: "A", keterangan: "Sangat aktif"}]
+  ekstrakurikuler Json?
+
+  // Prestasi (JSON Array)
+  // Format: [{nama: "Juara 1 Olimpiade", tingkat: "Kabupaten", keterangan: "2024"}]
+  prestasi Json?
+
+  // Kenaikan Kelas
+  naik  Boolean? // true = naik, false = tidak naik, null = belum ditentukan
+  kelas String? // Kelas tujuan jika naik (e.g., "XI IPA 1")
+
+  // Status & Publishing
+  status      String    @default("DRAFT") // DRAFT, PUBLISHED
+  publishedAt DateTime?
+  publishedBy Int? // User ID yang publish
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  siswa       Siswa       @relation(fields: [id_siswa], references: [id_siswa], onDelete: Cascade)
+  tahunAjaran TahunAjaran @relation(fields: [tahunAjaranId], references: [id_tahun], onDelete: Cascade)
+
+  // Constraint: satu siswa hanya punya satu rapor per semester per tahun ajaran
+  @@unique([id_siswa, tahunAjaranId, semester])
+  @@index([id_siswa])
+  @@index([tahunAjaranId])
+  @@index([semester])
+  @@index([status])
+  @@map("rapor")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
 
 enum Role {
   ADMIN
@@ -332,6 +612,7 @@ enum StatusDokumen {
   BELUM_DITERIMA
   LENGKAP
   KURANG
+  BELUM_LENGKAP // Added to support new schema intent
 }
 
 enum StatusTagihan {

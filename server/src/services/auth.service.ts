@@ -174,6 +174,23 @@ export class AuthService {
             email: true,
             jabatan: true,
             fotoProfil: true,
+            waliKelas: {
+              select: {
+                id_kelas: true,
+                namaKelas: true,
+              },
+            },
+            mengajarMapel: {
+              select: {
+                id_mapel: true,
+                kelas: {
+                  select: {
+                    id_kelas: true,
+                    namaKelas: true,
+                  },
+                },
+              },
+            },
           },
         },
         siswa: {
