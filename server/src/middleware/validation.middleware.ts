@@ -12,7 +12,7 @@ declare global {
   }
 }
 
-export const validate = (schema: Joi.ObjectSchema) => {
+export const validateBody = (schema: Joi.ObjectSchema) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const { error, value } = schema.validate(req.body, {
       abortEarly: false,
@@ -31,6 +31,8 @@ export const validate = (schema: Joi.ObjectSchema) => {
     next();
   };
 };
+
+export const validate = validateBody;
 
 export const validateQuery = (schema: Joi.ObjectSchema) => {
   return (req: Request, res: Response, next: NextFunction) => {

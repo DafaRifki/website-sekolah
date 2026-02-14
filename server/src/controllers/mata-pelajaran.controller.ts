@@ -16,6 +16,7 @@ export class MataPelajaranController {
         search: req.query.search as string,
         sortBy: req.query.sortBy as string,
         sortOrder: (req.query.sortOrder as "asc") || "desc",
+        kelompokMapel: req.query.kelompokMapel as string,
       };
 
       const result = await MataPelajaranService.getAll(query);

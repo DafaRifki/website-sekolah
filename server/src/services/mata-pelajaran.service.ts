@@ -31,6 +31,9 @@ export class MataPelajaranService {
 
     const where: Prisma.MataPelajaranWhereInput = {
       ...searchFilter,
+      ...(query.kelompokMapel && query.kelompokMapel !== "all"
+        ? { kelompokMapel: query.kelompokMapel }
+        : {}),
     };
 
     const [mataPelajaran, total] = await Promise.all([

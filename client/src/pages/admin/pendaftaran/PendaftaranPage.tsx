@@ -36,6 +36,7 @@ interface Pendaftaran {
   };
   statusDokumen: string;
   statusPembayaran: string;
+  siswaId: number | null;
 }
 
 export default function PendaftaranPage() {
@@ -60,22 +61,22 @@ export default function PendaftaranPage() {
   const handleUpdate = async (
     id: number,
     field: "statusDokumen" | "statusPembayaran",
-    value: string
+    value: string,
   ) => {
     try {
       const updateData = { [field]: value };
       const response = await apiClient.put(`/pendaftaran/${id}`, updateData);
 
-      if (response.data.data.autoApproved) {
+      const result = response.data.data;
+
+      if (result.autoApproved) {
         toast.success("Otomatis Diterima!", {
-          description:
-            response.data.message ||
-            "Pendaftaran otomatis disetujui karena dokumen lengkap dan pembayaran lunas",
+          description: "Data siswa telah berhasil dibuat.",
           duration: 5000,
         });
-      } else if (response.data.data.autoApproveError) {
+      } else if (result.autoApproveError) {
         toast.warning("Update Berhasil", {
-          description: `Status diupdate, tapi auto-approve gagal: ${response.data.dara.autoApproveError}`,
+          description: `Status diupdate, tapi gagal jadi siswa: ${result.autoApproveError}`,
           duration: 5000,
         });
       } else {
@@ -122,7 +123,7 @@ export default function PendaftaranPage() {
       Swal.fire(
         "Gagal!",
         error.response?.data?.message || "Gagal menghapus data pendaftaran",
-        "error"
+        "error",
       );
     }
   };
@@ -135,10 +136,10 @@ export default function PendaftaranPage() {
   // Calculate statistics
   const totalPendaftaran = data.length;
   const dokumenLengkap = data.filter(
-    (item) => item.statusDokumen === "LENGKAP"
+    (item) => item.statusDokumen === "LENGKAP",
   ).length;
   const pembayaranLunas = data.filter(
-    (item) => item.statusPembayaran === "LUNAS"
+    (item) => item.statusPembayaran === "LUNAS",
   ).length;
   const approved = data.filter((item) => item.siswaId !== null).length;
 

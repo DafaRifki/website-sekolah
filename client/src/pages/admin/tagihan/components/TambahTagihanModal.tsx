@@ -31,8 +31,24 @@ import {
   Users,
   Tag,
   Calendar,
+  ChevronsUpDown,
+  Check,
 } from "lucide-react";
 import apiClient from "@/config/axios";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 interface Siswa {
   id_siswa: number;
@@ -197,7 +213,72 @@ export default function TambahTagihanModal({
 
                 <div className="space-y-1">
                   <Label className="text-sm font-medium">Nama Siswa</Label>
-                  <Select
+
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        role="combobox"
+                        className={cn(
+                          "w-full justify-between font-normal",
+                          !form.id_siswa && "text-muted-foreground",
+                        )}>
+                        {form.id_siswa
+                          ? siswaList.find(
+                              (s) => String(s.id_siswa) === form.id_siswa,
+                            )?.nama
+                          : "Cari nama siswa..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-0" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-[--radix-popover-trigger-width] p-0"
+                      align="start">
+                      <Command>
+                        <CommandInput placeholder="Ketik nama siswa..." />
+                        <CommandList className="max-h-[300px] overflow-y-auto">
+                          <CommandEmpty>Siswa tidak ditemukan.</CommandEmpty>
+                          <CommandGroup>
+                            {siswaList.map((siswa) => (
+                              <CommandItem
+                                key={siswa.id_siswa}
+                                value={siswa.nama}
+                                onSelect={() => {
+                                  handleSelectChange(
+                                    String(siswa.id_siswa),
+                                    "id_siswa",
+                                  );
+                                }}>
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    form.id_siswa === String(siswa.id_siswa)
+                                      ? "opacity-100"
+                                      : "opacity-0",
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span>{siswa.nama}</span>
+                                  {siswa.kelas && (
+                                    <span className="text-xs text-slate-500">
+                                      Kelas: {siswa.kelas.namaKelas}
+                                    </span>
+                                  )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+
+                  {siswaList.length === 0 && !fetchLoading && (
+                    <p className="text-xs text-amber-600">
+                      Tidak ada data siswa tersedia
+                    </p>
+                  )}
+                  {/* <Select
                     value={form.id_siswa}
                     onValueChange={(value) =>
                       handleSelectChange(value, "id_siswa")
@@ -227,7 +308,7 @@ export default function TambahTagihanModal({
                     <p className="text-xs text-amber-600">
                       Tidak ada data siswa tersedia
                     </p>
-                  )}
+                  )} */}
                 </div>
               </CardContent>
             </Card>

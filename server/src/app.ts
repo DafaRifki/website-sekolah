@@ -22,13 +22,18 @@ import tagihanRoutes from "./routes/tagihan.routes";
 import pembayaranRoutes from "./routes/pembayaran.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
 import dashboardGuruRoutes from "./routes/dashboard-guru.routes";
+import RaporRoutes from "./routes/rapor.routes";
+import GuruMapelRoutes from "./routes/guru-mapel.routes";
+import JadwalRoutes from "./routes/jadwal.routes";
 
 const app = express();
 
 // 1. Security & Base Middleware
-app.use(helmet({
-  crossOriginResourcePolicy: false, // IZINKAN GAMBAR DILOAD DARI ORIGIN BERBEDA
-}));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false, // IZINKAN GAMBAR DILOAD DARI ORIGIN BERBEDA
+  }),
+);
 
 app.use(
   cors({
@@ -37,7 +42,7 @@ app.use(
         ? ["http://localhost:3000", "http://localhost:5173"]
         : process.env.FRONTEND_URL?.split(",") || ["http://localhost:3000"],
     credentials: true,
-  })
+  }),
 );
 
 // 2. Logging
@@ -107,7 +112,9 @@ app.use("/api/tagihan", tagihanRoutes);
 app.use("/api/pembayaran", pembayaranRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/dashboard-guru", dashboardGuruRoutes);
-
+app.use("/api/rapor", RaporRoutes);
+app.use("/api/guru-mapel", GuruMapelRoutes);
+app.use("/api/jadwal", JadwalRoutes);
 // 8. Error Handling
 app.use(notFoundHandler);
 app.use(errorHandler);

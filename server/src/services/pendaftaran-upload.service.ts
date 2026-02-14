@@ -1,6 +1,11 @@
 // src/services/pendaftaran-upload.service.ts
 import { prisma } from "../config/database";
-import { Prisma } from "@prisma/client";
+import {
+  Prisma,
+  StatusDokumen,
+  StatusPembayaranPendaftaran,
+} from "@prisma/client";
+import { PendaftaranService } from "./pendaftaran.service";
 
 interface PendaftaranCSVRow {
   // Informasi Pendaftaran
@@ -72,6 +77,8 @@ interface PendaftaranCSVRow {
   email?: string;
   noHp?: string;
   asalSekolah?: string;
+  statusDokumen?: string;
+  statusPembayaran?: string;
 }
 
 export class PendaftaranUploadService {
@@ -103,6 +110,25 @@ export class PendaftaranUploadService {
           throw new Error("Nama wajib diisi");
         }
 
+        // Helper statusDokumen dan statusPembayaranPendaftaran
+        const formatStatusDokumen = (val?: string): StatusDokumen => {
+          const status = val?.trim().toUpperCase();
+          const validValues = Object.values(StatusDokumen);
+          return validValues.includes(status as StatusDokumen)
+            ? (status as StatusDokumen)
+            : StatusDokumen.BELUM_DITERIMA;
+        };
+
+        const formatStatusBayar = (
+          val?: string,
+        ): StatusPembayaranPendaftaran => {
+          const status = val?.trim().toUpperCase();
+          const validValues = Object.values(StatusPembayaranPendaftaran);
+          return validValues.includes(status as StatusPembayaranPendaftaran)
+            ? (status as StatusPembayaranPendaftaran)
+            : StatusPembayaranPendaftaran.BELUM_BAYAR;
+        };
+
         // Parse dates
         const parseDate = (dateStr?: string) => {
           if (!dateStr) return null;
@@ -111,7 +137,7 @@ export class PendaftaranUploadService {
         };
 
         // Create pendaftaran
-        await prisma.pendaftaran.create({
+        const pendaftaran = await prisma.pendaftaran.create({
           data: {
             // Informasi Pendaftaran
             unitPendidikan: row.unitPendidikan || null,
@@ -187,10 +213,25 @@ export class PendaftaranUploadService {
             tahunAjaranId,
 
             // Default status
-            statusDokumen: "BELUM_DITERIMA",
-            statusPembayaran: "BELUM_BAYAR",
+            statusDokumen: formatStatusDokumen(row.statusDokumen),
+            statusPembayaran: formatStatusBayar(row.statusPembayaran),
           },
         });
+
+        // Auto-approve if statusDokumen is LENGKAP and statusPembayaran is LUNAS
+        if (
+          pendaftaran.statusDokumen === StatusDokumen.LENGKAP &&
+          pendaftaran.statusPembayaran === StatusPembayaranPendaftaran.LUNAS
+        ) {
+          try {
+            await PendaftaranService.approve(pendaftaran.id_pendaftaran);
+          } catch (approveError: any) {
+            console.warn(
+              `Auto-approve warning for row ${i + 1}: ${approveError.message}`
+            );
+            // Continue as success since pendaftaran was created
+          }
+        }
 
         results.success++;
       } catch (error: any) {
@@ -280,6 +321,8 @@ export class PendaftaranUploadService {
       "email",
       "noHp",
       "asalSekolah",
+      "statusDokumen",
+      "statusPembayaran",
     ];
 
     return headers;

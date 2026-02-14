@@ -53,9 +53,11 @@ export const getTagihanSummarySiswa = async () => {
   }
 };
 
-export const getMyTagihan = async () => {
+export const getMyTagihan = async (filters?: { tahunAjaranId?: number; status?: string }) => {
   try {
-    const res = await apiClient.get("/tagihan/my-bills");
+    const res = await apiClient.get("/tagihan/my-bills", {
+      params: filters,
+    });
     return res.data.data;
   } catch (error) {
     console.error("Error fetching my tagihan:", error);

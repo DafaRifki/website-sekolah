@@ -10,6 +10,29 @@ interface User {
   siswaId?: number;
   guruId?: number;
   statusPendaftaran?: "PENDING_VERIFIKASI" | "DITERIMA";
+  kelasWali?: { id_kelas: number; namaKelas: string }[];
+  kelasAjar?: { id_kelas: number; namaKelas: string }[];
+}
+
+interface UserData {
+  id: number;
+  email: string;
+  role: "ADMIN" | "GURU" | "SISWA";
+  guruId?: number;
+  siswaId?: number;
+  guru?: {
+    nama: string;
+    fotoProfil: string | null;
+    waliKelas?: { id_kelas: number; namaKelas: string }[];
+    mengajarMapel?: {
+      id_mapel: number;
+      kelas: { id_kelas: number; namaKelas: string };
+    }[];
+  };
+  siswa?: {
+    nama: string;
+    fotoProfil: string | null;
+  };
 }
 
 let cachedUser: User | null = null;
@@ -22,16 +45,27 @@ const fetchUser = async (): Promise<User | null> => {
 
   try {
     const { data } = await apiClient.get("/auth/profile");
-    const userData = data?.data;
+    const userData = data?.data as UserData;
 
     if (!userData) return null;
 
     let name = userData.email;
     let fotoProfil: string | null = null;
+    let kelasWali: { id_kelas: number; namaKelas: string }[] = [];
+    let kelasAjar: { id_kelas: number; namaKelas: string }[] = [];
 
     if (userData.role === "GURU" && userData.guru) {
       name = userData.guru.nama;
       fotoProfil = userData.guru.fotoProfil;
+      if (userData.guru.waliKelas) {
+        kelasWali = userData.guru.waliKelas;
+      }
+      if (userData.guru.mengajarMapel) {
+        const mapelKelas = userData.guru.mengajarMapel.map((m) => m.kelas);
+        kelasAjar = Array.from(
+          new Map(mapelKelas.map((k) => [k.id_kelas, k])).values(),
+        );
+      }
     } else if (userData.role === "SISWA" && userData.siswa) {
       name = userData.siswa.nama;
       fotoProfil = userData.siswa.fotoProfil;
@@ -40,23 +74,32 @@ const fetchUser = async (): Promise<User | null> => {
     }
 
     const normalizedUser: User = {
-      ...userData,
+      id: userData.id,
+      email: userData.email,
+      role: userData.role,
+      guruId: userData.guruId,
+      siswaId: userData.siswaId,
       name,
       fotoProfil,
+      kelasWali,
+      kelasAjar,
     };
 
     localStorage.setItem("user", JSON.stringify(normalizedUser));
     return normalizedUser;
-  } catch (err: any) {
-    if ([401, 403, 429].includes(err.response?.status)) {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("user");
-      // Clear alert flags from sessionStorage so they show up again on next login
-      Object.keys(sessionStorage).forEach((key) => {
-        if (key.startsWith("overdue_alert_shown_")) {
-          sessionStorage.removeItem(key);
-        }
-      });
+  } catch (err: unknown) {
+    if (err && typeof err === "object" && "response" in err) {
+      const response = (err as { response: { status: number } }).response;
+      if (response && [401, 403, 429].includes(response.status)) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("user");
+        // Clear alert flags from sessionStorage so they show up again on next login
+        Object.keys(sessionStorage).forEach((key) => {
+          if (key.startsWith("overdue_alert_shown_")) {
+            sessionStorage.removeItem(key);
+          }
+        });
+      }
     }
     console.error("Auth check failed:", err);
     return null;
@@ -114,5 +157,19 @@ export const useAuth = () => {
     }
   };
 
-  return { user, loading, logout };
+  const isAdmin = user?.role === "ADMIN";
+
+  const isWaliKelasOf = (id_kelas: number | string) => {
+    if (isAdmin) return true;
+    if (!user?.kelasWali) return false;
+    return user.kelasWali.some((k) => k.id_kelas === Number(id_kelas));
+  };
+
+  const isPengajarOf = (id_kelas: number | string) => {
+    if (isAdmin) return true;
+    if (!user?.kelasAjar) return false;
+    return user.kelasAjar.some((k) => k.id_kelas === Number(id_kelas));
+  };
+
+  return { user, loading, logout, isAdmin, isWaliKelasOf, isPengajarOf };
 };

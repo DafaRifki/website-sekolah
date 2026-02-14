@@ -5,12 +5,11 @@ import {
   BookOpen,
   PieChart,
   Bell,
-  Archive,
   Notebook,
   FileUser,
-  DollarSign,
   Banknote,
 } from "lucide-react";
+import { type LucideIcon } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
 import { NavMain } from "@/components/nav-main";
@@ -37,11 +36,11 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 type MenuSection = {
   type: "link" | "main";
   title: string;
-  links?: { name: string; url: string; icon: React.ElementType }[];
+  links?: { name: string; url: string; icon: LucideIcon }[];
   items?: {
     title: string;
     url: string;
-    icon: React.ElementType;
+    icon: LucideIcon;
     items?: { title: string; url: string }[];
   }[];
 };
@@ -69,9 +68,13 @@ const menuItems: Record<Role, MenuSection[]> = {
           icon: Users,
           items: [
             { title: "Guru", url: "/guru" },
+            { title: "Guru Mapel", url: "/guru-mapel" },
             { title: "Siswa", url: "/siswa" },
             { title: "Kelas", url: "/kelas" },
+            { title: "Mata Pelajaran", url: "/mata-pelajaran" },
+            { title: "Jadwal", url: "/jadwal" },
             { title: "Tahun Ajaran", url: "/tahun-ajaran" },
+            { title: "E-Rapor", url: "/e-rapor" },
           ],
         },
       ],
@@ -113,8 +116,10 @@ const menuItems: Record<Role, MenuSection[]> = {
           url: "#",
           icon: BookOpen,
           items: [
-            { title: "Input Nilai", url: "/nilai" },
+            { title: "Input Nilai", url: "/guru/nilai" },
+            { title: "Jadwal", url: "/guru/jadwal" },
             { title: "Absensi", url: "/absensi" },
+            { title: "E-Rapor", url: "/e-rapor" },
           ],
         },
       ],
@@ -136,7 +141,7 @@ const menuItems: Record<Role, MenuSection[]> = {
           icon: PieChart,
           items: [
             { title: "Nilai Saya", url: "/nilai" },
-            { title: "Jadwal", url: "/jadwal" },
+            { title: "Jadwal", url: "/siswa/jadwal" },
           ],
         },
       ],
@@ -148,8 +153,8 @@ const menuItems: Record<Role, MenuSection[]> = {
     },
     {
       type: "link",
-      title: "Tugas",
-      links: [{ name: "Tugas", url: "/tugas", icon: BookOpen }],
+      title: "Transkrip Nilai",
+      links: [{ name: "E-Rapor", url: "/siswa/e-rapor", icon: BookOpen }],
     },
   ],
 };
@@ -186,7 +191,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
             <NavLinks key={idx} title={section.title} links={section.links} />
           ) : section.type === "main" && section.items ? (
             <NavMain key={idx} items={section.items} />
-          ) : null
+          ) : null,
         )}
 
         {/* <NavLinks
