@@ -29,23 +29,26 @@ export class UserService {
   ): Promise<PaginationResult<any>> {
     const { skip, take, page, limit } = buildPaginationQuery(query);
 
-    // Build search filter
-    const searchFilter = buildSearchFilter(query.search, ["email"]);
+    // Custom search filter for relations
+    const where: any = {};
+    
+    if (query.search) {
+      where.OR = [
+        { email: { contains: query.search } },
+        { siswa: { nama: { contains: query.search } } },
+        { guru: { nama: { contains: query.search } } },
+      ];
+    }
 
-    // Build orderBy with proper Prisma types
+    // Build orderBy
     const orderBy: any = {};
-
     if (query.sortBy === "role") {
       orderBy.role = query.sortOrder === "desc" ? "desc" : "asc";
     } else if (query.sortBy === "email") {
       orderBy.email = query.sortOrder === "desc" ? "desc" : "asc";
     } else {
-      orderBy.id = "desc"; // Default sort by ID
+      orderBy.id = "desc";
     }
-
-    const where = {
-      ...searchFilter,
-    };
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
@@ -350,5 +353,197 @@ export class UserService {
       guru: guruCount,
       siswa: siswaCount,
     };
+  }
+
+  static async getPendingStudents() {
+    return prisma.user.findMany({
+      where: {
+        role: "SISWA",
+        siswa: {
+          status: "PENDING_VERIFIKASI",
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        createdAt: true,
+        siswa: {
+          select: {
+            id_siswa: true,
+            nama: true,
+            status: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  static async verifyStudent(userId: number) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { siswa: true },
+    });
+
+    if (!user || user.role !== "SISWA" || !user.siswa) {
+      throw new Error("Siswi not found or invalid user");
+    }
+
+    // Update status to AKTIF
+    await prisma.siswa.update({
+      where: { id_siswa: user.siswa.id_siswa },
+      data: { status: "AKTIF" },
+    });
+
+    return { message: "Siswa verified successfully" };
+  }
+
+  static async rejectStudent(userId: number) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { siswa: true },
+    });
+
+    if (!user || user.role !== "SISWA") {
+      throw new Error("Student not found or invalid user");
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // Delete User first (because User holds the FK to Siswa)
+      await tx.user.delete({ where: { id: userId } });
+
+      // Delete Siswa if exists
+      if (user.siswaId) {
+        await tx.siswa.delete({ where: { id_siswa: user.siswaId } });
+      }
+    });
+
+    return { message: "Student rejected and data deleted" };
+  }
+
+  static async getUnlinkedData() {
+    const [siswa, guru] = await Promise.all([
+      prisma.siswa.findMany({
+        // Removed `where: { user: null }` to allow searching all students
+        select: {
+          id_siswa: true,
+          nama: true,
+          nis: true,
+          kelas: {
+            select: {
+              namaKelas: true,
+            },
+          },
+          user: {
+            select: {
+              email: true,
+            },
+          },
+        },
+        orderBy: { nama: "asc" },
+      }),
+      prisma.guru.findMany({
+        // Removed `where: { user: null }` to allow searching all teachers
+        select: {
+          id_guru: true,
+          nama: true,
+          nip: true,
+          user: {
+            select: {
+              email: true,
+            },
+          },
+        },
+        orderBy: { nama: "asc" },
+      }),
+    ]);
+
+    return { siswa, guru };
+  }
+
+  static async verifyAndLinkUser(
+    userId: number,
+    targetId: number,
+    targetType: "SISWA" | "GURU" | "ADMIN"
+  ) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { siswa: true }, // Get the temporary siswa record
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Verify target exists
+    if (targetType === "SISWA") {
+      const targetSiswa = await prisma.siswa.findUnique({
+        where: { id_siswa: targetId },
+        include: { user: true },
+      });
+      if (!targetSiswa) throw new Error("Target Siswa not found");
+      // Allow overwriting: Logic moved to transaction
+    } else if (targetType === "GURU") {
+      const targetGuru = await prisma.guru.findUnique({
+        where: { id_guru: targetId },
+        include: { user: true },
+      });
+      if (!targetGuru) throw new Error("Target Guru not found");
+       // Allow overwriting: Logic moved to transaction
+    } 
+    // If ADMIN, no targetId check needed
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Check if target already has a user (only for SISWA/GURU), and UNLINK them if so
+      if (targetType !== "ADMIN") {
+        const existingUserLinked = await tx.user.findFirst({
+          where: targetType === "SISWA" ? { siswaId: targetId } : { guruId: targetId },
+        });
+
+        if (existingUserLinked) {
+          // Unlink the old user
+          await tx.user.update({
+            where: { id: existingUserLinked.id },
+            data: {
+              siswaId: null,
+              guruId: null,
+            },
+          });
+        }
+      }
+
+      // 2. Delete the temporary Siswa record created during registration
+      // Only if the user currently has a 'SISWA' role and a linked siswa record
+      // AND that siswa record was created recently (simple check: same ID as user.siswaId)
+      if (user.role === "SISWA" && user.siswaId) {
+        // Double check not to delete the TARGET siswa if they somehow match (unlikely)
+        // If target is SISWA, ensure we don't delete the target. If Admin/Guru, always delete temp.
+        if (targetType !== "SISWA" || user.siswaId !== targetId) {
+           await tx.siswa.delete({
+            where: { id_siswa: user.siswaId },
+          });
+        }
+      }
+
+      // 3. Update the User record
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          role: targetType, // Update role (SISWA or GURU or ADMIN)
+          siswaId: targetType === "SISWA" ? targetId : null,
+          guruId: targetType === "GURU" ? targetId : null,
+        },
+      });
+
+      // 4. If target is SISWA, ensure status is AKTIF
+      if (targetType === "SISWA") {
+        await tx.siswa.update({
+          where: { id_siswa: targetId },
+          data: { status: "AKTIF" },
+        });
+      }
+    });
+
+    return { message: `User successfully verified and linked/set to ${targetType}` };
   }
 }

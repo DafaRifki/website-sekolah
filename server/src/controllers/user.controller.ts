@@ -150,4 +150,78 @@ export class UserController {
       sendError(res, "Failed to get user statistics", error.message, 400);
     }
   }
+
+  static async getPendingStudents(req: Request, res: Response) {
+    try {
+      const users = await UserService.getPendingStudents();
+      sendSuccess(res, "Pending students retrieved successfully", users);
+    } catch (error: any) {
+      sendError(res, "Failed to get pending students", error.message, 400);
+    }
+  }
+
+  static async verifyStudent(req: Request, res: Response) {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return sendError(res, "Invalid ID", null, 400);
+
+      const result = await UserService.verifyStudent(id);
+      sendSuccess(res, result.message, null);
+    } catch (error: any) {
+      sendError(res, "Failed to verify student", error.message, 400);
+    }
+  }
+
+  static async rejectStudent(req: Request, res: Response) {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return sendError(res, "Invalid ID", null, 400);
+
+      const result = await UserService.rejectStudent(id);
+      sendSuccess(res, result.message, null);
+    } catch (error: any) {
+      sendError(res, "Failed to reject student", error.message, 400);
+    }
+  }
+
+  static async getUnlinkedData(req: Request, res: Response) {
+    try {
+      const result = await UserService.getUnlinkedData();
+      sendSuccess(res, "Unlinked data retrieved successfully", result);
+    } catch (error: any) {
+      sendError(res, "Failed to get unlinked data", error.message, 400);
+    }
+  }
+
+  static async verifyAndLinkUser(req: Request, res: Response) {
+    try {
+      const id = parseInt(req.params.id);
+      const { targetId, targetType } = req.body;
+
+      if (isNaN(id) || isNaN(targetId) || !targetType) {
+        return sendError(res, "Invalid input data", null, 400);
+      }
+
+      if (!["SISWA", "GURU", "ADMIN"].includes(targetType)) {
+        return sendError(res, "Invalid target type", null, 400);
+      }
+
+      // For ADMIN, targetId might be 0 or null, so we default to 0 if valid check passes for other types
+      const parsedTargetId = targetType === "ADMIN" ? 0 : parseInt(targetId);
+
+      // Only check isNaN for SISWA/GURU
+      if (targetType !== "ADMIN" && isNaN(parsedTargetId)) {
+         return sendError(res, "Invalid target ID", null, 400);
+      }
+
+      const result = await UserService.verifyAndLinkUser(
+        id,
+        parsedTargetId,
+        targetType
+      );
+      sendSuccess(res, result.message, null);
+    } catch (error: any) {
+      sendError(res, "Failed to link user", error.message, 400);
+    }
+  }
 }

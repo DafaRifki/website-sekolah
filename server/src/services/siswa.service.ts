@@ -11,15 +11,26 @@ import { Prisma } from "@prisma/client";
 interface CreateSiswaData {
   nama: string;
   nis?: string;
+  nisn?: string;
   email: string;
   password?: string;
+  tempatLahir?: string;
   alamat?: string;
   tanggalLahir?: Date | string;
+  agama?: string;
   jenisKelamin?: "L" | "P";
+  noHP?: string;
   kelasId?: number;
   fotoProfil?: string;
+  tahunMasuk?: number;
 
   // Orang Tua
+  namaAyah?: string;
+  namaIbu?: string;
+  pekerjaanAyah?: string;
+  pekerjaanIbu?: string;
+  noTeleponOrtu?: string;
+
   orangtuaNama?: string;
   orangtuaHubungan?: string;
   orangtuaPekerjaan?: string;
@@ -29,11 +40,20 @@ interface CreateSiswaData {
 
 interface UpdateSiswaData {
   nama?: string;
+  nisn?: string;
   alamat?: string;
+  tempatLahir?: string;
   tanggalLahir?: Date | string;
+  agama?: string;
   jenisKelamin?: "L" | "P";
+  noHP?: string;
   kelasId?: number;
   fotoProfil?: string;
+  namaAyah?: string;
+  namaIbu?: string;
+  pekerjaanAyah?: string;
+  pekerjaanIbu?: string;
+  noTeleponOrtu?: string;
 }
 
 export class SiswaService {
@@ -237,6 +257,16 @@ export class SiswaService {
         jenisKelamin: data.jenisKelamin,
         kelasId: data.kelasId,
         fotoProfil: data.fotoProfil,
+        nisn: data.nisn,
+        tempatLahir: data.tempatLahir,
+        agama: data.agama,
+        noHP: data.noHP,
+        namaAyah: data.namaAyah,
+        namaIbu: data.namaIbu,
+        pekerjaanAyah: data.pekerjaanAyah,
+        pekerjaanIbu: data.pekerjaanIbu,
+        noTeleponOrtu: data.noTeleponOrtu,
+        tahunMasuk: data.tahunMasuk,
 
         // Create User
         user: {
@@ -387,10 +417,19 @@ export class SiswaService {
 
     const updateData: any = {
       nama: data.nama,
+      nisn: data.nisn,
       alamat: data.alamat,
+      tempatLahir: data.tempatLahir,
+      agama: data.agama,
       jenisKelamin: data.jenisKelamin,
+      noHP: data.noHP,
       kelasId: data.kelasId,
       fotoProfil: data.fotoProfil,
+      namaAyah: data.namaAyah,
+      namaIbu: data.namaIbu,
+      pekerjaanAyah: data.pekerjaanAyah,
+      pekerjaanIbu: data.pekerjaanIbu,
+      noTeleponOrtu: data.noTeleponOrtu,
     };
 
     if (data.tanggalLahir) {

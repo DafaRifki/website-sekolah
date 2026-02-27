@@ -19,9 +19,19 @@ export default function SiswaBaruLayout() {
               "px-3 py-2 text-sm font-medium",
               location.pathname.includes("/siswa-baru/pendaftaran")
                 ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
             )}>
             Pendaftaran
+          </Link>
+          <Link
+            to="/siswa-baru/tarif"
+            className={cn(
+              "px-3 p-2 text-sm font-medium",
+              location.pathname.includes("/siswa-baru/tarif")
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+            )}>
+            Tarif Pembayaran
           </Link>
           <Link
             to="/siswa-baru/tagihan"
@@ -29,7 +39,7 @@ export default function SiswaBaruLayout() {
               "px-3 py-2 text-sm font-medium",
               location.pathname.includes("/siswa-baru/tagihan")
                 ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
             )}>
             Tagihan
           </Link>
@@ -39,7 +49,7 @@ export default function SiswaBaruLayout() {
               "px-3 py-2 text-sm font-medium",
               location.pathname.includes("/siswa-baru/pembayaran")
                 ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
             )}>
             Pembayaran
           </Link>

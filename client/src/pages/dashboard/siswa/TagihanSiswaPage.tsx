@@ -25,6 +25,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Building2, Copy, Info, ExternalLink } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Tagihan {
   id_tagihan: number;
@@ -56,10 +66,15 @@ const TagihanSiswaPage = () => {
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Filters
   const [tahunAjaranId, setTahunAjaranId] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  
+  // Modal State
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedTagihan, setSelectedTagihan] = useState<Tagihan | null>(null);
 
   const fetchTahunAjaran = useCallback(async () => {
     try {
@@ -338,11 +353,11 @@ const TagihanSiswaPage = () => {
                           <Button 
                             className="bg-green-600 hover:bg-green-700 text-white shadow-green-200 shadow-md font-bold px-6"
                             onClick={() => {
-                              // Link to payment page or instructions
-                              toast.info("Silakan hubungi bagian keuangan sekolah untuk melakukan pembayaran.");
+                              setSelectedTagihan(item);
+                              setIsPaymentModalOpen(true);
                             }}
                           >
-                            Bayar Sekarang
+                            Informasi Pembayaran
                           </Button>
                         </div>
                       </div>
@@ -420,6 +435,111 @@ const TagihanSiswaPage = () => {
           </div>
         </div>
       )}
+
+      {/* Payment Info Modal */}
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
+          <div className="bg-gradient-to-r from-green-600 to-green-500 p-6 text-white">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold flex items-center gap-3">
+                <Building2 className="h-6 w-6" />
+                Informasi Transfer
+              </DialogTitle>
+              <DialogDescription className="text-green-50/90 text-sm font-medium mt-1">
+                Silakan lakukan pembayaran melalui detail rekening di bawah ini.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {selectedTagihan && (
+              <div className="bg-gray-50 border rounded-xl p-4 flex justify-between items-center">
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tagihan Dipilih</p>
+                  <p className="font-bold text-gray-700">{selectedTagihan.tarif.namaTagihan}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Sisa</p>
+                  <p className="font-black text-lg text-red-600">{formatRupiah(selectedTagihan.sisaPembayaran)}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
+                  <Info className="h-3 w-3 text-blue-500" /> Nama Bank
+                </label>
+                <div className="p-3 bg-white border-2 border-gray-100 rounded-xl font-bold text-gray-800 flex items-center gap-3">
+                  <div className="h-8 w-12 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+                    <span className="text-[10px] font-black text-gray-400">BANK</span>
+                  </div>
+                  Bank Syariah Indonesia (BSI)
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase">Nomor Rekening</label>
+                <div className="p-4 bg-green-50 border-2 border-green-100 rounded-xl flex items-center justify-between group">
+                  <span className="text-xl font-black text-green-700 tracking-wider">712-345-6789</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-green-600 hover:bg-green-100 hover:text-green-700 h-8 gap-2 font-bold"
+                    onClick={() => {
+                      navigator.clipboard.writeText("7123456789");
+                      toast.success("Nomor rekening disalin!");
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                    Salin
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase">Atas Nama (A.N)</label>
+                <div className="p-3 bg-white border-2 border-gray-100 rounded-xl font-bold text-gray-800">
+                  PEMBAYARAN SEKOLAH AS-SAKINAH
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 italic text-xs text-amber-800 space-y-2">
+              <p className="font-bold flex items-center gap-2 uppercase tracking-wide">
+                <AlertCircle className="h-3 w-3" /> Penting:
+              </p>
+              <p>1. Mohon tuliskan <strong>Nama Siswa & NIS</strong> pada berita transfer.</p>
+              <p>2. Simpan bukti transfer dan serahkan ke bagian Bendahara Sekolah untuk verifikasi manual atau unggah bukti jika tersedia.</p>
+            </div>
+          </div>
+
+          <DialogFooter className="p-6 pt-0 flex-col sm:flex-row gap-3">
+            <Button variant="outline" onClick={() => setIsPaymentModalOpen(false)} className="w-full sm:w-auto rounded-xl font-bold">
+              Tutup
+            </Button>
+            <Button 
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 rounded-xl font-bold shadow-md shadow-green-100 gap-2"
+              onClick={() => {
+                if (!selectedTagihan) return;
+                
+                const message = `Halo Bendahara, saya ingin konfirmasi pembayaran:
+Nama: ${user?.name || '-'}
+NIS: ${user?.nis || '-'}
+Tagihan: ${selectedTagihan.tarif.namaTagihan}
+Nominal: ${formatRupiah(selectedTagihan.sisaPembayaran)}
+Ref ID: #${selectedTagihan.id_tagihan}`;
+
+                const encodedMessage = encodeURIComponent(message);
+                window.open(`https://wa.me/628123456789?text=${encodedMessage}`, "_blank"); 
+              }}
+            >
+              <ExternalLink className="h-4 w-4" />
+              Konfirmasi via WhatsApp
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -83,7 +83,8 @@ export default function TambahPembayaranModal({
     tarifId: "",
     tahunAjaranId: "",
     jumlahBayar: "",
-    metode: "",
+    metode: "Transfer Bank",
+    noBukti: "",
     keterangan: "",
   });
 
@@ -295,6 +296,7 @@ export default function TambahPembayaranModal({
         tagihanId,
         jumlahBayar: Number(form.jumlahBayar.replace(/\D/g, "")),
         metode: form.metode,
+        noBukti: form.noBukti || undefined,
         keterangan: form.keterangan || undefined,
       });
 
@@ -308,7 +310,8 @@ export default function TambahPembayaranModal({
         siswaId: "",
         tarifId: "",
         jumlahBayar: "",
-        metode: "",
+        metode: "Transfer Bank",
+        noBukti: "",
         keterangan: "",
       }));
       setSiswaSearch("");
@@ -592,6 +595,18 @@ export default function TambahPembayaranModal({
                     Terbilang: Rp {form.jumlahBayar}
                   </p>
                 )}
+              </div>
+
+              {/* Nomor Bukti / Referensi */}
+              <div className="space-y-2">
+                <Label>Nomor Bukti / Referensi (Opsional)</Label>
+                <Input
+                  placeholder="Contoh: ID Transaksi, Ref ID dari WhatsApp"
+                  value={form.noBukti}
+                  onChange={(e) =>
+                    setForm({ ...form, noBukti: e.target.value })
+                  }
+                />
               </div>
 
               {/* Keterangan */}

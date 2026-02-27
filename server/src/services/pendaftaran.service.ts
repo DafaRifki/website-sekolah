@@ -320,11 +320,29 @@ export class PendaftaranService {
 
     const siswa = await SiswaService.create({
       nama: pendaftaran.nama,
-      nis: pendaftaran.nisn || undefined,
+      nis: undefined,
+      nisn: pendaftaran.nisn || undefined,
       email: pendaftaran.email || `siswa${Date.now()}@sekolah.com`,
       alamat: pendaftaran.alamat || undefined,
+      tempatLahir: pendaftaran.tempatLahir || undefined,
       tanggalLahir: pendaftaran.tanggalLahir || undefined,
+      agama: pendaftaran.agama || undefined,
       jenisKelamin: pendaftaran.jenisKelamin as "L" | "P" | undefined,
+      noHP: pendaftaran.noHandphonAktif || pendaftaran.noHp || undefined,
+      tahunMasuk: new Date().getFullYear(),
+
+      // Data orang tua langsung ke kolom siswa
+      namaAyah: pendaftaran.namaAyah || undefined,
+      namaIbu: pendaftaran.namaIbu || undefined,
+      pekerjaanAyah: pendaftaran.pekerjaanAyah || undefined,
+      pekerjaanIbu: pendaftaran.pekerjaanIbu || undefined,
+      noTeleponOrtu:
+        pendaftaran.noHPAyah ||
+        pendaftaran.noHPIbu ||
+        pendaftaran.noWali ||
+        undefined,
+
+      // untuk tabel OrangTua (relasi terpisah)
       orangtuaNama:
         pendaftaran.namaAyah ||
         pendaftaran.namaIbu ||
@@ -340,6 +358,7 @@ export class PendaftaranService {
         pendaftaran.pekerjaanIbu ||
         pendaftaran.pekerjaanWali ||
         undefined,
+      orangtuaAlamat: pendaftaran.alamat || undefined,
       orangtuaNoHp:
         pendaftaran.noHPAyah ||
         pendaftaran.noHPIbu ||

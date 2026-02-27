@@ -17,6 +17,8 @@ const storage = multer.diskStorage({
       folder = "guru"; 
     } else if (file.fieldname === "dokumen") {
       folder = "documents";
+    } else if (file.fieldname === "gambar") {
+      folder = "berita";
     }
 
     const fullPath = path.join(uploadDir, folder);

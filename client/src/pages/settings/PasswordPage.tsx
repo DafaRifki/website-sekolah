@@ -23,7 +23,7 @@ import { toast } from "sonner";
 
 import Loading from "@/components/Loading";
 import apiClient from "@/config/axios";
-import { zodResolver } from "@hookform/resolvers/zod/src/zod.js";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 
 

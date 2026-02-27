@@ -6,6 +6,7 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string;
   password: string;
+  nama: string;
   role?: "GURU" | "SISWA";
 }
 

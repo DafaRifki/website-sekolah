@@ -135,15 +135,15 @@ export const createUserValidation = Joi.object({
     "any.only": "Role harus ADMIN, GURU, atau SISWA",
     "any.required": "Role wajib diisi",
   }),
-  guruId: Joi.number().integer().optional(),
-  siswaId: Joi.number().integer().optional(),
+  guruId: Joi.number().integer().optional().allow(null),
+  siswaId: Joi.number().integer().optional().allow(null),
 });
 
 export const updateUserValidation = Joi.object({
   email: Joi.string().email().optional(),
   role: Joi.string().valid("ADMIN", "GURU", "SISWA").optional(),
-  guruId: Joi.number().integer().optional(),
-  siswaId: Joi.number().integer().optional(),
+  guruId: Joi.number().integer().optional().allow(null),
+  siswaId: Joi.number().integer().optional().allow(null),
 });
 
 export const resetPasswordValidation = Joi.object({
@@ -537,7 +537,7 @@ export const bulkNilaiValidation = Joi.object({
       Joi.object({
         id_siswa: Joi.number().integer().required(),
         nilai: Joi.number().integer().min(0).max(100).required(),
-      })
+      }),
     )
     .min(1)
     .required()
@@ -607,7 +607,7 @@ export const bulkAbsensiValidation = Joi.object({
           .valid("HADIR", "SAKIT", "IZIN", "TIDAK_HADIR")
           .required(),
         keterangan: Joi.string().optional().allow(""),
-      })
+      }),
     )
     .min(1)
     .required()
@@ -733,6 +733,7 @@ export const pembayaranValidation = Joi.object({
   metode: Joi.string().optional().messages({
     "string.base": "Metode harus berupa teks",
   }),
+  noBukti: Joi.string().allow("", null).optional(),
   keterangan: Joi.string().allow("", null).optional(),
   tanggal: Joi.date().optional().messages({
     "date.base": "Tanggal harus berupa format tanggal",
@@ -749,6 +750,141 @@ export const updatePembayaranValidation = Joi.object({
     "number.min": "Jumlah bayar minimal 1",
   }),
   metode: Joi.string().optional(),
+  noBukti: Joi.string().allow("", null).optional(),
   keterangan: Joi.string().allow("", null).optional(),
   tanggal: Joi.date().optional(),
 }).min(1);
+
+// ============================================
+// ADVANCED TARIF PEMBAYARAN VALIDATIONS
+// Added for bulk edit, template copy, and import features
+// ============================================
+
+/**
+ * Validation for bulk update tarif
+ * PUT /api/tarif-pembayaran/bulk-update
+ */
+export const bulkUpdateValidation = Joi.object({
+  ids: Joi.array()
+    .items(Joi.number().integer().positive())
+    .min(1)
+    .required()
+    .messages({
+      "array.base": "IDs harus berupa array",
+      "array.min": "Minimal harus ada 1 tarif yang dipilih",
+      "any.required": "IDs wajib diisi",
+    }),
+  type: Joi.string().valid("percentage", "fixed").required().messages({
+    "any.required": "Type wajib diisi",
+    "any.only": "Type harus 'percentage' atau 'fixed'",
+  }),
+  value: Joi.number().positive().required().messages({
+    "any.required": "Value wajib diisi",
+    "number.base": "Value harus berupa angka",
+    "number.positive": "Value harus lebih besar dari 0",
+  }),
+  operation: Joi.string().valid("increase", "decrease").required().messages({
+    "any.required": "Operation wajib diisi",
+    "any.only": "Operation harus 'increase' atau 'decrease'",
+  }),
+});
+
+/**
+ * Validation for copy tarif from template
+ * POST /api/tarif-pembayaran/copy-template
+ */
+export const copyTemplateValidation = Joi.object({
+  sourceTahunAjaranId: Joi.number().integer().positive().required().messages({
+    "any.required": "Source tahun ajaran ID wajib diisi",
+    "number.base": "Source tahun ajaran ID harus berupa angka",
+    "number.positive": "Source tahun ajaran ID harus lebih besar dari 0",
+  }),
+  targetTahunAjaranId: Joi.number()
+    .integer()
+    .positive()
+    .required()
+    .invalid(Joi.ref("sourceTahunAjaranId"))
+    .messages({
+      "any.required": "Target tahun ajaran ID wajib diisi",
+      "number.base": "Target tahun ajaran ID harus berupa angka",
+      "number.positive": "Target tahun ajaran ID harus lebih besar dari 0",
+      "any.invalid": "Source dan target tahun ajaran tidak boleh sama",
+    }),
+  applyAdjustment: Joi.boolean().optional().default(false).messages({
+    "boolean.base": "Apply adjustment harus berupa boolean",
+  }),
+  adjustmentType: Joi.string()
+    .valid("percentage", "fixed")
+    .when("applyAdjustment", {
+      is: true,
+      then: Joi.required(),
+      otherwise: Joi.optional(),
+    })
+    .messages({
+      "any.only": "Adjustment type harus 'percentage' atau 'fixed'",
+      "any.required": "Adjustment type wajib diisi jika apply adjustment true",
+    }),
+  adjustmentValue: Joi.number()
+    .positive()
+    .when("applyAdjustment", {
+      is: true,
+      then: Joi.required(),
+      otherwise: Joi.optional(),
+    })
+    .messages({
+      "number.base": "Adjustment value harus berupa angka",
+      "number.positive": "Adjustment value harus lebih besar dari 0",
+      "any.required": "Adjustment value wajib diisi jika apply adjustment true",
+    }),
+});
+
+/**
+ * Validation for import CSV
+ * POST /api/tarif-pembayaran/import/csv
+ */
+export const importCSVValidation = Joi.object({
+  tahunAjaranId: Joi.number().integer().positive().required().messages({
+    "any.required": "Tahun ajaran ID wajib diisi",
+    "number.base": "Tahun ajaran ID harus berupa angka",
+    "number.positive": "Tahun ajaran ID harus lebih besar dari 0",
+  }),
+  tarifs: Joi.array()
+    .items(
+      Joi.object({
+        namaTagihan: Joi.string().required().messages({
+          "any.required": "Nama tagihan wajib diisi",
+          "string.empty": "Nama tagihan tidak boleh kosong",
+        }),
+        nominal: Joi.number().integer().min(0).required().messages({
+          "any.required": "Nominal wajib diisi",
+          "number.base": "Nominal harus berupa angka",
+          "number.min": "Nominal tidak boleh negatif",
+        }),
+        keterangan: Joi.string().optional().allow("", null).messages({
+          "string.base": "Keterangan harus berupa teks",
+        }),
+      }),
+    )
+    .min(1)
+    .required()
+    .messages({
+      "array.base": "Tarifs harus berupa array",
+      "array.min": "Minimal harus ada 1 tarif",
+      "any.required": "Tarifs wajib diisi",
+    }),
+  overwriteExisting: Joi.boolean().optional().default(false).messages({
+    "boolean.base": "Overwrite existing harus berupa boolean",
+  }),
+});
+
+/**
+ * Validation for duplicate single tarif
+ * POST /api/tarif-pembayaran/:id/duplicate
+ */
+export const duplicateTarifValidation = Joi.object({
+  targetTahunAjaranId: Joi.number().integer().positive().required().messages({
+    "any.required": "Target tahun ajaran ID wajib diisi",
+    "number.base": "Target tahun ajaran ID harus berupa angka",
+    "number.positive": "Target tahun ajaran ID harus lebih besar dari 0",
+  }),
+});

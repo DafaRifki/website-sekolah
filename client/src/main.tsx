@@ -89,7 +89,48 @@ const GuruMapelPage = lazy(() => import("@/pages/GuruMapel/GuruMapelPage.tsx"));
 const GuruMapelFormPage = lazy(
   () => import("@/pages/GuruMapel/GuruMapelFormPage.tsx"),
 );
+const TarifPembayaranPage = lazy(
+  () => import("@/pages/admin/tarif/TarifPembayaranPage.tsx"),
+);
 const AbsensiPage = lazy(() => import("@/pages/AbsensiPage.tsx"));
+
+const DashboardAbsensiAdmin = lazy(
+  () => import("@/pages/absensi/admin/DashboardAbsensiAdmin.tsx"),
+);
+const DashboardAbsensiGuru = lazy(
+  () => import("@/pages/absensi/guru/DashboardAbsensiGuru.tsx"),
+);
+const RiwayatAbsensiSiswa = lazy(
+  () => import("@/pages/absensi/siswa/RiwayatAbsensiSiswa.tsx"),
+);
+
+const LaporanPage = lazy(() => import("@/pages/admin/laporan/LaporanPage.tsx"));
+const UserVerificationPage = lazy(
+  () => import("@/pages/admin/users/UserVerificationPage.tsx"),
+);
+const AdminBeritaPage = lazy(
+  () => import("@/pages/admin/berita/AdminBeritaPage.tsx"),
+);
+
+const JadwalMengajarGuru = lazy(
+  () => import("@/pages/absensi/guru/JadwalMengajarGuru.tsx"),
+);
+
+const MulaiPertemuanForm = lazy(
+  () => import("@/pages/absensi/guru/MulaiPertemuanForm.tsx"),
+);
+
+const InputPresensiPage = lazy(
+  () => import("@/pages/absensi/guru/InputPresensiPage.tsx"),
+);
+
+const RiwayatMengajar = lazy(
+  () => import("@/pages/absensi/guru/RiwayatMengajar.tsx"),
+);
+
+const KehadiranSiswa = lazy(
+  () => import("@/pages/absensi/siswa/KehadiranSiswa.tsx"),
+);
 
 const root = document.getElementById("root") as HTMLElement;
 
@@ -133,19 +174,34 @@ ReactDOM.createRoot(root).render(
         <Route element={<AuthLayout />}>
           <Route path="/dashboard" element={<DashboardPageIndex />} />
           <Route path="/dashboard/tagihan" element={<TagihanSiswaPage />} />
+          <Route path="/dashboard/laporan" element={<LaporanPage />} />
+          <Route path="/admin/absensi" element={<DashboardAbsensiAdmin />} />
 
           {/* Data Siswa */}
           <Route path="/siswa" element={<DataSiswaPage />} />
           <Route path="/siswa/:id/edit" element={<EditSiswaPage />} />
           <Route path="/siswa/e-rapor" element={<RaporSiswaPage />} />
+          <Route path="/siswa/e-rapor" element={<RaporSiswaPage />} />
           {/* Data Jadwal */}
           <Route path="/siswa/jadwal" element={<JadwalSiswaPage />} />
+          {/* <Route path="/siswa/absensi" element={<RiwayatAbsensiSiswa />} /> */}
+          <Route
+            path="/siswa/absensi/kehadiranku"
+            element={<KehadiranSiswa />}
+          />
+
+          {/* Verifikasi User */}
+          <Route
+            path="/users/verification"
+            element={<UserVerificationPage />}
+          />
 
           {/* Pendaftaran siswa baru */}
           <Route path="/siswa-baru" element={<SiswaBaruLayout />}>
             <Route index element={<Navigate to="pendaftaran" replace />} />
             <Route path="pendaftaran" element={<PendaftaranPage />} />
             <Route path="tagihan" element={<TagihanPage />} />
+            <Route path="tarif" element={<TarifPembayaranPage />} />
             <Route path="pembayaran" element={<PembayaranPage />} />
           </Route>
 
@@ -161,6 +217,17 @@ ReactDOM.createRoot(root).render(
           {/* Jadwal Guru */}
           <Route path="/guru/jadwal" element={<JadwalGuruPage />} />
           <Route path="/absensi" element={<AbsensiPage />} />
+          <Route path="/guru/absensi/jadwal" element={<JadwalMengajarGuru />} />
+          <Route
+            path="/guru/absensi/mulai-pertemuan"
+            element={<MulaiPertemuanForm />}
+          />
+          <Route
+            path="/guru/absensi/pertemuan/:id"
+            element={<InputPresensiPage />}
+          />
+          <Route path="/guru/absensi/riwayat" element={<InputPresensiPage />} />
+          <Route path="/guru/absensi" element={<DashboardAbsensiGuru />} />
 
           {/* Data Jadwal */}
           <Route path="/jadwal" element={<JadwalPage />} />
@@ -191,6 +258,7 @@ ReactDOM.createRoot(root).render(
             path="/mata-pelajaran/:id/edit"
             element={<MataPelajaranFormPage />}
           />
+          <Route path="/admin/berita" element={<AdminBeritaPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

@@ -129,7 +129,7 @@ export class AbsensiService {
       try {
         // Check if siswa is in kelas
         const siswaInKelas = kelas.siswa.find(
-          (s) => s.id_siswa === absensiItem.id_siswa
+          (s) => s.id_siswa === absensiItem.id_siswa,
         );
 
         if (!siswaInKelas) {
@@ -234,7 +234,7 @@ export class AbsensiService {
     siswaId: number,
     startDate?: string,
     endDate?: string,
-    tahunAjaranId?: number
+    tahunAjaranId?: number,
   ) {
     const siswa = await prisma.siswa.findUnique({
       where: { id_siswa: siswaId },
@@ -309,7 +309,7 @@ export class AbsensiService {
   static async getByKelas(
     kelasId: number,
     tanggal: string,
-    tahunAjaranId: number
+    tahunAjaranId: number,
   ) {
     const kelas = await prisma.kelas.findUnique({
       where: { id_kelas: kelasId },
@@ -346,7 +346,7 @@ export class AbsensiService {
           keterangan: absensi?.keterangan || null,
           id_absensi: absensi?.id_absensi || null,
         };
-      })
+      }),
     );
 
     // Calculate statistics
@@ -380,7 +380,7 @@ export class AbsensiService {
     kelasId?: number,
     startDate?: string,
     endDate?: string,
-    tahunAjaranId?: number
+    tahunAjaranId?: number,
   ) {
     const where: any = {};
 
