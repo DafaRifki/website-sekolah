@@ -725,6 +725,58 @@ async function main() {
 
   console.log("✅ 3 pendaftaran created");
 
+  // ==================== 14. BERITA ====================
+  console.log("\n📰 Seeding berita...");
+
+  const beritaData = [
+    {
+      judul: "Pembangunan Gedung Laboratorium Baru Selesai",
+      isi: "Sekolah kami dengan bangga mengumumkan selesainya pembangunan gedung laboratorium baru yang modern. Laboratorium ini dilengkapi dengan peralatan canggih untuk mendukung kegiatan praktikum siswa di bidang Fisika, Kimia, dan Biologi. Pembangunan ini merupakan bagian dari program peningkatan fasilitas sekolah tahun 2024/2025.",
+      gambar: null,
+      kategori: "Infrastruktur",
+      penulis: "Admin",
+      tanggal: new Date("2025-01-10"),
+    },
+    {
+      judul: "Siswa Kita Raih Juara 1 Olimpiade Matematika Tingkat Provinsi",
+      isi: "Ahmad Faiz, siswa kelas X IPA 1, berhasil meraih juara pertama dalam Olimpiade Matematika tingkat Provinsi yang diselenggarakan pada 5 Januari 2025. Prestasi ini merupakan kebanggaan bagi seluruh warga sekolah. Ahmad akan mewakili provinsi dalam kompetisi tingkat nasional yang akan diselenggarakan pada bulan Maret mendatang.",
+      gambar: null,
+      kategori: "Prestasi",
+      penulis: "Admin",
+      tanggal: new Date("2025-01-12"),
+    },
+    {
+      judul: "Kegiatan Studi Wisata ke Museum Nasional",
+      isi: "Dalam rangka memperkaya wawasan dan pengalaman siswa, sekolah mengadakan kegiatan studi wisata ke Museum Nasional Jakarta pada tanggal 20 Januari 2025. Kegiatan ini diikuti oleh seluruh siswa kelas X dan XI. Para siswa mendapatkan pengetahuan langsung tentang sejarah dan kebudayaan Indonesia.",
+      gambar: null,
+      kategori: "Kegiatan",
+      penulis: "Budi Santoso, S.Pd",
+      tanggal: new Date("2025-01-18"),
+    },
+    {
+      judul: "Pengumuman Jadwal Ujian Tengah Semester Genap 2024/2025",
+      isi: "Diberitahukan kepada seluruh siswa bahwa Ujian Tengah Semester (UTS) Genap Tahun Ajaran 2024/2025 akan dilaksanakan mulai tanggal 10 Februari 2025. Siswa diharapkan mempersiapkan diri dengan baik. Jadwal lengkap ujian dapat dilihat di papan pengumuman sekolah atau menghubungi wali kelas masing-masing.",
+      gambar: null,
+      kategori: "Pengumuman",
+      penulis: "Admin",
+      tanggal: new Date("2025-01-25"),
+    },
+    {
+      judul: "Renovasi Lapangan Olahraga Sekolah",
+      isi: "Sekolah sedang melaksanakan renovasi lapangan olahraga untuk meningkatkan kenyamanan dan keamanan siswa dalam beraktivitas. Selama proses renovasi berlangsung, kegiatan olahraga akan dipindahkan sementara ke aula sekolah. Renovasi diperkirakan selesai pada akhir Februari 2025.",
+      gambar: null,
+      kategori: "Infrastruktur",
+      penulis: "Admin",
+      tanggal: new Date("2025-01-28"),
+    },
+  ];
+
+  for (const data of beritaData) {
+    await prisma.berita.create({ data });
+  }
+
+  console.log(`✅ ${beritaData.length} berita created`);
+
   // ==================== SUMMARY ====================
   console.log("\n" + "=".repeat(50));
   console.log("🎉 SEEDING COMPLETED SUCCESSFULLY!");
@@ -746,6 +798,7 @@ async function main() {
     nilaiRapor: await prisma.nilaiRapor.count(),
     absensi: await prisma.absensi.count(),
     pendaftaran: await prisma.pendaftaran.count(),
+    berita: await prisma.berita.count(),
   };
 
   console.log("\n📊 Database Statistics:");

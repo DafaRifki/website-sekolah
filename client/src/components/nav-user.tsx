@@ -98,7 +98,7 @@ export function NavUser({
                     {initials}
                   </AvatarFallback> */}
                   {user.fotoProfil ? (
-                    <img src={"${user.fotoProfil}"} alt={user.name} />
+                    <img src={`${user.fotoProfil}`} alt={user.name} />
                   ) : (
                     <AvatarFallback className="rounded-lg">
                       {initials}

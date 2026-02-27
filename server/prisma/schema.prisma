@@ -112,9 +112,9 @@ model Siswa {
   pendaftaran    Pendaftaran[]
   tagihan        Tagihan[]
   pembayaran     Pembayaran[]
+  rapor          Rapor[]
 
-  // NEW: Rapor relation
-  rapor Rapor[]
+  detailAbsensiPertemuan DetailAbsensiPertemuan[]
 
   @@index([kelasId])
   @@map("siswa")
@@ -233,6 +233,8 @@ model GuruMapel {
   tahunAjaran TahunAjaran   @relation(fields: [tahunAjaranId], references: [id_tahun], onDelete: Cascade)
   jadwal      Jadwal[]
 
+  absensiPertemuan AbsensiPertemuan[]
+
   // Constraint: satu guru tidak bisa mengajar mapel yang sama di kelas yang sama di tahun ajaran yang sama
   @@unique([id_guru, id_mapel, id_kelas, tahunAjaranId])
   @@index([id_guru])
@@ -317,6 +319,57 @@ model Absensi {
   @@index([id_tahun])
   @@index([tanggal])
   @@map("absensi")
+}
+
+model AbsensiPertemuan {
+  id_absensi_pertemuan Int @id @default(autoincrement())
+
+  guruMapelId Int
+  guruMapel   GuruMapel @relation(fields: [guruMapelId], references: [id], onDelete: Cascade)
+
+  pertemuanKe Int
+  tanggal     DateTime
+  jamMulai    String
+  jamSelesai  String
+
+  materi         String? @db.Text
+  keteranganGuru String? @db.Text
+
+  statusPertemuan StatusPertemuan @default(SCHEDULED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  detailAbsensi DetailAbsensiPertemuan[]
+
+  @@unique([guruMapelId, tanggal])
+  @@index([guruMapelId])
+  @@index([tanggal])
+  @@index([statusPertemuan])
+  @@map("absensi_pertemuan")
+}
+
+model DetailAbsensiPertemuan {
+  id_detail_absensi Int @id @default(autoincrement())
+
+  absensiPertemuanId Int
+  absensiPertemuan   AbsensiPertemuan @relation(fields: [absensiPertemuanId], references: [id_absensi_pertemuan], onDelete: Cascade)
+
+  siswaId Int
+  siswa   Siswa @relation(fields: [siswaId], references: [id_siswa], onDelete: Cascade)
+
+  status     StatusAbsensi @default(HADIR)
+  keterangan String?       @db.Text
+
+  waktuCheckIn DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([absensiPertemuanId, siswaId])
+  @@index([absensiPertemuanId])
+  @@index([siswaId])
+  @@map("detail_absensi_pertemuan")
 }
 
 // ============================================================================
@@ -592,6 +645,24 @@ model Rapor {
 }
 
 // ============================================================================
+// 16. BERITA & PENGUMUMAN (NEW)
+// ============================================================================
+
+model Berita {
+  id        Int      @id @default(autoincrement())
+  judul     String
+  isi       String   @db.LongText
+  gambar    String?
+  kategori  String // Infrastruktur, Prestasi, Kegiatan, Pengumuman
+  penulis   String   @default("Admin")
+  tanggal   DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("berita")
+}
+
+// ============================================================================
 // ENUMS
 // ============================================================================
 
@@ -606,6 +677,13 @@ enum StatusAbsensi {
   SAKIT
   IZIN
   TIDAK_HADIR
+}
+
+enum StatusPertemuan {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
 }
 
 enum StatusDokumen {

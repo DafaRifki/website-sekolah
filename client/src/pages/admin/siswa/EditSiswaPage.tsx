@@ -45,12 +45,21 @@ export default function EditSiswaPage() {
   const [siswa, setSiswa] = useState({
     nama: "",
     nis: "",
+    nisn: "",
     email: "",
     password: "",
+    tempatLahir: "",
     alamat: "",
     tanggalLahir: "",
+    agama: "",
     jenisKelamin: "",
+    noHP: "",
     kelasId: "",
+    namaAyah: "",
+    namaIbu: "",
+    pekerjaanAyah: "",
+    pekerjaanIbu: "",
+    noTeleponOrtu: "",
   });
 
   const [orangtua, setOrangtua] = useState<{
@@ -85,14 +94,23 @@ export default function EditSiswaPage() {
         setSiswa({
           nama: siswaData.nama || "",
           nis: siswaData.nis || "",
+          nisn: siswaData.nisn || "",
           email: siswaData.user?.email || "",
           password: "",
+          tempatLahir: siswaData.tempatLahir || "",
           alamat: siswaData.alamat || "",
           tanggalLahir: siswaData.tanggalLahir
             ? siswaData.tanggalLahir.split("T")[0]
             : "",
+          agama: siswaData.agama || "",
           jenisKelamin: siswaData.jenisKelamin || "",
+          noHP: siswaData.noHP || "",
           kelasId: siswaData.kelasId?.toString() || "",
+          namaAyah: siswaData.namaAyah || "",
+          namaIbu: siswaData.namaIbu || "",
+          pekerjaanAyah: siswaData.pekerjaanAyah || "",
+          pekerjaanIbu: siswaData.pekerjaanIbu || "",
+          noTeleponOrtu: siswaData.noTeleponOrtu || "",
         });
 
         // console.log("Siswa Data:", siswaData);
@@ -134,13 +152,13 @@ export default function EditSiswaPage() {
   }, [id]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setSiswa({ ...siswa, [e.target.name]: e.target.value });
   };
 
   const handleChangeOrangtua = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setOrangtua({ ...orangtua, [e.target.name]: e.target.value });
   };
@@ -160,7 +178,7 @@ export default function EditSiswaPage() {
       ];
       if (!allowedTypes.includes(file.type)) {
         toast.error(
-          "Hanya file gambar yang diperbolehkan (JPG, JPEG, PNG, GIF)"
+          "Hanya file gambar yang diperbolehkan (JPG, JPEG, PNG, GIF)",
         );
         return;
       }
@@ -208,10 +226,19 @@ export default function EditSiswaPage() {
       await apiClient.put(`/siswa/${id}`, {
         nama: siswa.nama,
         nis: siswa.nis,
+        nisn: siswa.nisn,
         alamat: siswa.alamat,
+        tempatLahir: siswa.tempatLahir,
         tanggalLahir: siswa.tanggalLahir,
+        agama: siswa.agama,
         jenisKelamin: siswa.jenisKelamin,
+        noHP: siswa.noHP,
         kelasId: siswa.kelasId ? parseInt(siswa.kelasId) : null,
+        namaAyah: siswa.namaAyah,
+        namaIbu: siswa.namaIbu,
+        pekerjaanAyah: siswa.pekerjaanAyah,
+        pekerjaanIbu: siswa.pekerjaanIbu,
+        noTeleponOrtu: siswa.noTeleponOrtu,
       });
 
       // 2. Update Data User (Email & Password)
@@ -392,6 +419,23 @@ export default function EditSiswaPage() {
                   <Label className="mb-2">NIS</Label>
                   <Input name="nis" value={siswa.nis} onChange={handleChange} />
                 </div>
+                <div>
+                  <Label className="mb-2">NISN</Label>
+                  <Input
+                    name="nisn"
+                    value={siswa.nisn}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <Label className="mb-2">No. HP Siswa</Label>
+                  <Input
+                    name="noHP"
+                    value={siswa.noHP}
+                    onChange={handleChange}
+                    placeholder="08xxxxxxxxx"
+                  />
+                </div>
               </div>
 
               <div>
@@ -404,6 +448,14 @@ export default function EditSiswaPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="mb-2">Tempat Lahir</Label>
+                  <Input
+                    name="tempatLahir"
+                    value={siswa.tempatLahir}
+                    onChange={handleChange}
+                  />
+                </div>
                 <div>
                   <Label className="mb-2">Tanggal Lahir</Label>
                   <Popover>
@@ -453,6 +505,14 @@ export default function EditSiswaPage() {
                       <SelectItem value="P">Perempuan</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div>
+                  <Label className="mb-2">Agama</Label>
+                  <Input
+                    name="agama"
+                    value={siswa.agama}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
 
@@ -523,12 +583,35 @@ export default function EditSiswaPage() {
               <h3 className="text-lg font-semibold">Data Orang Tua</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="mb-2">Nama Orang Tua</Label>
+                  <Label className="mb-2">Nama Ayah</Label>
                   <Input
-                    name="nama"
-                    placeholder="Nama Orang Tua"
-                    value={orangtua.nama}
-                    onChange={handleChangeOrangtua}
+                    name="namaAyah"
+                    value={siswa.namaAyah}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <Label className="mb-2">Pekerjaan Ayah</Label>
+                  <Input
+                    name="pekerjaanAyah"
+                    value={siswa.pekerjaanAyah}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <Label className="mb-2">Nama Ibu</Label>
+                  <Input
+                    name="namaIbu"
+                    value={siswa.namaAyah}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <Label className="mb-2">Pekerjaan Ibu</Label>
+                  <Input
+                    name="pekerjaanIbu"
+                    value={siswa.pekerjaanIbu}
+                    onChange={handleChange}
                   />
                 </div>
                 <div>
@@ -540,9 +623,9 @@ export default function EditSiswaPage() {
                     onChange={handleChangeOrangtua}
                   />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+                {/* </div> */}
+                {/* <div className="grid grid-cols-2 gap-4"> */}
+                {/* <div>
                   <Label className="mb-2">Pekerjaan</Label>
                   <Input
                     name="pekerjaan"
@@ -550,13 +633,13 @@ export default function EditSiswaPage() {
                     value={orangtua.pekerjaan}
                     onChange={handleChangeOrangtua}
                   />
-                </div>
+                </div> */}
                 <div>
-                  <Label className="mb-2">No HP</Label>
+                  <Label className="mb-2">No. Telepon Orang Tua</Label>
                   <Input
-                    name="noHp"
+                    name="noTeleponOrtu"
                     placeholder="08xxxxxxxx"
-                    value={orangtua.noHp}
+                    value={siswa.noTeleponOrtu}
                     onChange={handleChangeOrangtua}
                   />
                 </div>

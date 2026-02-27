@@ -25,6 +25,10 @@ import dashboardGuruRoutes from "./routes/dashboard-guru.routes";
 import RaporRoutes from "./routes/rapor.routes";
 import GuruMapelRoutes from "./routes/guru-mapel.routes";
 import JadwalRoutes from "./routes/jadwal.routes";
+import LaporanRoutes from "./routes/laporan.routes";
+import beritaRoutes from "./routes/berita.routes";
+import absensiEnhancedRoutes from "./routes/absensi.routes.enhanced";
+import absensiAdminRoutes from "./routes/absensi.admin.routes";
 
 const app = express();
 
@@ -107,6 +111,8 @@ app.use("/api/mata-pelajaran", mataPelajaranRoutes);
 app.use("/api/orangtua", OrangtuaRoutes);
 app.use("/api/nilai", nilaiRoutes);
 app.use("/api/absensi", absensiRoutes);
+app.use("/api/absensi", absensiEnhancedRoutes);
+app.use("/api/absensi/admin", absensiAdminRoutes);
 app.use("/api/tarif-pembayaran", tarifPembayaranRoutes);
 app.use("/api/tagihan", tagihanRoutes);
 app.use("/api/pembayaran", pembayaranRoutes);
@@ -115,6 +121,8 @@ app.use("/api/dashboard-guru", dashboardGuruRoutes);
 app.use("/api/rapor", RaporRoutes);
 app.use("/api/guru-mapel", GuruMapelRoutes);
 app.use("/api/jadwal", JadwalRoutes);
+app.use("/api/laporan", LaporanRoutes);
+app.use("/api/berita", beritaRoutes);
 // 8. Error Handling
 app.use(notFoundHandler);
 app.use(errorHandler);

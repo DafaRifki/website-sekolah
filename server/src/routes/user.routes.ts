@@ -43,6 +43,13 @@ router.post(
   UserController.resetUserPassword
 );
 
+// User Verification Routes
+router.get("/pending", requireRole("ADMIN"), UserController.getPendingStudents);
+router.post("/verify/:id", requireRole("ADMIN"), UserController.verifyStudent);
+router.post("/reject/:id", requireRole("ADMIN"), UserController.rejectStudent);
+router.get("/unlinked-data", requireRole("ADMIN"), UserController.getUnlinkedData);
+router.post("/verify-link/:id", requireRole("ADMIN"), UserController.verifyAndLinkUser);
+
 // Admin and self-access routes
 router.get("/:id", UserController.getUserById); // Will implement ownership check in controller
 

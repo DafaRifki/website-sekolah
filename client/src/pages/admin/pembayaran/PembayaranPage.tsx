@@ -35,6 +35,7 @@ interface Pembayaran {
   nominalTagihan: number;
   jumlahBayar: number;
   metode: string;
+  noBukti?: string;
   tanggal: string;
   keterangan?: string;
   tahunAjaran?: {
@@ -257,6 +258,7 @@ export default function PembayaranPage() {
                         <TableHead>Nominal Tagihan</TableHead>
                         <TableHead>Jumlah Bayar</TableHead>
                         <TableHead>Metode</TableHead>
+                        <TableHead>No. Bukti</TableHead>
                         <TableHead>Tanggal</TableHead>
                         <TableHead>Tahun Ajaran</TableHead>
                         <TableHead>Keterangan</TableHead>
@@ -286,6 +288,9 @@ export default function PembayaranPage() {
                               className="bg-blue-100 text-blue-700">
                               {item.metode}
                             </Badge>
+                          </TableCell>
+                          <TableCell className="font-mono text-xs text-slate-600">
+                            {item.noBukti || "-"}
                           </TableCell>
                           <TableCell>
                             {new Date(item.tanggal).toLocaleDateString("id-ID")}

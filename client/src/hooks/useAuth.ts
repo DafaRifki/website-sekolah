@@ -9,6 +9,7 @@ interface User {
   fotoProfil: string | null;
   siswaId?: number;
   guruId?: number;
+  nis?: string;
   statusPendaftaran?: "PENDING_VERIFIKASI" | "DITERIMA";
   kelasWali?: { id_kelas: number; namaKelas: string }[];
   kelasAjar?: { id_kelas: number; namaKelas: string }[];
@@ -31,6 +32,7 @@ interface UserData {
   };
   siswa?: {
     nama: string;
+    nis?: string;
     fotoProfil: string | null;
   };
 }
@@ -50,11 +52,12 @@ const fetchUser = async (): Promise<User | null> => {
     if (!userData) return null;
 
     let name = userData.email;
+    let nis: string | undefined = undefined;
     let fotoProfil: string | null = null;
     let kelasWali: { id_kelas: number; namaKelas: string }[] = [];
     let kelasAjar: { id_kelas: number; namaKelas: string }[] = [];
 
-    if (userData.role === "GURU" && userData.guru) {
+    if (userData.guru) {
       name = userData.guru.nama;
       fotoProfil = userData.guru.fotoProfil;
       if (userData.guru.waliKelas) {
@@ -66,8 +69,9 @@ const fetchUser = async (): Promise<User | null> => {
           new Map(mapelKelas.map((k) => [k.id_kelas, k])).values(),
         );
       }
-    } else if (userData.role === "SISWA" && userData.siswa) {
+    } else if (userData.siswa) {
       name = userData.siswa.nama;
+      nis = userData.siswa.nis;
       fotoProfil = userData.siswa.fotoProfil;
     } else if (userData.role === "ADMIN") {
       name = "Administrator";
@@ -79,6 +83,7 @@ const fetchUser = async (): Promise<User | null> => {
       role: userData.role,
       guruId: userData.guruId,
       siswaId: userData.siswaId,
+      nis,
       name,
       fotoProfil,
       kelasWali,

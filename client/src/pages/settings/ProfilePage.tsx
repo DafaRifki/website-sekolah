@@ -15,11 +15,10 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import apiClient from "@/config/axios";
 import { toast } from "sonner";
-import { AlertCircleIcon } from "lucide-react";
+import { AlertCircleIcon, User as UserIcon, Settings as SettingsIcon } from "lucide-react";
 import z from "zod";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod/src/zod.js";
-
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
@@ -30,18 +29,14 @@ import {
 } from "@/components/ui/form";
 import Loading from "@/components/Loading";
 import Swal from "sweetalert2";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { motion, AnimatePresence } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface User {
-  id: number;
-  email: string;
-  role: string;
-  guru?: {
-    nama: string;
-  };
-  siswa?: {
-    nama: string;
-  };
-}
+// Import role-specific components
+import AdminProfile from "./components/AdminProfile";
+import GuruProfile from "./components/GuruProfile";
+import SiswaProfile from "./components/SiswaProfile";
 
 const formSchema = z.object({
   email: z.string().email().min(1, { message: "Email is required" }),
@@ -49,8 +44,10 @@ const formSchema = z.object({
 });
 
 const ProfilePage = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [updateLoading, setUpdateLoading] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState("overview");
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -62,16 +59,12 @@ const ProfilePage = () => {
 
   const fetchUser = useCallback(async () => {
     try {
-      const { data } = await apiClient.get("/auth/profile", {
-        withCredentials: true,
-      });
+      const { data } = await apiClient.get("/auth/profile");
       const profile = data.data;
       setUser(profile);
 
-      // Get name from guru or siswa data
-      const name = profile.guru?.nama || profile.siswa?.nama || "";
+      const name = profile.guru?.nama || profile.siswa?.nama || "Administrator";
 
-      // reset form values
       form.reset({
         name: name,
         email: profile.email || "",
@@ -79,7 +72,8 @@ const ProfilePage = () => {
     } catch {
       toast.error("Gagal mengambil user");
     } finally {
-      setLoading(false);
+      // Small delay for smooth transition
+      setTimeout(() => setLoading(false), 500);
     }
   }, [form]);
 
@@ -88,19 +82,16 @@ const ProfilePage = () => {
   }, [fetchUser]);
 
   const handleUpdate = async (values: z.infer<typeof formSchema>) => {
-    setLoading(true);
+    setUpdateLoading(true);
     try {
-      // hit api - using auth/update-profile endpoint
-      await apiClient.patch("/auth/update-profile", values, {
-        withCredentials: true,
-      });
+      await apiClient.patch("/auth/update-profile", values);
       toast.success("Update Berhasil");
-    } catch (err) {
-      const error = err as { response?: { data?: { message?: string } } };
-      const msg = error.response?.data?.message || "Gagal update profil user";
+      fetchUser();
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Gagal update profil user";
       toast.error(msg);
     } finally {
-      setLoading(false);
+      setUpdateLoading(false);
     }
   };
 
@@ -118,106 +109,192 @@ const ProfilePage = () => {
     });
     if (result.isConfirmed) {
       try {
-        console.log(user);
-        // toast.success("Hapus data user berhasil");
-        Swal.fire("Terhapus!", "Akun anda sudah dihapus.", "success");
-      } catch {
-        // Handle error silently
+        await apiClient.delete(`/auth/profile`);
+        toast.success("Akun berhasil dihapus");
+      } catch (err: any) {
+        toast.error(err.response?.data?.message || "Gagal menghapus akun");
       }
     }
   };
 
+  const renderProfileByRole = () => {
+    switch (user?.role) {
+      case "ADMIN":
+        return <AdminProfile data={user} />;
+      case "GURU":
+        return <GuruProfile data={user} />;
+      case "SISWA":
+        return <SiswaProfile data={user} />;
+      default:
+        return <div>Role tidak dikenal.</div>;
+    }
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.4,
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <SettingsLayout>
+        <div className="p-4 md:p-8 space-y-8">
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <div className="flex gap-4">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Skeleton className="h-64 rounded-xl" />
+            <div className="md:col-span-2 space-y-6">
+              <Skeleton className="h-48 rounded-xl" />
+              <Skeleton className="h-48 rounded-xl" />
+            </div>
+          </div>
+        </div>
+      </SettingsLayout>
+    );
+  }
+
   return (
     <SettingsLayout>
-      <div className="p-6">
-        <h1 className="text-xl font-bold mb-4">Profile settings</h1>
-        <p className="text-sm text-muted-foreground mb-6">
-          Manage your profile and account settings
-        </p>
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="p-4 md:p-8 max-w-full mx-auto"
+      >
+        <div className="flex flex-col gap-1 mb-8">
+          <motion.h1 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600"
+          >
+            Profil Pengguna
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-muted-foreground"
+          >
+            Kelola informasi profil dan pengaturan akun Anda secara dinamis.
+          </motion.p>
+        </div>
 
-        {/* Profile Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile information</CardTitle>
-            <CardDescription>
-              Update your name and email address
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(handleUpdate)}
-                  className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Masukkan nama" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+        <Tabs 
+          value={activeTab} 
+          onValueChange={setActiveTab} 
+          className="space-y-6"
+        >
+          <TabsList className="bg-muted/50 p-1 backdrop-blur-sm border border-white/20">
+            <TabsTrigger value="overview" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <UserIcon className="w-4 h-4" />
+              <span>Profil Saya</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <SettingsIcon className="w-4 h-4" />
+              <span>Pengaturan Akun</span>
+            </TabsTrigger>
+          </TabsList>
 
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email address</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="Masukkan email"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <TabsContent value="overview" className="mt-0 border-none p-0 outline-none">
+                {renderProfileByRole()}
+              </TabsContent>
 
-                  <Button type="submit" disabled={loading}>
-                    {loading && <Loading />}
-                    Save Profil
-                  </Button>
-                </form>
-              </Form>
-            </div>
-          </CardContent>
-          {/* <CardFooter>
-            <Button>Save</Button>
-          </CardFooter> */}
-        </Card>
+              <TabsContent value="settings" className="mt-0 border-none p-0 outline-none space-y-6">
+                <Card className="border-none shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <CardHeader>
+                    <CardTitle>Informasi Dasar</CardTitle>
+                    <CardDescription>
+                      Perbarui nama tampilan dan alamat email Anda.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(handleUpdate)} className="space-y-4 max-w-md">
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nama Lengkap</FormLabel>
+                              <FormControl>
+                                <Input className="focus-visible:ring-green-500" placeholder="Masukkan nama" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Alamat Email</FormLabel>
+                              <FormControl>
+                                <Input className="focus-visible:ring-green-500" type="email" placeholder="Masukkan email" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button type="submit" disabled={updateLoading} className="bg-green-600 hover:bg-green-700 transition-all duration-300 transform active:scale-95">
+                          {updateLoading ? <Loading /> : "Simpan Perubahan"}
+                        </Button>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
 
-        {/* Delete Account Section */}
-        <Card className="mt-6 border-red-400 bg-red-50">
-          <CardHeader>
-            <CardTitle className="text-red-600">Delete account</CardTitle>
-            <CardDescription>
-              Delete your account and all of its resources
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertCircleIcon />
-              <AlertTitle>Warning</AlertTitle>
-              <AlertDescription>
-                Please proceed with caution, this cannot be undone
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-          <CardFooter>
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete account
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
+                <Card className="border-none shadow-sm border-red-100 bg-red-50/10 hover:bg-red-50/20 transition-colors">
+                  <CardHeader>
+                    <CardTitle className="text-red-600 flex items-center gap-2">
+                      <AlertCircleIcon className="w-5 h-5" />
+                      Zona Berbahaya
+                    </CardTitle>
+                    <CardDescription>
+                      Tindakan ini permanen dan tidak dapat dibatalkan.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Alert variant="destructive" className="bg-white border-red-200">
+                      <AlertCircleIcon className="w-4 h-4" />
+                      <AlertTitle>Peringatan Akun</AlertTitle>
+                      <AlertDescription>
+                        Menghapus akun akan menghapus semua data terkait secara permanen dari sistem kami.
+                      </AlertDescription>
+                    </Alert>
+                  </CardContent>
+                  <CardFooter>
+                    <Button variant="destructive" onClick={handleDelete} className="hover:bg-red-700 transition-all">
+                      Hapus Selamanya
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </TabsContent>
+            </motion.div>
+          </AnimatePresence>
+        </Tabs>
+      </motion.div>
     </SettingsLayout>
   );
 };

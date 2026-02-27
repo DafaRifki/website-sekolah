@@ -73,8 +73,10 @@ const menuItems: Record<Role, MenuSection[]> = {
             { title: "Kelas", url: "/kelas" },
             { title: "Mata Pelajaran", url: "/mata-pelajaran" },
             { title: "Jadwal", url: "/jadwal" },
+            { title: "Absensi Rekap", url: "/admin/absensi" },
             { title: "Tahun Ajaran", url: "/tahun-ajaran" },
             { title: "E-Rapor", url: "/e-rapor" },
+            { title: "Verifikasi User", url: "/users/verification" },
           ],
         },
       ],
@@ -88,12 +90,19 @@ const menuItems: Record<Role, MenuSection[]> = {
           url: "/siswa-baru/pendaftaran",
           icon: FileUser,
         },
+        {
+          name: "Laporan Keuangan",
+          url: "/dashboard/laporan",
+          icon: BookOpen,
+        },
       ],
     },
     {
       type: "link",
       title: "Pengumuman",
-      links: [{ name: "Pengumuman", url: "/pengumuman", icon: Bell }],
+      links: [
+        { name: "Pengumuman & Berita", url: "/admin/berita", icon: Bell },
+      ],
     },
     {
       type: "link",
@@ -118,7 +127,7 @@ const menuItems: Record<Role, MenuSection[]> = {
           items: [
             { title: "Input Nilai", url: "/guru/nilai" },
             { title: "Jadwal", url: "/guru/jadwal" },
-            { title: "Absensi", url: "/absensi" },
+            { title: "Absensi", url: "/guru/absensi/jadwal" },
             { title: "E-Rapor", url: "/e-rapor" },
           ],
         },
@@ -140,7 +149,7 @@ const menuItems: Record<Role, MenuSection[]> = {
           url: "#",
           icon: PieChart,
           items: [
-            { title: "Nilai Saya", url: "/nilai" },
+            { title: "Riwayat Absensi", url: "/siswa/absensi/kehadiranku" },
             { title: "Jadwal", url: "/siswa/jadwal" },
           ],
         },

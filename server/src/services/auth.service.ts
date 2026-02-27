@@ -10,7 +10,7 @@ import { Role } from "@prisma/client";
 
 export class AuthService {
   static async register(data: RegisterRequest): Promise<AuthResponse> {
-    const { email, password, role = "SISWA" } = data;
+    const { email, password, nama, role = "SISWA" } = data;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -24,29 +24,47 @@ export class AuthService {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        role: role as Role,
-      },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-      },
+    // Transaction to create User and possibly Siswa
+    const result = await prisma.$transaction(async (tx) => {
+      // Create user
+      const user = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          role: role as Role,
+        },
+      });
+
+      // If role is SISWA, create Siswa record with PENDING_VERIFIKASI status
+      // This allows verification without changing schema
+      if (role === "SISWA") {
+        await tx.siswa.create({
+          data: {
+            nama: nama || email.split("@")[0], // Fallback name
+            status: "PENDING_VERIFIKASI", // Special status for new registrations
+            user: {
+              connect: { id: user.id },
+            },
+          },
+        });
+      }
+
+      return user;
     });
 
     // Generate tokens
     const tokens = generateTokens({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
+      userId: result.id,
+      email: result.email,
+      role: result.role,
     });
 
     return {
-      user,
+      user: {
+        id: result.id,
+        email: result.email,
+        role: result.role,
+      },
       tokens,
     };
   }
@@ -66,6 +84,7 @@ export class AuthService {
         siswaId: true,
         siswa: {
           select: {
+            status: true, // Get status to check verification
             pendaftaran: {
               select: {
                 statusDokumen: true,
@@ -79,6 +98,20 @@ export class AuthService {
 
     if (!user) {
       throw new Error("Invalid email or password");
+    }
+
+    // Check verification status for SISWA
+    if (user.role === "SISWA" && user.siswa) {
+      if (user.siswa.status === "PENDING_VERIFIKASI") {
+        throw new Error(
+          "Akun Anda sedang dalam proses verifikasi admin. Silakan tunggu hingga disetujui.",
+        );
+      }
+      
+      // If status is NONAKTIF (blocked), also prevent login
+      if (user.siswa.status === "NONAKTIF") {
+         throw new Error("Akun Anda dinonaktifkan. Silakan hubungi admin.");
+      }
     }
 
     // Check password
@@ -171,8 +204,15 @@ export class AuthService {
             id_guru: true,
             nama: true,
             nip: true,
+            jenisKelamin: true,
+            tempatLahir: true,
+            tanggalLahir: true,
+            alamat: true,
+            noHP: true,
             email: true,
+            pendidikan: true,
             jabatan: true,
+            statusKepegawaian: true,
             fotoProfil: true,
             waliKelas: {
               select: {
@@ -183,6 +223,11 @@ export class AuthService {
             mengajarMapel: {
               select: {
                 id_mapel: true,
+                mapel: {
+                  select: {
+                    namaMapel: true,
+                  },
+                },
                 kelas: {
                   select: {
                     id_kelas: true,
@@ -196,13 +241,31 @@ export class AuthService {
         siswa: {
           select: {
             id_siswa: true,
-            nama: true,
             nis: true,
+            nisn: true,
+            nama: true,
+            jenisKelamin: true,
+            tempatLahir: true,
+            tanggalLahir: true,
+            agama: true,
+            alamat: true,
+            noHP: true,
+            email: true,
+            namaAyah: true,
+            namaIbu: true,
+            pekerjaanAyah: true,
+            pekerjaanIbu: true,
+            noTeleponOrtu: true,
             kelas: {
               select: {
                 id_kelas: true,
                 namaKelas: true,
                 tingkat: true,
+                guru: {
+                  select: {
+                    nama: true,
+                  },
+                },
               },
             },
             fotoProfil: true,
@@ -296,12 +359,12 @@ export class AuthService {
 
     // Update name in guru or siswa record if applicable
     if (data.name) {
-      if (user.role === "GURU" && user.guruId) {
+      if (user.guruId) {
         await prisma.guru.update({
           where: { id_guru: user.guruId },
           data: { nama: data.name },
         });
-      } else if (user.role === "SISWA" && user.siswaId) {
+      } else if (user.siswaId) {
         await prisma.siswa.update({
           where: { id_siswa: user.siswaId },
           data: { nama: data.name },

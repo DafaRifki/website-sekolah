@@ -99,7 +99,7 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
       ];
       if (!allowedTypes.includes(file.type)) {
         toast.error(
-          "Hanya file gambar yang diperbolehkan (JPG, JPEG, PNG, GIF)"
+          "Hanya file gambar yang diperbolehkan (JPG, JPEG, PNG, GIF)",
         );
         return;
       }
@@ -190,7 +190,7 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
       toast.error(
         error.response?.data?.message ||
           error.response?.data?.error ||
-          "Gagal menambahkan siswa"
+          "Gagal menambahkan siswa",
       );
       console.error(error);
     } finally {

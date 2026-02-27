@@ -10,6 +10,7 @@ interface CreatePembayaranData {
   tagihanId: number;
   jumlahBayar: number;
   metode?: string; // CASH, TRANSFER, etc.
+  noBukti?: string;
   keterangan?: string;
   tanggal?: Date;
 }
@@ -17,6 +18,7 @@ interface CreatePembayaranData {
 interface UpdatePembayaranData {
   jumlahBayar?: number;
   metode?: string;
+  noBukti?: string;
   keterangan?: string;
   tanggal?: Date;
 }
@@ -102,6 +104,7 @@ export class PembayaranService {
       nominalTagihan: p.tagihan.tarif.nominal,
       jumlahBayar: p.jumlahBayar,
       metode: p.metode,
+      noBukti: p.noBukti,
       tanggal: p.tanggal,
       keterangan: p.keterangan,
       tahunAjaran: p.tagihan.tahunAjaran,
@@ -132,6 +135,7 @@ export class PembayaranService {
                 jumlahBayar: true,
                 tanggal: true,
                 metode: true,
+                noBukti: true,
               },
             },
           },
@@ -272,11 +276,19 @@ export class PembayaranService {
     }
 
     // Create pembayaran
+    console.log("[PembayaranService] Creating payment with data:", {
+      tagihanId: data.tagihanId,
+      jumlahBayar: data.jumlahBayar,
+      metode: data.metode,
+      noBukti: data.noBukti,
+    });
     const pembayaran = await prisma.pembayaran.create({
       data: {
         tagihanId: data.tagihanId,
+        id_siswa: tagihan.id_siswa,
         jumlahBayar: data.jumlahBayar,
         metode: data.metode,
+        noBukti: data.noBukti,
         keterangan: data.keterangan,
         tanggal: data.tanggal || new Date(),
       },
@@ -336,6 +348,7 @@ export class PembayaranService {
       data: {
         jumlahBayar: data.jumlahBayar,
         metode: data.metode,
+        noBukti: data.noBukti,
         keterangan: data.keterangan,
         tanggal: data.tanggal,
       },
@@ -521,6 +534,7 @@ export class PembayaranService {
         namaTagihan: p.tagihan.tarif.namaTagihan,
         jumlahBayar: p.jumlahBayar,
         metode: p.metode,
+        noBukti: p.noBukti,
         tanggal: p.tanggal,
       })),
     };
@@ -542,6 +556,7 @@ export class PembayaranService {
       nominalTagihan: pembayaran.tagihan.tarif.nominal,
       jumlahBayar: pembayaran.jumlahBayar,
       metode: pembayaran.metode,
+      noBukti: pembayaran.noBukti,
       tanggal: pembayaran.tanggal,
       keterangan: pembayaran.keterangan,
       totalBayarSebelumnya: pembayaran.totalBayarSebelumnya,

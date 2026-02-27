@@ -12,11 +12,12 @@ import { Input } from "@/components/ui/input";
 import apiClient from "@/config/axios";
 import delay from "@/lib/delay";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import z from "zod";
+import { Eye, EyeOff } from "lucide-react";
 
 const formSchema = z
   .object({
@@ -41,6 +42,8 @@ const formSchema = z
 const SignUpPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,7 +59,7 @@ const SignUpPage = () => {
     setLoading(true);
     try {
       await delay(500);
-      const { data } = await apiClient.post("/auth/register", values);
+      await apiClient.post("/auth/register", values);
       // console.log(data);
       toast.success("Register Berhasil", {
         onAutoClose: () => {
@@ -64,7 +67,7 @@ const SignUpPage = () => {
           navigate("/login");
         },
       });
-    } catch (error: unknown) {
+    } catch {
       toast.error("Terjadi kesalahan, coba lagi!", {
         onAutoClose: () => {
           setLoading(false);
@@ -137,13 +140,26 @@ const SignUpPage = () => {
                 <FormItem>
                   <FormLabel className="text-gray-700">Password</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      type="password"
-                      placeholder="********"
-                      className="focus:ring-2 focus:ring-green-300"
-                      autoComplete="off"
-                    />
+                    <div className="relative">
+                      <Input
+                        {...field}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="********"
+                        className="focus:ring-2 focus:ring-green-300 pr-10"
+                        autoComplete="off"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
                   </FormControl>
                   <FormMessage className="text-red-500 text-xs" />
                 </FormItem>
@@ -159,13 +175,28 @@ const SignUpPage = () => {
                     Konfirmasi Password
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      type="password"
-                      placeholder="********"
-                      className="focus:ring-2 focus:ring-green-300"
-                      autoComplete="off"
-                    />
+                    <div className="relative">
+                      <Input
+                        {...field}
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="********"
+                        className="focus:ring-2 focus:ring-green-300 pr-10"
+                        autoComplete="off"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
                   </FormControl>
                   <FormMessage className="text-red-500 text-xs" />
                 </FormItem>
