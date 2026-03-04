@@ -27,9 +27,12 @@ const AdminBeritaPage: React.FC = () => {
     setLoading(true);
     try {
       const res = await apiClient.get("/berita");
-      setBerita(res.data.data);
+      // Memastikan data yang di-set adalah array
+      const data = Array.isArray(res.data?.data) ? res.data.data : [];
+      setBerita(data);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching berita:", err);
+      setBerita([]);
     } finally {
       setLoading(false);
     }
@@ -62,8 +65,9 @@ const AdminBeritaPage: React.FC = () => {
     }
   };
 
-  const filteredBerita = berita.filter((b) =>
-    b.judul.toLowerCase().includes(search.toLowerCase())
+  // Filter yang aman dari error null/undefined
+  const filteredBerita = (berita || []).filter((b) =>
+    b?.judul?.toLowerCase().includes((search || "").toLowerCase())
   );
 
   return (
@@ -125,10 +129,10 @@ const AdminBeritaPage: React.FC = () => {
                 </TableRow>
               ) : (
                 filteredBerita.map((b, idx) => (
-                  <TableRow key={b.id} className="hover:bg-slate-50/50">
+                  <TableRow key={b?.id || idx} className="hover:bg-slate-50/50">
                     <TableCell className="text-center font-medium">{idx + 1}</TableCell>
                     <TableCell>
-                      {b.gambar ? (
+                      {b?.gambar ? (
                         <img
                           src={`${import.meta.env.VITE_URL_API || "http://localhost:3000"}${b.gambar}`}
                           alt={b.judul}
@@ -141,21 +145,21 @@ const AdminBeritaPage: React.FC = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="font-semibold text-slate-900 line-clamp-1">{b.judul}</div>
+                      <div className="font-semibold text-slate-900 line-clamp-1">{b?.judul || "Tanpa Judul"}</div>
                       <div className="text-xs text-slate-500">
-                        {new Date(b.tanggal).toLocaleDateString("id-ID", {
+                        {b?.tanggal ? new Date(b.tanggal).toLocaleDateString("id-ID", {
                           day: "numeric",
                           month: "short",
                           year: "numeric",
-                        })}
+                        }) : "-"}
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="font-normal">
-                        {b.kategori}
+                        {b?.kategori || "Umum"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-slate-600 text-sm">{b.penulis}</TableCell>
+                    <TableCell className="text-slate-600 text-sm">{b?.penulis || "Admin"}</TableCell>
                     <TableCell>
                       <div className="flex justify-center gap-1">
                         <Button
@@ -169,7 +173,7 @@ const AdminBeritaPage: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(b.id)}
+                          onClick={() => b?.id && handleDelete(b.id)}
                           className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="w-4 h-4" />

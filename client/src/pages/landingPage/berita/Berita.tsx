@@ -157,7 +157,7 @@ export default function Berita() {
                         <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
-                        <p className="text-xs text-gray-500">{news.penulis}</p>
+                        <p className="text-xs text-gray-700">{news.penulis}</p>
                       </div>
                     </div>
 
@@ -167,7 +167,7 @@ export default function Berita() {
                     </h3>
 
                     {/* Description */}
-                    <p className="text-gray-600 mb-6 leading-relaxed line-clamp-3">
+                    <p className="text-gray-800 mb-6 leading-relaxed line-clamp-3">
                       {news.isi}
                     </p>
 
@@ -183,12 +183,7 @@ export default function Berita() {
                         </svg>
                       </button>
                       
-                      {/* Share button */}
-                      <button className="p-3 bg-gray-100 hover:bg-emerald-100 rounded-xl transition-colors duration-300 group-hover:scale-110 transform">
-                        <svg className="w-4 h-4 text-gray-600 hover:text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                        </svg>
-                      </button>
+
                     </div>
                   </div>
 
@@ -199,21 +194,7 @@ export default function Berita() {
             </div>
           )}
 
-          {/* Load More Section */}
-          <motion.div
-            className="text-center mt-12"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            viewport={{ once: true }}
-          >
-            <button className="inline-flex items-center space-x-2 px-8 py-4 bg-white/80 backdrop-blur-sm border-2 border-emerald-200 text-emerald-700 rounded-2xl hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-semibold">
-              <span>Muat Berita Lainnya</span>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-            </button>
-          </motion.div>
+
         </div>
 
         {/* Modal untuk detail berita */}

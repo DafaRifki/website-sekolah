@@ -3,78 +3,97 @@ import { motion } from "framer-motion";
 import PublicLayout from "@/pages/layout/PublicLayout";
 
 const fasilitasList = [
+      {
+    title: "Gedung Sekolah Modern",
+    img: "/img/fasilitas/GEDUNGSMA.jpeg",
+    description: "Gedung sekolah dengan desain modern dan nyaman untuk belajar dan beraktivitas",
+    category: "umum"
+  },
   {
     title: "Ruang Kelas Nyaman",
-    img: "/img/kelas.jpg",
+    img: "/img/fasilitas/rkelas3.jpeg",
     description: "Ruang kelas dengan fasilitas modern dan suasana kondusif untuk pembelajaran optimal",
     category: "akademik"
   },
+
   {
     title: "Perpustakaan Modern",
-    img: "/img/perpustakaan.jpg",
+    img: "/img/fasilitas/PERPUSDALAM.jpeg",
     description: "Perpustakaan digital dengan koleksi buku lengkap dan area baca yang nyaman",
     category: "akademik"
   },
-  {
-    title: "Laboratorium Sains",
-    img: "/img/lab.jpg",
-    description: "Laboratorium lengkap untuk praktikum IPA dengan peralatan modern",
+   {
+    title: "Ruang Guru Nyaman",
+    img: "/img/fasilitas/RUANGGURU.jpeg",
+    description: "Ruang kerja guru yang nyaman dengan fasilitas lengkap",
+    category: "akademik"
+  },
+    {
+    title: "Ruangan Kepala Sekolah",
+    img: "/img/fasilitas/1.KEPSEK.jpeg",
+    description: "Ruangan kepala sekolah yang representatif dengan fasilitas lengkap untuk administrasi dan pertemuan",
     category: "akademik"
   },
   {
     title: "Lapangan Olahraga",
-    img: "/img/lapangan.jpg",
+    img: "/img/fasilitas/LAPANGANUPACARA.jpeg",
     description: "Lapangan multifungsi untuk berbagai aktivitas olahraga dan kegiatan outdoor",
     category: "olahraga"
   },
   {
     title: "Mushola Sekolah",
-    img: "/img/masjid.jpg",
+    img: "/img/fasilitas/R.MUSHOLA1.jpeg",
     description: "Tempat ibadah yang nyaman dengan fasilitas wudhu dan sound system",
     category: "religius"
   },
-  {
+    {
+    title: "Aula Serbaguna",
+    img: "/img/fasilitas/AULA.jpeg",
+    description: "Ruang serbaguna untuk acara, seminar, dan kegiatan besar lainnya",
+    category: "umum"
+  },
+    {
+    title: "Pinter ",
+    img: "/img/fasilitas/PRINTERR.jpeg",
+    description: "Sekolah menyediakan fasilitas Pinter untuk mendukung pembelajaran interaktif dan kreatif dengan teknologi terkini",
+    category: "akademik"
+  },
+    {
     title: "Ruang Komputer",
-    img: "/img/komputer.jpg",
+    img: "/img/fasilitas/RKOMPUTER.jpeg",
     description: "Lab komputer dengan perangkat terbaru dan koneksi internet high-speed",
     category: "teknologi"
   },
   {
     title: "Kamar Mandi Bersih",
-    img: "/img/kamarmandi.jpg",
+    img: "/img/fasilitas/toilet.jpeg",
     description: "Fasilitas sanitasi yang bersih dan terawat untuk kenyamanan siswa",
+    category: "umum"
+  },
+    {
+    title: "Tempat Wudhu",
+    img: "/img/fasilitas/TEMPATWUDHU.jpeg",
+    description: "Fasilitas tempat wudhu yang bersih dan nyaman untuk mendukung kegiatan ibadah siswa",
     category: "umum"
   },
   {
     title: "Kantin Sehat",
-    img: "/img/kantin.jpg",
+    img: "/img/fasilitas/kantin.jpeg",
     description: "Kantin dengan menu sehat dan bergizi serta suasana yang bersih",
     category: "umum"
   },
   {
     title: "Rak Sepatu Tertata",
-    img: "/img/raksepatu.jpg",
+    img: "/img/fasilitas/raksepatu.jpeg",
     description: "Area penyimpanan sepatu yang rapi dan terorganisir dengan baik",
     category: "umum"
-  },
-  {
-    title: "Ruang Guru Nyaman",
-    img: "/img/ruangguru.jpg",
-    description: "Ruang kerja guru yang nyaman dengan fasilitas lengkap",
-    category: "akademik"
-  },
-  {
-    title: "Aula Serbaguna",
-    img: "/img/aula.jpg",
-    description: "Ruang serbaguna untuk acara, seminar, dan kegiatan besar lainnya",
+  }, 
+    {
+    title: "Alat Kebersihan",
+    img: "/img/fasilitas/ALATKEBERSIHAN.jpeg",
+    description: "Fasilitas kebersihan yang lengkap untuk menjaga kebersihan lingkungan sekolah",
     category: "umum"
-  },
-  {
-    title: "Koperasi",
-    img: "/img/parkir.jpg",
-    description: "Koperasi sekolah yang menyediakan kebutuhan siswa dan guru",
-    category: "umum"
-  },
+  }, 
 ];
 
 const categories = [
@@ -112,9 +131,6 @@ const Fasilitas: React.FC = () => {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="mb-6"
             >
-              <span className="inline-block px-6 py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded-full text-sm font-semibold mb-4">
-                ✨ Fasilitas Unggulan
-              </span>
 
               <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-green-500 via-emerald-600 to-teal-700 bg-clip-text text-transparent leading-tight">
                 Fasilitas
@@ -127,7 +143,7 @@ const Fasilitas: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 1, delay: 0.4 }}
-              className="text-xl md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed"
+              className="text-xl md:text-xl text-gray-800 max-w-4xl mx-auto leading-relaxed"
             >
               Nikmati pengalaman belajar terbaik dengan fasilitas modern, lengkap, dan terintegrasi 
               yang mendukung pengembangan akademik dan karakter islami siswa.
@@ -185,7 +201,7 @@ const Fasilitas: React.FC = () => {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   
-                  <div className="absolute inset-0 bg-gradient-to-t from-green-100 via-yellow-200 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute inset-0 bg-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   
                   {/* Floating Badge */}
                   <div className="absolute top-4 right-4">
@@ -217,9 +233,7 @@ const Fasilitas: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Hover Glow Effect */}
-                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-400/0 to-purple-400/0 group-hover:from-blue-400/20 group-hover:to-purple-400/20 transition-all duration-500 pointer-events-none"></div>
-              </motion.div>
+                </motion.div>
             ))}
             </div>
           </div>
