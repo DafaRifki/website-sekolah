@@ -46,25 +46,32 @@ const BeritaModal: React.FC<BeritaModalProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (editData) {
-      setFormData({
-        judul: editData.judul || "",
-        isi: editData.isi || "",
-        kategori: editData.kategori || "Kegiatan",
-        penulis: editData.penulis || "Admin",
-        tanggal: editData.tanggal ? new Date(editData.tanggal).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
-      });
-      setPreviewUrl(editData.gambar ? `${import.meta.env.VITE_URL_API || "http://localhost:3000"}${editData.gambar}` : null);
-    } else {
-      setFormData({
-        judul: "",
-        isi: "",
-        kategori: "Kegiatan",
-        penulis: "Admin",
-        tanggal: new Date().toISOString().split("T")[0],
-      });
-      setImageFile(null);
-      setPreviewUrl(null);
+    // Hanya proses data jika modal terbuka
+    if (isOpen) {
+      if (editData) {
+        setFormData({
+          judul: editData.judul || "",
+          isi: editData.isi || "",
+          kategori: editData.kategori || "Kegiatan",
+          penulis: editData.penulis || "Admin",
+          // Pengecekan tanggal agar tidak crash toISOString()
+          tanggal: (editData.tanggal && !isNaN(Date.parse(editData.tanggal)))
+            ? new Date(editData.tanggal).toISOString().split("T")[0]
+            : new Date().toISOString().split("T")[0],
+        });
+        setPreviewUrl(editData.gambar ? `${import.meta.env.VITE_URL_API || "http://localhost:3000"}${editData.gambar}` : null);
+      } else {
+        // Reset form jika mode Tambah Baru
+        setFormData({
+          judul: "",
+          isi: "",
+          kategori: "Kegiatan",
+          penulis: "Admin",
+          tanggal: new Date().toISOString().split("T")[0],
+        });
+        setImageFile(null);
+        setPreviewUrl(null);
+      }
     }
   }, [editData, isOpen]);
 
@@ -72,6 +79,10 @@ const BeritaModal: React.FC<BeritaModalProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       setImageFile(file);
+      // Cleanup preview lama jika ada untuk mencegah memory leak
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
       setPreviewUrl(URL.createObjectURL(file));
     }
   };
@@ -91,7 +102,7 @@ const BeritaModal: React.FC<BeritaModalProps> = ({
     }
 
     try {
-      if (editData) {
+      if (editData?.id) {
         await apiClient.put(`/berita/${editData.id}`, data, {
           headers: { "Content-Type": "multipart/form-data" },
         });

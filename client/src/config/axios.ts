@@ -1,14 +1,13 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: `${import.meta.env.VITE_URL_API}/api`,
-  // headers: {                         <-- HAPUS BAGIAN INI
-  //   "Content-Type": "application/json",
-  // },                                 <-- SAMPAI SINI
+  // Pastikan VITE_URL_API di file .env sudah benar (contoh: http://localhost:3000)
+  baseURL: `${import.meta.env.VITE_URL_API || "http://localhost:3000"}/api`,
   withCredentials: true,
-  timeout: 30000, // 30 seconds timeout
+  timeout: 30000,
 });
 
+// INTERCEPTOR REQUEST: Mengambil token terbaru sebelum mengirim permintaan
 apiClient.interceptors.request.use(
   async (config) => {
     const token = localStorage.getItem("accessToken");
@@ -25,20 +24,29 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle authentication errors
+    const originalRequest = error.config;
+ 
     if (error.response?.status === 401) {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
+      // DEBUG: Membantu kamu melihat alasan ditolak oleh server di Console
+      console.error("🔒 Akses Ditolak (401):", error.response.data?.message || "Token tidak valid atau expired");
+
+      if (!window.location.pathname.includes("/login")) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        
+      }
     }
 
-    // Add better error information for connection issues
+    // Handle error koneksi atau server mati
     if (!error.response) {
-      // Network error or server not responding
+      console.error("🌐 Masalah Jaringan:", error.message);
       error.code = error.code || "ERR_NETWORK";
-      error.message =
-        error.message || "Network Error: Cannot connect to server";
+      error.message = error.message || "Gagal terhubung ke server. Pastikan Backend menyala.";
+    }
+
+    if (error.response?.status === 403) {
+      console.error("🚫 Terlarang (403): Kamu tidak memiliki izin (Role bukan Admin)");
     }
 
     return Promise.reject(error);
