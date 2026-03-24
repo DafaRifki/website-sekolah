@@ -62,7 +62,7 @@ export default function EditKelasModal({
   const [guruList, setGuruList] = useState<Guru[]>([]);
   const [tahunAjaranId, setTahunAjaranId] = useState<string>("none");
   const [tahunAjaranList, setTahunAjaranList] = useState<TahunAjaran[]>([]);
-  const [setActive, setSetActive] = useState(false);
+  const [setActive, setSetActive] = useState<boolean | "indeterminate">(false);
 
   useEffect(() => {
     if (kelas) {
@@ -83,38 +83,62 @@ export default function EditKelasModal({
 
   useEffect(() => {
     if (isOpen) {
+      // Fetch Guru
       apiClient
         .get("/guru")
-        .then((res) => setGuruList(res.data.data))
-        .catch((err) => console.error("Gagal fetch guru:", err));
+        .then((res) => {
+          const dataGuru = res.data?.data?.data || res.data?.data || res.data;
+          if (Array.isArray(dataGuru)) {
+            setGuruList(dataGuru);
+          } else {
+            setGuruList([]);
+          }
+        })
+        .catch((err) => setGuruList([]));
 
+      // Fetch Tahun Ajaran
       apiClient
         .get("/tahun-ajaran")
-        .then((res) => setTahunAjaranList(res.data.data))
-        .catch((err) => console.error("Gagal fetch tahun ajaran:", err));
+        .then((res) => {
+          const dataTahun = res.data?.data?.data || res.data?.data || res.data;
+          if (Array.isArray(dataTahun)) {
+            setTahunAjaranList(dataTahun);
+          } else {
+            setTahunAjaranList([]);
+          }
+        })
+        .catch((err) => setTahunAjaranList([]));
     }
   }, [isOpen]);
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
     if (!kelas) return;
 
     try {
-      if (!namaKelas || !tingkat || tahunAjaranId === "none") {
-        Swal.fire(
-          "Error",
-          "Nama kelas, tingkat, dan tahun ajaran wajib diisi",
-          "error"
-        );
+      if (!namaKelas || !tingkat) {
+        Swal.fire("Error", "Nama kelas dan tingkat wajib diisi", "error");
         return;
       }
 
-      await apiClient.patch(`/kelas/${kelas.id_kelas}`, {
-        namaKelas,
-        tingkat,
+
+      await apiClient.put(`/kelas/${kelas.id_kelas}`, {
+        namaKelas: namaKelas,
+        tingkat: tingkat,
         waliId: waliId === "none" ? null : parseInt(waliId),
-        tahunAjaranId: parseInt(tahunAjaranId),
-        isActive: setActive,
       });
+
+
+      if (tahunAjaranId !== "none") {
+        try {
+          await apiClient.post(`/kelas/${kelas.id_kelas}/link-tahun-ajaran`, {
+            tahunAjaranId: parseInt(tahunAjaranId),
+          });
+        } catch (linkError: any) {
+          if (!linkError.response?.data?.message?.includes("already linked")) {
+            console.error("Gagal menghubungkan tahun ajaran:", linkError);
+          }
+        }
+      }
 
       Swal.fire("Berhasil", "Kelas berhasil diperbarui", "success");
       onSuccess();
@@ -168,11 +192,13 @@ export default function EditKelasModal({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Tidak ada wali kelas</SelectItem>
-                {guruList.map((g) => (
-                  <SelectItem key={g.id_guru} value={g.id_guru.toString()}>
-                    {g.nama}
-                  </SelectItem>
-                ))}
+                {/* Safety Check Map Guru */}
+                {Array.isArray(guruList) &&
+                  guruList.map((g) => (
+                    <SelectItem key={g.id_guru} value={g.id_guru.toString()}>
+                      {g.nama}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -186,11 +212,15 @@ export default function EditKelasModal({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Belum ada tahun ajaran</SelectItem>
-                {tahunAjaranList.map((t) => (
-                  <SelectItem key={t.id_tahun} value={t.id_tahun.toString()}>
-                    {t.namaTahun} {t.isActive && "(aktif)"}
-                  </SelectItem>
-                ))}
+                {/* Safety Check Map Tahun Ajaran */}
+                {Array.isArray(tahunAjaranList) &&
+                  tahunAjaranList.map((t) => (
+                    <SelectItem
+                      key={t.id_tahun}
+                      value={t.id_tahun.toString()}>
+                      {t.namaTahun} {t.isActive && "(aktif)"}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>

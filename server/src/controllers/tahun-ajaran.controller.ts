@@ -169,4 +169,41 @@ export class TahunAjaranController {
       sendError(res, "Failed to get statistics", error.message, 400);
     }
   }
+  // =====================================================================
+  // KONTROLER BULK KELAS & TAHUN AJARAN
+  // =====================================================================
+
+  static async addKelasBulk(req: Request, res: Response) {
+    try {
+      const result = await TahunAjaranService.addKelasBulk(req.body);
+      sendSuccess(res, "Kelas berhasil ditambahkan ke tahun ajaran", result);
+    } catch (error: any) {
+      sendError(res, "Gagal menambahkan kelas", error.message, 400);
+    }
+  }
+
+  static async updateKelasBulk(req: Request, res: Response) {
+    try {
+      const result = await TahunAjaranService.updateKelasBulk(req.body);
+      sendSuccess(res, "Status kelas berhasil diperbarui", result);
+    } catch (error: any) {
+      sendError(res, "Gagal memperbarui status kelas", error.message, 400);
+    }
+  }
+
+  static async removeKelas(req: Request, res: Response) {
+    try {
+      const tahunAjaranId = parseInt(req.params.id);
+      const kelasId = parseInt(req.params.kelasId);
+
+      if (isNaN(tahunAjaranId) || isNaN(kelasId)) {
+        return sendError(res, "ID tidak valid", null, 400);
+      }
+
+      const result = await TahunAjaranService.removeKelas(tahunAjaranId, kelasId);
+      sendSuccess(res, "Kelas berhasil dihapus dari tahun ajaran", result);
+    } catch (error: any) {
+      sendError(res, "Gagal menghapus kelas", error.message, 400);
+    }
+  }
 }

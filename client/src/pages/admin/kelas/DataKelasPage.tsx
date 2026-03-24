@@ -50,13 +50,14 @@ interface Siswa {
   alamat?: string;
 }
 
+// PERBAIKAN: Menyesuaikan dengan format JSON dari Backend
 interface Kelas {
   id_kelas: number;
   namaKelas: string;
   tingkat: string;
-  guru?: Guru | null;
+  waliKelas?: Guru | null; // Sebelumnya 'guru'
   siswa?: Siswa[];
-  _count?: { siswa: number };
+  jumlahSiswa?: number; // Sebelumnya '_count'
 }
 
 export default function DataKelasPage() {
@@ -231,20 +232,22 @@ export default function DataKelasPage() {
                           Tingkat {k.tingkat}
                         </Badge>
                       </TableCell>
+                      
+                      {/* PERBAIKAN: Menggunakan k.waliKelas */}
                       <TableCell>
-                        {k.guru ? (
+                        {k.waliKelas ? (
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                               <span className="text-xs font-medium text-blue-600">
-                                {k.guru.nama.charAt(0).toUpperCase()}
+                                {k.waliKelas.nama.charAt(0).toUpperCase()}
                               </span>
                             </div>
                             <div>
                               <div className="font-medium text-sm">
-                                {k.guru.nama}
+                                {k.waliKelas.nama}
                               </div>
                               <div className="text-xs text-gray-500">
-                                {k.guru.nip}
+                                {k.waliKelas.nip || "-"}
                               </div>
                             </div>
                           </div>
@@ -254,14 +257,17 @@ export default function DataKelasPage() {
                           </span>
                         )}
                       </TableCell>
+
+                      {/* PERBAIKAN: Menggunakan k.jumlahSiswa */}
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1">
                           <Users className="w-4 h-4 text-gray-400" />
                           <span className="text-sm font-medium">
-                            {k._count?.siswa || k.siswa?.length || 0}
+                            {k.jumlahSiswa || 0}
                           </span>
                         </div>
                       </TableCell>
+                      
                       <TableCell>
                         <div className="flex items-center justify-center gap-2">
                           <Button

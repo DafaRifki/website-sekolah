@@ -16,39 +16,43 @@ import TambahKelasBulkModal from "./TambahKelasBulkModal";
 import KelolaKelasModal from "./KelolaKelasModal";
 import { useState } from "react";
 
-interface TahunAjaranCardProps {
-  data: {
-    data: {
-      id_tahun: number;
-      namaTahun: string;
-      kelasRel: {
-        isActive: boolean;
-        kelas: {
-          id_kelas: number;
-          namaKelas: string;
-          tingkat: string;
-        };
-      };
-    }[];
-  };
+interface TahunAjaranData {
+  id_tahun: number;
+  namaTahun: string;
+  kelasRel?: {
+    isActive: boolean;
+    kelas: {
+      id_kelas: number;
+      namaKelas: string;
+      tingkat: string;
+    };
+  }[];
 }
 
-export default function TahunAjaranCard({ data }: TahunAjaranCardProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const totalKelas = data.data.kelasRel.length;
-  const kelasAktif = data.kelasRel.filter((rel) => rel.isActive).length;
-  const persentaseAktif =
-    totalKelas > 0 ? Math.round((kelasAktif / totalKelas) * 100) : 0;
+interface TahunAjaranCardProps {
+  data: TahunAjaranData;
+  onSuccess: () => void; // Menambahkan prop onSuccess
+}
 
-  // Group classes by tingkat
-  const kelasByTingkat = data.kelasRel.reduce((acc, rel) => {
+export default function TahunAjaranCard({ data, onSuccess }: TahunAjaranCardProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const safeKelasRel = Array.isArray(data.kelasRel) ? data.kelasRel : [];
+  
+  const totalKelas = safeKelasRel.length;
+  const kelasAktif = safeKelasRel.filter((rel) => rel?.isActive).length;
+  const persentaseAktif = totalKelas > 0 ? Math.round((kelasAktif / totalKelas) * 100) : 0;
+
+  const kelasByTingkat = safeKelasRel.reduce((acc, rel) => {
+    if (!rel || !rel.kelas) return acc;
+    
     const tingkat = rel.kelas.tingkat;
     if (!acc[tingkat]) {
       acc[tingkat] = [];
     }
     acc[tingkat].push(rel);
     return acc;
-  }, {} as Record<string, typeof data.kelasRel>);
+  }, {} as Record<string, typeof safeKelasRel>);
 
   const tingkatOrder = ["X", "XI", "XII"];
   const sortedTingkat = Object.keys(kelasByTingkat).sort((a, b) => {
@@ -62,7 +66,6 @@ export default function TahunAjaranCard({ data }: TahunAjaranCardProps) {
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-200 bg-white dark:bg-slate-800 border-0 shadow-md">
-      {/* Professional Header */}
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -92,12 +95,12 @@ export default function TahunAjaranCard({ data }: TahunAjaranCardProps) {
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => setIsModalOpen(true)}
             className="opacity-60 group-hover:opacity-100 transition-opacity">
             <Settings className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Progress Indicator */}
         {totalKelas > 0 && (
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2">
@@ -120,10 +123,8 @@ export default function TahunAjaranCard({ data }: TahunAjaranCardProps) {
 
       <Separator className="mx-6" />
 
-      {/* Content */}
       <CardContent className="pt-4">
         {totalKelas === 0 ? (
-          /* Professional Empty State */
           <div className="text-center py-8">
             <div className="h-12 w-12 mx-auto rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mb-3">
               <BookOpen className="h-6 w-6 text-slate-400" />
@@ -134,17 +135,18 @@ export default function TahunAjaranCard({ data }: TahunAjaranCardProps) {
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
               Tambahkan kelas untuk tahun ajaran ini
             </p>
-            <Button size="sm" variant="outline" className="shadow-sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Kelas
-            </Button>
+            
+            <div className="flex justify-center mt-2">
+              <TambahKelasBulkModal
+                tahunAjaranId={data.id_tahun}
+                onSuccess={onSuccess} // Menggunakan properti onSuccess
+              />
+            </div>
           </div>
         ) : (
-          /* Professional Class List */
           <div className="space-y-4">
             {sortedTingkat.map((tingkat) => (
               <div key={tingkat} className="space-y-2">
-                {/* Tingkat Header */}
                 <div className="flex items-center justify-between py-1">
                   <div className="flex items-center gap-2">
                     <GraduationCap className="h-4 w-4 text-purple-500" />
@@ -157,7 +159,6 @@ export default function TahunAjaranCard({ data }: TahunAjaranCardProps) {
                   </Badge>
                 </div>
 
-                {/* Classes */}
                 <div className="space-y-2">
                   {kelasByTingkat[tingkat].map((rel) => (
                     <div
@@ -204,45 +205,35 @@ export default function TahunAjaranCard({ data }: TahunAjaranCardProps) {
           </div>
         )}
 
-        {/* Professional Action Section */}
         {totalKelas > 0 && (
           <>
             <Separator className="my-4" />
-            <div className="flex gap-2">
+            <div className="flex gap-2 relative z-10">
               <TambahKelasBulkModal
                 tahunAjaranId={data.id_tahun}
-                onSuccess={() => {
-                  window.location.reload();
-                }}
+                onSuccess={onSuccess} // Menggunakan properti onSuccess
               />
-              {/* <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 text-xs shadow-sm">
-                <Plus className="h-3 w-3 mr-1" />
-                Tambah Kelas
-              </Button> */}
-
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 text-xs shadow-sm"
+                className="flex-1 text-xs shadow-sm cursor-pointer"
                 onClick={() => setIsModalOpen(true)}>
                 <Settings className="h-3 w-3 mr-1" />
                 Kelola
               </Button>
-              <KelolaKelasModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                tahunAjaranId={data.id_tahun}
-                onSuccess={() => window.location.reload()}
-              />
             </div>
           </>
         )}
       </CardContent>
 
-      {/* Professional Footer */}
+      <KelolaKelasModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        tahunAjaranId={data.id_tahun}
+        initialKelasRel={safeKelasRel} 
+        onSuccess={onSuccess} // Menggunakan properti onSuccess
+      />
+
       {totalKelas > 0 && (
         <div className="px-6 py-3 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-700">
           <div className="flex items-center justify-between">
