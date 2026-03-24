@@ -54,6 +54,19 @@ export class TahunAjaranService {
               absensi: true,
             },
           },
+          // MEMUNCULKAN DETAIL KELAS
+          kelasRel: {
+            select: {
+              isActive: true,
+              kelas: {
+                select: {
+                  id_kelas: true,
+                  namaKelas: true,
+                  tingkat: true,
+                }
+              }
+            }
+          }
         },
       }),
       prisma.tahunAjaran.count({ where }),
@@ -74,6 +87,19 @@ export class TahunAjaranService {
             tarif: true,
           },
         },
+        // MEMUNCULKAN DETAIL KELAS
+        kelasRel: {
+          select: {
+            isActive: true,
+            kelas: {
+              select: {
+                id_kelas: true,
+                namaKelas: true,
+                tingkat: true,
+              }
+            }
+          }
+        }
       },
     });
 
@@ -139,17 +165,14 @@ export class TahunAjaranService {
     const startDate = new Date(data.startDate);
     const endDate = new Date(data.endDate);
 
-    // Validate dates
     if (startDate >= endDate) {
       throw new Error("End date must be after start date");
     }
 
-    // Validate semester
     if (data.semester !== 1 && data.semester !== 2) {
       throw new Error("Semester must be 1 or 2");
     }
 
-    // Check for existing combination
     const existing = await prisma.tahunAjaran.findUnique({
       where: {
         namaTahun_semester: {
@@ -165,7 +188,6 @@ export class TahunAjaranService {
       );
     }
 
-    // If setting as active, deactivate others
     if (data.isActive) {
       await prisma.tahunAjaran.updateMany({
         where: { isActive: true },
@@ -195,7 +217,6 @@ export class TahunAjaranService {
       throw new Error("Tahun ajaran not found");
     }
 
-    // Validate dates if provided
     if (data.startDate || data.endDate) {
       const startDate = data.startDate
         ? new Date(data.startDate)
@@ -207,12 +228,10 @@ export class TahunAjaranService {
       }
     }
 
-    // Validate semester if provided
     if (data.semester && data.semester !== 1 && data.semester !== 2) {
       throw new Error("Semester must be 1 or 2");
     }
 
-    // Check for conflicts if changing year or semester
     if (data.namaTahun || data.semester) {
       const newNamaTahun = data.namaTahun || existing.namaTahun;
       const newSemester = data.semester || existing.semester;
@@ -238,7 +257,6 @@ export class TahunAjaranService {
       }
     }
 
-    // If setting as active, deactivate others
     if (data.isActive) {
       await prisma.tahunAjaran.updateMany({
         where: {
@@ -280,13 +298,11 @@ export class TahunAjaranService {
       throw new Error("Tahun ajaran not found");
     }
 
-    // Deactivate all others
     await prisma.tahunAjaran.updateMany({
       where: { isActive: true },
       data: { isActive: false },
     });
 
-    // Activate this one
     const activated = await prisma.tahunAjaran.update({
       where: { id_tahun: id },
       data: { isActive: true },
@@ -313,7 +329,6 @@ export class TahunAjaranService {
       throw new Error("Tahun ajaran not found");
     }
 
-    // Prevent deletion if has related data
     const totalRelated =
       existing._count.daftar +
       existing._count.kelasRel +
@@ -324,7 +339,6 @@ export class TahunAjaranService {
       );
     }
 
-    // Prevent deletion of active tahun ajaran
     if (existing.isActive) {
       throw new Error(
         "Cannot delete active tahun ajaran. Please set another tahun ajaran as active first."
@@ -379,5 +393,82 @@ export class TahunAjaranService {
         semester2: semester2Count,
       },
     };
+  }
+
+  // =====================================================================
+  // FITUR BULK KELAS & TAHUN AJARAN
+  // =====================================================================
+
+  static async addKelasBulk(data: { id_tahun: number, kelasIds: number[], activeKelasId: number | null }) {
+    const { id_tahun, kelasIds, activeKelasId } = data;
+
+    const tahunAjaran = await prisma.tahunAjaran.findUnique({
+      where: { id_tahun },
+    });
+
+    if (!tahunAjaran) {
+      throw new Error("Tahun ajaran tidak ditemukan");
+    }
+
+    const existingLinks = await prisma.kelasTahunAjaran.findMany({
+      where: {
+        tahunAjaranId: id_tahun,
+        kelasId: { in: kelasIds },
+      },
+    });
+
+    const existingKelasIds = existingLinks.map((link) => link.kelasId);
+    const newKelasIds = kelasIds.filter((id) => !existingKelasIds.includes(id));
+
+    if (newKelasIds.length === 0) {
+      throw new Error("Semua kelas yang dipilih sudah ada di tahun ajaran ini");
+    }
+
+    const createData = newKelasIds.map((kelasId) => ({
+      tahunAjaranId: id_tahun,
+      kelasId: kelasId,
+      isActive: kelasId === activeKelasId ? true : false,
+    }));
+
+    await prisma.kelasTahunAjaran.createMany({
+      data: createData,
+    });
+
+    return { message: `${createData.length} kelas berhasil ditambahkan` };
+  }
+
+  static async updateKelasBulk(data: { tahunAjaranId: number, kelas: { id_kelas: number, isActive: boolean }[] }) {
+    const { tahunAjaranId, kelas } = data;
+
+    const updates = kelas.map((k) => {
+      return prisma.kelasTahunAjaran.updateMany({
+        where: {
+          tahunAjaranId: tahunAjaranId,
+          kelasId: k.id_kelas,
+        },
+        data: {
+          isActive: k.isActive,
+        },
+      });
+    });
+
+    await prisma.$transaction(updates);
+
+    return { message: "Status kelas massal berhasil diperbarui" };
+  }
+
+  static async removeKelas(tahunAjaranId: number, kelasId: number) {
+    const result = await prisma.kelasTahunAjaran.deleteMany({
+      where: {
+        tahunAjaranId: tahunAjaranId,
+        kelasId: kelasId,
+      },
+    });
+
+    if (result.count === 0) {
+      throw new Error("Kelas tidak ditemukan di tahun ajaran ini");
+    }
+
+    return { message: "Kelas berhasil dihapus dari tahun ajaran" };
   }
 }

@@ -66,13 +66,26 @@ export default function TambahKelasModal({
     setWaliId("none");
   };
 
-  // Fetch daftar guru
+// Fetch daftar guru
   useEffect(() => {
     if (isOpen) {
       apiClient
         .get("/guru")
-        .then((res) => setGuruList(res.data.data))
-        .catch((err) => console.error("Gagal fetch guru:", err));
+        .then((res) => {
+          // Coba ambil dari res.data.data.data (mengikuti pola DataKelasPage)
+          const dataGuru = res.data?.data?.data || res.data?.data || res.data;
+          
+          if (Array.isArray(dataGuru)) {
+            setGuruList(dataGuru);
+          } else {
+            console.log("Struktur Asli API Guru:", res.data); // Ini akan membantu kita melihat isi aslinya di Console
+            setGuruList([]); 
+          }
+        })
+        .catch((err) => {
+          console.error("Gagal fetch guru:", err);
+          setGuruList([]);
+        });
     }
   }, [isOpen]);
 
@@ -183,7 +196,8 @@ export default function TambahKelasModal({
                       <span className="text-gray-500">Belum ditentukan</span>
                     </div>
                   </SelectItem>
-                  {guruList.map((g) => (
+                  {/* Tambahkan pengecekan Array.isArray di sini agar aman */}
+                  {Array.isArray(guruList) && guruList.map((g) => (
                     <SelectItem key={g.id_guru} value={g.id_guru.toString()}>
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">

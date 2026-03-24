@@ -20,7 +20,9 @@ import TahunAjaranCard from "./components/TahunAjaranCard";
 interface TahunAjaran {
   id_tahun: number;
   namaTahun: string;
-  kelasRel: {
+  isActive?: boolean;
+  semester?: string;
+  kelasRel?: {
     isActive: boolean;
     kelas: {
       id_kelas: number;
@@ -40,13 +42,17 @@ export default function TahunAjaranPage() {
       setLoading(true);
       setError(null);
       const res = await apiClient.get("/tahun-ajaran");
-      setTahunAjaran(res.data.data.data || []);
+      
+      let data = res.data?.data?.data || res.data?.data || res.data;
+      setTahunAjaran(Array.isArray(data) ? data : []);
+      
     } catch (error: any) {
       console.error("Error fetching tahun ajaran:", error);
       setError(
         error.response?.data?.message ||
           "Gagal memuat data tahun ajaran. Silakan coba lagi."
       );
+      setTahunAjaran([]);
     } finally {
       setLoading(false);
     }
@@ -56,24 +62,27 @@ export default function TahunAjaranPage() {
     fetchData();
   }, []);
 
-  // Calculate statistics
-  const totalTahunAjaran = tahunAjaran.length;
-  const totalKelas = tahunAjaran.reduce(
-    (sum, item) => sum + item.kelasRel.length,
+  const safeTahunAjaran = Array.isArray(tahunAjaran) ? tahunAjaran : [];
+
+  const totalTahunAjaran = safeTahunAjaran.length;
+  
+  const totalKelas = safeTahunAjaran.reduce(
+    (sum, item) => sum + (Array.isArray(item?.kelasRel) ? item.kelasRel.length : 0),
     0
   );
-  const kelasAktif = tahunAjaran.reduce(
-    (sum, item) => sum + item.kelasRel.filter((rel) => rel.isActive).length,
+  
+  const kelasAktif = safeTahunAjaran.reduce(
+    (sum, item) => sum + (Array.isArray(item?.kelasRel) ? item.kelasRel.filter((rel) => rel?.isActive).length : 0),
     0
   );
-  const tahunOperasional = tahunAjaran.filter((item) =>
-    item.kelasRel.some((rel) => rel.isActive)
+  
+  const tahunOperasional = safeTahunAjaran.filter((item) =>
+    Array.isArray(item?.kelasRel) ? item.kelasRel.some((rel) => rel?.isActive) : false
   ).length;
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900/50">
       <div className="container mx-auto p-6 space-y-6">
-        {/* Professional Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
@@ -102,7 +111,6 @@ export default function TahunAjaranPage() {
           </div>
         </div>
 
-        {/* Error Alert */}
         {error && (
           <Alert variant="destructive" className="shadow-sm">
             <AlertCircle className="h-4 w-4" />
@@ -115,7 +123,6 @@ export default function TahunAjaranPage() {
           </Alert>
         )}
 
-        {/* Professional Statistics Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="shadow-sm border-0 bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10">
             <CardContent className="p-4">
@@ -190,7 +197,6 @@ export default function TahunAjaranPage() {
           </Card>
         </div>
 
-        {/* Loading State */}
         {loading && (
           <Card className="shadow-sm">
             <CardContent className="flex items-center justify-center py-12">
@@ -204,8 +210,7 @@ export default function TahunAjaranPage() {
           </Card>
         )}
 
-        {/* Empty State */}
-        {!loading && !error && tahunAjaran.length === 0 && (
+        {!loading && !error && safeTahunAjaran.length === 0 && (
           <Card className="shadow-sm">
             <CardContent className="text-center py-12">
               <div className="h-16 w-16 mx-auto rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
@@ -223,10 +228,8 @@ export default function TahunAjaranPage() {
           </Card>
         )}
 
-        {/* Main Content */}
-        {!loading && !error && tahunAjaran.length > 0 && (
+        {!loading && !error && safeTahunAjaran.length > 0 && (
           <>
-            {/* Summary Card */}
             <Card className="shadow-sm border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-900/10">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -257,14 +260,16 @@ export default function TahunAjaranPage() {
               </CardContent>
             </Card>
 
-            {/* Tahun Ajaran Grid */}
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {tahunAjaran.map((item) => (
-                <TahunAjaranCard key={item.id_tahun} data={item} />
+              {safeTahunAjaran.map((item) => (
+                <TahunAjaranCard 
+                  key={item.id_tahun} 
+                  data={item} 
+                  onSuccess={fetchData} // Memberikan fetchData ke prop onSuccess
+                />
               ))}
             </div>
 
-            {/* Helpful Tips */}
             {kelasAktif === 0 && (
               <Card className="shadow-sm border-l-4 border-l-amber-400 bg-gradient-to-r from-amber-50/50 to-transparent dark:from-amber-900/10">
                 <CardContent className="p-4">

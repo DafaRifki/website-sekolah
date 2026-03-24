@@ -68,7 +68,11 @@ export default function TambahKelasBulkModal({
         setFetchLoading(true);
         setError(null);
         const res = await apiClient.get("/kelas");
-        setKelasOptions(Array.isArray(res.data.data) ? res.data.data : []);
+        
+        // PERBAIKAN: Safely extract data karena backend menggunakan pagination (data.data.data)
+        const rawData = res.data?.data?.data || res.data?.data || res.data;
+        
+        setKelasOptions(Array.isArray(rawData) ? rawData : []);
       } catch (error: any) {
         console.error("Gagal fetch kelas:", error);
         setError("Gagal memuat data kelas. Silakan coba lagi.");
@@ -154,7 +158,7 @@ export default function TambahKelasBulkModal({
         <Button
           size="sm"
           variant="outline"
-          className="flex-1 text-xs shadow-sm">
+          className="flex-1 text-xs shadow-sm cursor-pointer">
           <Plus className="h-3 w-3 mr-1" />
           Tambah Kelas
         </Button>
@@ -291,7 +295,7 @@ export default function TambahKelasBulkModal({
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                  <div className="space-y-3 max-h-64 overflow-y-auto px-1">
                     {selectedKelas.map((selectedItem) => {
                       const kelas = kelasOptions.find(
                         (k) => k.id_kelas === selectedItem.id
@@ -381,15 +385,6 @@ export default function TambahKelasBulkModal({
                         {selectedKelas.length - kelasAktif} kelas nonaktif
                       </span>
                     </div>
-                    {kelasAktif > 1 && (
-                      <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/10 rounded border border-amber-200 dark:border-amber-800">
-                        <p className="text-xs text-amber-800 dark:text-amber-400">
-                          <strong>Catatan:</strong> Hanya satu kelas yang dapat
-                          aktif pada saat yang bersamaan. Sistem akan
-                          menggunakan kelas aktif pertama yang dipilih.
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </AlertDescription>
               </Alert>
@@ -397,7 +392,7 @@ export default function TambahKelasBulkModal({
           </div>
         )}
 
-        <DialogFooter className="gap-3 pt-6">
+        <DialogFooter className="gap-3 pt-6 border-t mt-4">
           <Button
             variant="outline"
             onClick={() => {

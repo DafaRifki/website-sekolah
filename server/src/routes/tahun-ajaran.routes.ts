@@ -20,6 +20,26 @@ router.get(
   TahunAjaranController.getStats
 );
 router.get("/by-year", authenticateToken, TahunAjaranController.getByYear);
+router.post(
+  "/kelas/bulk",
+  authenticateToken,
+  requireRole("ADMIN"),
+  TahunAjaranController.addKelasBulk
+);
+
+router.put(
+  "/kelas/bulk-update",
+  authenticateToken,
+  requireRole("ADMIN"),
+  TahunAjaranController.updateKelasBulk
+);
+
+router.delete(
+  "/:id/kelas/:kelasId",
+  authenticateToken,
+  requireRole("ADMIN"),
+  TahunAjaranController.removeKelas
+);
 router.get("/:id", authenticateToken, TahunAjaranController.getById);
 
 // Admin only routes

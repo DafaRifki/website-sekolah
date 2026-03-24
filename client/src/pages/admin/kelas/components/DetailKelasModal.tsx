@@ -12,7 +12,8 @@ interface Guru {
   id_guru: number;
   nama: string;
   nip: string;
-  email: string;
+  jabatan?: string;
+  email?: string;
   noHP?: string;
 }
 
@@ -24,24 +25,15 @@ interface Siswa {
   alamat?: string;
 }
 
-interface TahunAjaran {
-  id_tahun: number;
-  namaTahun: string;
-}
-
-interface TahunRel {
-  isActive: boolean;
-  tahunAjaran: TahunAjaran;
-}
-
+// PERBAIKAN: Sesuaikan interface Kelas dengan respons backend
 interface Kelas {
   id_kelas: number;
   namaKelas: string;
   tingkat: string;
-  guru?: Guru | null;
+  waliKelas?: Guru | null; // Diganti dari 'guru'
+  jumlahSiswa?: number;    // Diganti dari '_count'
+  tahunAjaran?: string | null; // Backend mengirimkan ini sebagai string langsung
   siswa?: Siswa[];
-  tahunRel?: TahunRel[];
-  _count?: { siswa: number };
 }
 
 interface DetailKelasModalProps {
@@ -56,9 +48,6 @@ export default function DetailKelasModal({
   onClose,
 }: DetailKelasModalProps) {
   if (!kelas) return null;
-
-  // cari tahun ajaran aktif dari relasi
-  const activeTahunRel = kelas.tahunRel?.find((rel) => rel.isActive);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -93,15 +82,15 @@ export default function DetailKelasModal({
               </div>
             </div>
 
-            {/* Tahun Ajaran Aktif */}
-            {activeTahunRel && (
+            {/* PERBAIKAN: Tahun Ajaran Aktif */}
+            {kelas.tahunAjaran && (
               <div>
                 <label className="text-sm font-medium text-gray-700">
                   Tahun Ajaran
                 </label>
                 <div className="p-2 bg-gray-50 rounded-lg flex items-center justify-between">
                   <span className="font-medium">
-                    {activeTahunRel.tahunAjaran.namaTahun}
+                    {kelas.tahunAjaran}
                   </span>
                   <Badge variant="secondary">Aktif</Badge>
                 </div>
@@ -109,22 +98,29 @@ export default function DetailKelasModal({
             )}
           </div>
 
-          {/* Wali Kelas */}
+          {/* PERBAIKAN: Wali Kelas */}
           <div>
             <label className="text-sm font-medium text-gray-700">
               Wali Kelas
             </label>
             <div className="p-3 bg-gray-50 rounded-lg space-y-1">
-              {kelas.guru ? (
+              {kelas.waliKelas ? (
                 <>
-                  <p className="font-medium">{kelas.guru.nama}</p>
-                  <p className="text-sm text-gray-600">NIP: {kelas.guru.nip}</p>
-                  <p className="text-sm text-gray-600">
-                    Email: {kelas.guru.email}
-                  </p>
-                  {kelas.guru.noHP && (
+                  <p className="font-medium">{kelas.waliKelas.nama}</p>
+                  <p className="text-sm text-gray-600">NIP: {kelas.waliKelas.nip || "-"}</p>
+                  {kelas.waliKelas.jabatan && (
+                     <p className="text-sm text-gray-600">
+                       Jabatan: {kelas.waliKelas.jabatan}
+                     </p>
+                  )}
+                  {kelas.waliKelas.email && (
                     <p className="text-sm text-gray-600">
-                      No HP: {kelas.guru.noHP}
+                      Email: {kelas.waliKelas.email}
+                    </p>
+                  )}
+                  {kelas.waliKelas.noHP && (
+                    <p className="text-sm text-gray-600">
+                      No HP: {kelas.waliKelas.noHP}
                     </p>
                   )}
                 </>
@@ -134,17 +130,18 @@ export default function DetailKelasModal({
             </div>
           </div>
 
-          {/* Statistik Siswa */}
+          {/* PERBAIKAN: Statistik Siswa */}
           <div>
             <label className="text-sm font-medium text-gray-700">
               Jumlah Siswa
             </label>
             <div className="p-2 bg-gray-50 rounded-lg font-medium">
-              {kelas._count?.siswa ?? kelas.siswa?.length ?? 0} siswa
+              {kelas.jumlahSiswa || 0} siswa
             </div>
           </div>
 
           {/* Preview Siswa */}
+          {/* Catatan: Bagian ini kemungkinan tidak akan muncul karena backend 'getAll' tidak mengirimkan daftar siswa secara spesifik. */}
           {kelas.siswa && kelas.siswa.length > 0 && (
             <div>
               <label className="text-sm font-medium text-gray-700">
