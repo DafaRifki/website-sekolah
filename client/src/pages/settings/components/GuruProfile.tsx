@@ -40,14 +40,48 @@ export default function GuruProfile({ data }: GuruProfileProps) {
         {/* Kolom Kiri: Foto & Status Utama */}
         <motion.div variants={cardVariants}>
           <Card className="h-full border-none shadow-sm bg-gradient-to-b from-blue-50 to-white hover:shadow-md transition-shadow">
-            <CardContent className="pt-6 flex flex-col items-center">
-              <div className="w-32 h-32 rounded-full bg-blue-100 flex items-center justify-center border-4 border-white shadow-md overflow-hidden mb-4 transform hover:scale-105 transition-transform">
+            <CardContent className="pt-6 flex flex-col items-center relative">
+              
+              {/* --- BAGIAN FOTO PROFIL YANG DIPERBARUI --- */}
+              <div className="w-32 h-32 rounded-full bg-blue-100 flex items-center justify-center border-4 border-white shadow-md overflow-hidden mb-4 transform hover:scale-105 transition-transform relative">
                 {profile.fotoProfil ? (
-                  <img src={profile.fotoProfil} alt={profile.nama} className="w-full h-full object-cover" />
+                  <>
+                    <img 
+                      src={(() => {
+                        // 1. Ambil URL murni dari .env
+                        let baseUrl = import.meta.env.VITE_URL_API || import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+                        
+                        // 2. Bersihkan '/api' di ujung jika ada
+                        baseUrl = baseUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
+                        
+                        // 3. Ekstrak nama file saja
+                        const fileName = profile.fotoProfil.split('/').pop();
+                        
+                        // 4. Arahkan ke folder uploads/guru
+                        return `${baseUrl}/uploads/guru/${fileName}?t=${new Date().getTime()}`;
+                      })()} 
+                      alt={profile.nama} 
+                      className="w-full h-full object-cover relative z-10"
+                      onError={(e) => {
+                        // Jika gambar gagal dimuat (hilang/rusak), sembunyikan img tag-nya
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                    {/* Inisial Fallback (Tertutup gambar jika sukses, terlihat jika gambar gagal) */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-blue-100 z-0">
+                       <span className="text-4xl font-bold text-blue-600">
+                        {profile.nama.charAt(0).toUpperCase()}
+                       </span>
+                    </div>
+                  </>
                 ) : (
-                  <User className="w-16 h-16 text-blue-600" />
+                  <span className="text-4xl font-bold text-blue-600">
+                    {profile.nama.charAt(0).toUpperCase()}
+                  </span>
                 )}
               </div>
+              {/* --- AKHIR BAGIAN FOTO PROFIL --- */}
+
               <h2 className="text-xl font-bold text-center mb-1">{profile.nama}</h2>
               <p className="text-sm text-muted-foreground mb-4">NIP: {profile.nip || "-"}</p>
               <div className="flex flex-wrap gap-2 justify-center">

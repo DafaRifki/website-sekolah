@@ -46,8 +46,9 @@ interface Props {
   onEdit: (guru: Guru) => void;
 }
 
-// [PERBAIKAN 1] Definisikan URL Backend yang benar (Port 5000)
-const BACKEND_URL = import.meta.env.VITE_URL_API || "http://localhost:5000";
+// --- KONFIGURASI URL BACKEND (Sama dengan GuruCard) ---
+const ENV_URL = import.meta.env.VITE_URL_API || "http://localhost:5000";
+const BACKEND_URL = ENV_URL.replace(/\/+$/, "");
 
 export default function DetailGuruModal({
   guruData,
@@ -61,6 +62,11 @@ export default function DetailGuruModal({
   useEffect(() => {
     setGuru(guruData);
   }, [guruData]);
+
+  // Logic URL Gambar (Pastikan folder 'uploads/guru' sesuai dengan struktur backend)
+  const imageUrl = guru?.fotoProfil
+    ? `${BACKEND_URL}/uploads/guru/${guru.fotoProfil}`
+    : defaultAvatar;
 
   const handleDelete = () => {
     const targetId = guru?.id_guru;
@@ -157,19 +163,25 @@ export default function DetailGuruModal({
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-6 border-b">
                   
-                  {/* [PERBAIKAN 2] Gunakan BACKEND_URL, bukan localhost:3000 */}
+                  {/* FOTO PROFIL */}
                   <img
-                      src={guru.fotoProfil ? `${BACKEND_URL}/uploads/guru/${guru.fotoProfil}` : defaultAvatar}
+                      src={imageUrl}
                       alt={guru.nama}
                       className="w-24 h-24 rounded-full border-4 border-white shadow-md object-cover bg-gray-100 flex-shrink-0"
-                      onError={(e) => (e.currentTarget.src = defaultAvatar)}
+                      onError={(e) => {
+                        e.currentTarget.src = defaultAvatar;
+                      }}
                   />
 
                   <div className="flex-1 text-center sm:text-left space-y-2">
                       <h3 className="text-2xl font-bold text-gray-900">{guru.nama}</h3>
                       <div className="flex flex-wrap justify-center sm:justify-start gap-2">
-                      <Badge variant="secondary" className="px-3 py-1">{guru.user?.role || "Guru"}</Badge>
-                      {guru.jabatan && <Badge variant="outline" className="px-3 py-1 border-blue-200 text-blue-700 bg-blue-50">{guru.jabatan}</Badge>}
+                        <Badge variant="secondary" className="px-3 py-1">{guru.user?.role || "Guru"}</Badge>
+                        {guru.jabatan && (
+                          <Badge variant="outline" className="px-3 py-1 border-blue-200 text-blue-700 bg-blue-50">
+                            {guru.jabatan}
+                          </Badge>
+                        )}
                       </div>
                       
                       {guru.waliKelas && guru.waliKelas.length > 0 && (
@@ -230,7 +242,6 @@ export default function DetailGuruModal({
                 </>
            )}
         </div>
-
       </DialogContent>
     </Dialog>
   );

@@ -39,14 +39,48 @@ export default function SiswaProfile({ data }: SiswaProfileProps) {
         {/* Kolom Kiri: Foto & Status Utama */}
         <motion.div variants={cardVariants}>
           <Card className="h-full border-none shadow-sm bg-gradient-to-b from-green-50 to-white hover:shadow-md transition-shadow">
-            <CardContent className="pt-6 flex flex-col items-center">
-              <div className="w-32 h-32 rounded-full bg-green-100 flex items-center justify-center border-4 border-white shadow-md overflow-hidden mb-4 transform hover:rotate-3 transition-transform">
+            <CardContent className="pt-6 flex flex-col items-center relative">
+              
+              {/* --- BAGIAN FOTO PROFIL YANG DIPERBARUI --- */}
+              <div className="w-32 h-32 rounded-full bg-green-100 flex items-center justify-center border-4 border-white shadow-md overflow-hidden mb-4 transform hover:rotate-3 transition-transform relative">
                 {profile.fotoProfil ? (
-                  <img src={profile.fotoProfil} alt={profile.nama} className="w-full h-full object-cover" />
+                  <>
+                    <img 
+                      src={(() => {
+                        // 1. Ambil URL murni dari .env
+                        let baseUrl = import.meta.env.VITE_URL_API || import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+                        
+                        // 2. Bersihkan jika ada tambahan "/api" di belakangnya
+                        baseUrl = baseUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
+                        
+                        // 3. Ambil HANYA nama filenya saja
+                        const fileName = profile.fotoProfil.split('/').pop();
+                        
+                        // 4. Bentuk URL langsung ke folder uploads/siswa
+                        return `${baseUrl}/uploads/siswa/${fileName}?t=${new Date().getTime()}`;
+                      })()} 
+                      alt={profile.nama} 
+                      className="w-full h-full object-cover relative z-10"
+                      onError={(e) => {
+                        // Fallback jika gagal muat (hilangkan gambar, biarkan inisial terlihat di bawahnya)
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                    {/* Inisial Fallback - Berada di bawah gambar, terlihat jika gambar gagal/hilang */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-green-100 z-0">
+                       <span className="text-4xl font-bold text-green-600">
+                        {profile.nama.charAt(0).toUpperCase()}
+                       </span>
+                    </div>
+                  </>
                 ) : (
-                  <User className="w-16 h-16 text-green-600" />
+                  <span className="text-4xl font-bold text-green-600">
+                    {profile.nama.charAt(0).toUpperCase()}
+                  </span>
                 )}
               </div>
+              {/* --- AKHIR BAGIAN FOTO PROFIL --- */}
+
               <h2 className="text-xl font-bold text-center mb-1">{profile.nama}</h2>
               <p className="text-sm text-muted-foreground mb-4">NIS: {profile.nis || "-"}</p>
               <div className="flex flex-wrap gap-2 justify-center">

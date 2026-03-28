@@ -40,6 +40,7 @@ interface Guru {
   nip: string;
   email: string;
   noHP?: string;
+  fotoProfil?: string; // PERBAIKAN: Menambahkan properti fotoProfil
 }
 
 interface Siswa {
@@ -50,14 +51,13 @@ interface Siswa {
   alamat?: string;
 }
 
-// PERBAIKAN: Menyesuaikan dengan format JSON dari Backend
 interface Kelas {
   id_kelas: number;
   namaKelas: string;
   tingkat: string;
-  waliKelas?: Guru | null; // Sebelumnya 'guru'
+  waliKelas?: Guru | null; 
   siswa?: Siswa[];
-  jumlahSiswa?: number; // Sebelumnya '_count'
+  jumlahSiswa?: number; 
 }
 
 export default function DataKelasPage() {
@@ -68,7 +68,6 @@ export default function DataKelasPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [kelasEdit, setKelasEdit] = useState<Kelas | null>(null);
 
-  // filter states
   const [searchNamaKelas, setSearchNamaKelas] = useState("");
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
 
@@ -129,10 +128,8 @@ export default function DataKelasPage() {
     }
   };
 
-  // daftar tingkat untuk dropdown filter
   const uniqueTingkat = Array.from(new Set(kelas.map((k) => k.tingkat)));
 
-  // filter logic
   const filteredKelas = kelas.filter((k) => {
     const bySearch = k.namaKelas
       .toLowerCase()
@@ -147,6 +144,15 @@ export default function DataKelasPage() {
     fetchKelas();
   }, []);
 
+  // PERBAIKAN: Fungsi Helper untuk merakit URL Foto Guru
+  const getGuruProfileUrl = (fotoPath?: string) => {
+    if (!fotoPath) return null;
+    let baseUrl = import.meta.env.VITE_URL_API || import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+    baseUrl = baseUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
+    const fileName = fotoPath.split('/').pop();
+    return `${baseUrl}/uploads/guru/${fileName}?t=${new Date().getTime()}`;
+  };
+
   return (
     <div className="p-6">
       <Card>
@@ -157,9 +163,7 @@ export default function DataKelasPage() {
               Data Kelas
             </CardTitle>
 
-            {/* Controls */}
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-              {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
@@ -170,7 +174,6 @@ export default function DataKelasPage() {
                 />
               </div>
 
-              {/* Filter by Tingkat */}
               <Select value={selectedFilter} onValueChange={setSelectedFilter}>
                 <SelectTrigger className="w-full sm:w-48">
                   <SelectValue placeholder="Filter Tingkat" />
@@ -185,7 +188,6 @@ export default function DataKelasPage() {
                 </SelectContent>
               </Select>
 
-              {/* Add Button */}
               <Button onClick={() => setIsTambahOpen(true)} className="gap-2">
                 <Plus className="w-4 h-4" />
                 Tambah Kelas
@@ -224,45 +226,62 @@ export default function DataKelasPage() {
                       <TableCell className="text-center font-medium">
                         {idx + 1}
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium text-gray-900">
                         {k.namaKelas}
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs bg-white">
                           Tingkat {k.tingkat}
                         </Badge>
                       </TableCell>
                       
-                      {/* PERBAIKAN: Menggunakan k.waliKelas */}
+                      {/* PERBAIKAN: Sel Wali Kelas dengan Foto Profil */}
                       <TableCell>
                         {k.waliKelas ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <span className="text-xs font-medium text-blue-600">
-                                {k.waliKelas.nama.charAt(0).toUpperCase()}
-                              </span>
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden border border-blue-200 shrink-0 relative">
+                              {k.waliKelas.fotoProfil ? (
+                                <>
+                                  <img 
+                                    src={getGuruProfileUrl(k.waliKelas.fotoProfil) as string} 
+                                    alt={k.waliKelas.nama}
+                                    className="w-full h-full object-cover relative z-10"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 flex items-center justify-center bg-blue-100 z-0">
+                                    <span className="text-sm font-semibold text-blue-600">
+                                      {k.waliKelas.nama.charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="text-sm font-semibold text-blue-600">
+                                  {k.waliKelas.nama.charAt(0).toUpperCase()}
+                                </span>
+                              )}
                             </div>
                             <div>
-                              <div className="font-medium text-sm">
+                              <div className="font-medium text-sm text-gray-900">
                                 {k.waliKelas.nama}
                               </div>
-                              <div className="text-xs text-gray-500">
-                                {k.waliKelas.nip || "-"}
+                              <div className="text-xs text-gray-500 mt-0.5">
+                                NIP: {k.waliKelas.nip || "-"}
                               </div>
                             </div>
                           </div>
                         ) : (
-                          <span className="text-gray-500 italic">
+                          <span className="text-gray-500 italic text-sm">
                             Belum ditentukan
                           </span>
                         )}
                       </TableCell>
 
-                      {/* PERBAIKAN: Menggunakan k.jumlahSiswa */}
                       <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1">
+                        <div className="flex items-center justify-center gap-1.5">
                           <Users className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-medium">
+                          <span className="text-sm font-medium text-gray-700">
                             {k.jumlahSiswa || 0}
                           </span>
                         </div>
@@ -274,14 +293,14 @@ export default function DataKelasPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDetail(k)}
-                            className="h-8 w-8 p-0">
+                            className="h-8 w-8 p-0 text-gray-600 hover:text-blue-600 hover:bg-blue-50">
                             <Eye className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(k)}
-                            className="h-8 w-8 p-0">
+                            className="h-8 w-8 p-0 text-gray-600 hover:text-green-600 hover:bg-green-50">
                             <Edit3 className="w-4 h-4" />
                           </Button>
                           <Button
@@ -290,7 +309,7 @@ export default function DataKelasPage() {
                             onClick={() =>
                               handleDelete(k.id_kelas, k.namaKelas)
                             }
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
+                            className="h-8 w-8 p-0 text-gray-600 hover:text-red-600 hover:bg-red-50">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -304,21 +323,18 @@ export default function DataKelasPage() {
         </CardContent>
       </Card>
 
-      {/* Detail Modal */}
       <DetailKelasModal
         kelas={selectedKelas}
         isOpen={isDetailOpen}
         onClose={handleCloseDetail}
       />
 
-      {/* Tambah Data Modal */}
       <TambahKelasModal
         isOpen={isTambahOpen}
         onClose={() => setIsTambahOpen(false)}
         onSuccess={fetchKelas}
       />
 
-      {/* Edit Data Modal */}
       <EditKelasModal
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}

@@ -57,6 +57,7 @@ export class KelasService {
               nip: true,
               nama: true,
               jabatan: true,
+              fotoProfil: true,
             },
           },
           _count: {
@@ -93,6 +94,7 @@ export class KelasService {
             nip: k.guru.nip,
             nama: k.guru.nama,
             jabatan: k.guru.jabatan,
+            fotoProfil: k.guru.fotoProfil,
           }
         : null,
       jumlahSiswa: k._count.siswa,
@@ -120,6 +122,7 @@ export class KelasService {
             jabatan: true,
             email: true,
             noHP: true,
+            fotoProfil: true,
           },
         },
         siswa: {

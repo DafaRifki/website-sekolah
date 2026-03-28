@@ -113,17 +113,15 @@ export default function EditSiswaPage() {
           noTeleponOrtu: siswaData.noTeleponOrtu || "",
         });
 
-        // console.log("Siswa Data:", siswaData);
         if (siswaData.user?.id) {
           setUserId(siswaData.user.id);
-          // console.log("Set UserId:", siswaData.user.id);
         }
 
         // Set foto profil saat ini
         if (siswaData.fotoProfil) {
           const baseUrl =
             import.meta.env.VITE_API_BASE_URL ||
-            "http://localhost:3000/uploads/";
+            "http://localhost:3000";
           setCurrentFotoUrl(`${baseUrl}${siswaData.fotoProfil}`);
           setPreviewUrl(`${baseUrl}${siswaData.fotoProfil}`);
         }
@@ -169,7 +167,6 @@ export default function EditSiswaPage() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validasi tipe file
       const allowedTypes = [
         "image/jpeg",
         "image/jpg",
@@ -183,7 +180,6 @@ export default function EditSiswaPage() {
         return;
       }
 
-      // Validasi ukuran file (max 5MB)
       const maxSize = 5 * 1024 * 1024; // 5MB
       if (file.size > maxSize) {
         toast.error("Ukuran file maksimal 5MB");
@@ -192,7 +188,6 @@ export default function EditSiswaPage() {
 
       setSelectedFile(file);
 
-      // Create preview URL
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreviewUrl(e.target?.result as string);
@@ -242,10 +237,7 @@ export default function EditSiswaPage() {
       });
 
       // 2. Update Data User (Email & Password)
-      // console.log("UserId:", userId);
-
       if (userId) {
-        // Update existing user
         if (siswa.email) {
           await apiClient.put(`/users/${userId}`, {
             email: siswa.email,
@@ -258,8 +250,6 @@ export default function EditSiswaPage() {
           });
         }
       } else if (siswa.email && siswa.password) {
-        // Create new user if doesn't exist
-        // console.log("Creating new user for siswa...");
         await apiClient.post("/users", {
           email: siswa.email,
           password: siswa.password,
@@ -268,7 +258,7 @@ export default function EditSiswaPage() {
         });
       }
 
-      // 2. Upload Foto jika ada
+      // 3. Upload Foto jika ada
       if (selectedFile) {
         const formData = new FormData();
         formData.append("fotoProfil", selectedFile);
@@ -279,36 +269,29 @@ export default function EditSiswaPage() {
         });
       }
 
-      // 4. Update Data Orang Tua
+      // 4. Update Data Orang Tua (Wali)
       if (
-        orangtua.nama ||
-        orangtua.hubungan ||
-        orangtua.pekerjaan ||
         orangtua.alamat ||
-        orangtua.noHp
+        orangtua.id_orangtua
       ) {
         if (orangtua.id_orangtua) {
-          // Update existing
           await apiClient.put(`/orangtua/${orangtua.id_orangtua}`, {
-            nama: orangtua.nama,
-            hubungan: orangtua.hubungan,
-            pekerjaan: orangtua.pekerjaan,
+            nama: orangtua.nama || siswa.namaAyah || siswa.namaIbu || "Orang Tua Siswa",
+            hubungan: orangtua.hubungan || "Orang Tua/Wali",
+            pekerjaan: orangtua.pekerjaan || "-",
             alamat: orangtua.alamat,
-            noHp: orangtua.noHp,
+            noHp: orangtua.noHp || siswa.noTeleponOrtu || "-",
           });
         } else {
-          // Create new and link
-          // console.log("Creating new orangtua...");
           const resOrtu = await apiClient.post("/orangtua", {
-            nama: orangtua.nama,
-            hubungan: orangtua.hubungan,
-            pekerjaan: orangtua.pekerjaan,
+            nama: siswa.namaAyah || siswa.namaIbu || "Orang Tua Siswa",
+            hubungan: "Orang Tua/Wali",
+            pekerjaan: siswa.pekerjaanAyah || siswa.pekerjaanIbu || "-",
             alamat: orangtua.alamat,
-            noHp: orangtua.noHp,
+            noHp: siswa.noTeleponOrtu || "-",
           });
 
           const newOrtuId = resOrtu.data.data.id_orangtua;
-          // console.log("Linking orangtua", newOrtuId, "to siswa", id);
 
           await apiClient.post(`/orangtua/${newOrtuId}/link-siswa`, {
             siswaId: parseInt(id!),
@@ -602,7 +585,7 @@ export default function EditSiswaPage() {
                   <Label className="mb-2">Nama Ibu</Label>
                   <Input
                     name="namaIbu"
-                    value={siswa.namaAyah}
+                    value={siswa.namaIbu} 
                     onChange={handleChange}
                   />
                 </div>
@@ -615,40 +598,20 @@ export default function EditSiswaPage() {
                   />
                 </div>
                 <div>
-                  <Label className="mb-2">Hubungan</Label>
-                  <Input
-                    name="hubungan"
-                    placeholder="Ayah / Ibu / Wali"
-                    value={orangtua.hubungan}
-                    onChange={handleChangeOrangtua}
-                  />
-                </div>
-                {/* </div> */}
-                {/* <div className="grid grid-cols-2 gap-4"> */}
-                {/* <div>
-                  <Label className="mb-2">Pekerjaan</Label>
-                  <Input
-                    name="pekerjaan"
-                    placeholder="Pekerjaan Orang Tua"
-                    value={orangtua.pekerjaan}
-                    onChange={handleChangeOrangtua}
-                  />
-                </div> */}
-                <div>
                   <Label className="mb-2">No. Telepon Orang Tua</Label>
                   <Input
                     name="noTeleponOrtu"
                     placeholder="08xxxxxxxx"
                     value={siswa.noTeleponOrtu}
-                    onChange={handleChangeOrangtua}
+                    onChange={handleChange} 
                   />
                 </div>
               </div>
               <div>
-                <Label className="mb-2">Alamat</Label>
+                <Label className="mb-2">Alamat Orang Tua/Wali</Label>
                 <Input
                   name="alamat"
-                  placeholder="Alamat Orang tua"
+                  placeholder="Alamat Orang tua lengkap"
                   value={orangtua.alamat}
                   onChange={handleChangeOrangtua}
                 />

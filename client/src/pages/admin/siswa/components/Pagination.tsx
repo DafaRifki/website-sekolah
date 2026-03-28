@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import React from "react";
 
 interface PaginationProps {
   currentPage: number;
@@ -14,6 +15,7 @@ const Pagination: React.FC<PaginationProps> = ({
   onPageChange,
   className = "",
 }) => {
+  // Hide pagination if there is only 1 page
   if (totalPages <= 1) return null;
 
   const handleSetPage = (page: number) => {
@@ -21,23 +23,46 @@ const Pagination: React.FC<PaginationProps> = ({
     onPageChange(page);
   };
 
-  const middlePages = Array.from({ length: 3 }).map((_, i) => {
-    const page = currentPage - 1 + i;
-    if (page <= 1 || page >= totalPages) return null;
-    return page;
-  });
+  // Fungsi untuk men-generate urutan halaman yang lebih rapi dan konsisten
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+
+    if (totalPages <= 5) {
+      // Jika total halaman sedikit (<= 5), tampilkan semua
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Jika di halaman awal (1, 2, 3)
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, 4, "...", totalPages);
+      } 
+      // Jika di halaman akhir
+      else if (currentPage >= totalPages - 2) {
+        pages.push(1, "...", totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } 
+      // Jika di tengah-tengah
+      else {
+        pages.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages);
+      }
+    }
+
+    return pages;
+  };
 
   return (
     <div
-      className={`flex items-center justify-between px-6 py-4 border-t bg-gray-50 ${className}`}>
+      className={`flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t bg-gray-50 ${className}`}>
+      
       {/* Info */}
-      <div className="text-sm text-gray-700">
-        Halaman {currentPage} dari {totalPages}
+      <div className="text-sm text-gray-700 text-center sm:text-left">
+        Halaman <span className="font-medium">{currentPage}</span> dari{" "}
+        <span className="font-medium">{totalPages}</span>
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center gap-2">
-        {/* Prev */}
+      <div className="flex items-center gap-1 sm:gap-2">
+        {/* Prev Button */}
         <Button
           variant="outline"
           size="sm"
@@ -45,59 +70,35 @@ const Pagination: React.FC<PaginationProps> = ({
           onClick={() => handleSetPage(currentPage - 1)}
           className="flex items-center gap-1">
           <ChevronLeft className="w-4 h-4" />
-          Prev
+          <span className="hidden sm:inline">Prev</span>
         </Button>
 
-        {/* Page 1 */}
-        <Button
-          variant={currentPage === 1 ? "default" : "outline"}
-          size="sm"
-          onClick={() => handleSetPage(1)}
-          className="w-8 h-8 p-0">
-          1
-        </Button>
-
-        {/* Left Ellipsis */}
-        {currentPage > 3 && <span className="px-1 text-gray-500">...</span>}
-
-        {/* Middle pages */}
-        {middlePages.map((p, i) =>
-          p ? (
+        {/* Dynamic Pages */}
+        {getPageNumbers().map((page, index) =>
+          page === "..." ? (
+            <span key={`ellipsis-${index}`} className="px-2 text-gray-500">
+              ...
+            </span>
+          ) : (
             <Button
-              key={i}
-              variant={currentPage === p ? "default" : "outline"}
+              key={`page-${page}`}
+              variant={currentPage === page ? "default" : "outline"}
               size="sm"
-              onClick={() => handleSetPage(p)}
+              onClick={() => handleSetPage(page as number)}
               className="w-8 h-8 p-0">
-              {p}
+              {page}
             </Button>
-          ) : null
+          )
         )}
 
-        {/* Right Ellipsis */}
-        {currentPage < totalPages - 2 && (
-          <span className="px-1 text-gray-500">...</span>
-        )}
-
-        {/* Last Page */}
-        {totalPages > 1 && (
-          <Button
-            variant={currentPage === totalPages ? "default" : "outline"}
-            size="sm"
-            onClick={() => handleSetPage(totalPages)}
-            className="w-8 h-8 p-0">
-            {totalPages}
-          </Button>
-        )}
-
-        {/* Next */}
+        {/* Next Button */}
         <Button
           variant="outline"
           size="sm"
           disabled={currentPage === totalPages}
           onClick={() => handleSetPage(currentPage + 1)}
           className="flex items-center gap-1">
-          Next
+          <span className="hidden sm:inline">Next</span>
           <ChevronRight className="w-4 h-4" />
         </Button>
       </div>

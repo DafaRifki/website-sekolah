@@ -20,16 +20,17 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import DateOfBirthPicker from "@/components/DateOfBirthPicker";
-import { Eye, EyeOff, Camera, X, Upload } from "lucide-react";
+import { Eye, EyeOff, Camera, X, Upload, Mail } from "lucide-react";
 
 interface Kelas {
   id_kelas: number;
   namaKelas: string;
 }
 
-interface Orangtua {
-  id_orangtua: number;
-  nama: string;
+interface UserOption {
+  id: number;
+  email: string;
+  role: string;
 }
 
 interface TambahSiswaModalProps {
@@ -45,154 +46,96 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
+  
+  // State untuk Email Suggestion
+  const [userOptions, setUserOptions] = useState<UserOption[]>([]);
+  const [filteredEmails, setFilteredEmails] = useState<UserOption[]>([]);
+  const [showEmailSuggestions, setShowEmailSuggestions] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     nama: "",
     nis: "",
-    email: "",
-    password: "",
+    nisn: "",
+    noHpSiswa: "",
     alamat: "",
+    tempatLahir: "",
     tanggalLahir: "",
     jenisKelamin: "",
+    agama: "",
     kelasId: "",
-    orangtuaNama: "",
-    orangtuaHubungan: "",
-    orangtuaPekerjaan: "",
-    orangtuaAlamat: "",
-    orangtuaNoHp: "",
+    email: "",
+    password: "",
+    namaAyah: "",
+    pekerjaanAyah: "",
+    namaIbu: "",
+    pekerjaanIbu: "",
+    noHpOrangtua: "",
+    alamatOrangtua: "",
   });
 
   const [fotoProfil, setFotoProfil] = useState<File | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
 
-  // ambil daftar kelas dari backend
-  const fetchKelas = async () => {
+  // Fetch data awal (Kelas & User List untuk Suggestion)
+  const fetchData = async () => {
     try {
-      const { data } = await apiClient.get("/kelas");
-      setKelasList(data.data.data || []);
+      const [resKelas, resUsers] = await Promise.all([
+        apiClient.get("/kelas"),
+        apiClient.get("/users/list"), // Asumsi endpoint untuk list email user
+      ]);
+      setKelasList(resKelas.data.data.data || []);
+      setUserOptions(resUsers.data.data || []);
     } catch (error) {
-      console.error(error);
+      console.error("Gagal ambil data:", error);
     }
   };
 
   useEffect(() => {
-    if (isOpen) {
-      fetchKelas();
-    }
+    if (isOpen) fetchData();
   }, [isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validasi tipe file
-      const allowedTypes = [
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "image/gif",
-      ];
-      if (!allowedTypes.includes(file.type)) {
-        toast.error(
-          "Hanya file gambar yang diperbolehkan (JPG, JPEG, PNG, GIF)",
-        );
-        return;
-      }
-
-      // Validasi ukuran file (max 5MB)
-      const maxSize = 5 * 1024 * 1024;
-      if (file.size > maxSize) {
-        toast.error("Ukuran file maksimal 5MB");
-        return;
-      }
-
-      setFotoProfil(file);
-
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreviewUrl(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  // Logic Email Suggestion
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData({ ...formData, email: value });
+    
+    const filtered = userOptions.filter(u => 
+      u.email.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredEmails(filtered);
+    setShowEmailSuggestions(true);
   };
 
-  const handleRemovePhoto = () => {
-    setFotoProfil(null);
-    setPreviewUrl("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
+  const handleSelectEmail = (email: string) => {
+    setFormData({ ...formData, email: email });
+    setShowEmailSuggestions(false);
   };
 
   const handleSubmit = async () => {
     setLoading(true);
     try {
       const payload = new FormData();
-      payload.append("nama", formData.nama);
-      payload.append("nis", formData.nis);
-      payload.append("email", formData.email);
-      payload.append("password", formData.password);
-      payload.append("alamat", formData.alamat);
-      payload.append("tanggalLahir", formData.tanggalLahir);
-      payload.append("jenisKelamin", formData.jenisKelamin);
-      if (formData.kelasId) payload.append("kelasId", formData.kelasId);
-      if (formData.orangtuaNama)
-        payload.append("orangtuaNama", formData.orangtuaNama);
-      if (formData.orangtuaHubungan)
-        payload.append("orangtuaHubungan", formData.orangtuaHubungan);
-      if (formData.orangtuaPekerjaan)
-        payload.append("orangtuaPekerjaan", formData.orangtuaPekerjaan);
-      if (formData.orangtuaAlamat)
-        payload.append("orangtuaAlamat", formData.orangtuaAlamat);
-      if (formData.orangtuaNoHp)
-        payload.append("orangtuaNoHp", formData.orangtuaNoHp);
-
+      Object.entries(formData).forEach(([key, value]) => {
+        payload.append(key, value);
+      });
       if (fotoProfil) payload.append("fotoProfil", fotoProfil);
 
       const { data } = await apiClient.post("/siswa", payload, {
-        withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       toast.success("Siswa berhasil ditambahkan");
       onAdded(data.data);
-
-      // Reset form
-      setFormData({
-        nama: "",
-        nis: "",
-        email: "",
-        password: "",
-        alamat: "",
-        tanggalLahir: "",
-        jenisKelamin: "",
-        kelasId: "",
-        orangtuaNama: "",
-        orangtuaHubungan: "",
-        orangtuaPekerjaan: "",
-        orangtuaAlamat: "",
-        orangtuaNoHp: "",
-      });
-      setFotoProfil(null);
-      setPreviewUrl("");
       onClose();
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message ||
-          error.response?.data?.error ||
-          "Gagal menambahkan siswa",
-      );
-      console.error(error);
+      toast.error(error.response?.data?.message || "Gagal simpan data");
     } finally {
       setLoading(false);
     }
@@ -200,319 +143,133 @@ const TambahSiswaModal: React.FC<TambahSiswaModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogOverlay className="fixed inset-0 bg-black/20 backdrop-blur-sm" />
-      <DialogContent className="bg-white rounded-xl max-w-4xl mx-auto p-0 max-h-[90vh] overflow-hidden">
-        <DialogHeader className="p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-          <DialogTitle className="text-2xl font-bold text-gray-800">
-            Tambah Siswa Baru
-          </DialogTitle>
-          <DialogDescription className="text-gray-600 mt-1">
-            Lengkapi formulir di bawah ini untuk menambahkan siswa baru
-          </DialogDescription>
+      <DialogOverlay className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+      <DialogContent className="bg-white rounded-xl max-w-4xl mx-auto p-0 max-h-[95vh] overflow-hidden shadow-2xl">
+        <DialogHeader className="p-6 border-b bg-white sticky top-0 z-10">
+          <DialogTitle className="text-2xl font-bold">Tambah Siswa Baru</DialogTitle>
         </DialogHeader>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-          {/* Foto Profil Section */}
-          <div className="mb-8 p-4 border rounded-lg bg-gray-50">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">
-              Foto Profil
-            </h3>
-            <div className="flex flex-col items-center space-y-4">
-              <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors">
+        <div className="p-8 overflow-y-auto max-h-[calc(95vh-130px)] space-y-10">
+          
+          {/* FOTO PROFIL */}
+          <div className="flex flex-col items-center gap-4 bg-gray-50 p-6 rounded-xl border-2 border-dashed">
+             <div className="relative w-28 h-28 rounded-full overflow-hidden bg-white shadow-md border-4 border-white">
                 {previewUrl ? (
-                  <img
-                    src={previewUrl}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />
                 ) : (
-                  <div className="flex items-center justify-center w-full h-full">
-                    <Camera className="w-8 h-8 text-gray-400" />
-                  </div>
+                  <div className="flex items-center justify-center h-full text-gray-300"><Camera size={40} /></div>
                 )}
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={triggerFileInput}
-                  className="flex items-center gap-2">
-                  <Upload className="w-4 h-4" />
-                  {previewUrl ? "Ubah Foto" : "Pilih Foto"}
-                </Button>
-
-                {previewUrl && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRemovePhoto}
-                    className="flex items-center gap-2 text-red-600 hover:text-red-700">
-                    <X className="w-4 h-4" />
-                    Hapus
-                  </Button>
-                )}
-              </div>
-
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileSelect}
-                accept="image/jpeg,image/jpg,image/png,image/gif"
-                className="hidden"
-              />
-
-              <p className="text-xs text-gray-500 text-center">
-                Format: JPG, JPEG, PNG, GIF (Maks. 5MB)
-              </p>
-            </div>
+             </div>
+             <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+               <Upload className="mr-2 h-4 w-4"/> Pilih Foto Profil
+             </Button>
+             <input type="file" ref={fileInputRef} onChange={(e) => {
+               const file = e.target.files?.[0];
+               if(file) {
+                 setFotoProfil(file);
+                 setPreviewUrl(URL.createObjectURL(file));
+               }
+             }} className="hidden" accept="image/*" />
           </div>
 
-          {/* Data Siswa Section */}
-          <div className="mb-6 p-4 border rounded-lg">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">
-              Data Siswa
-            </h3>
-            <div className="space-y-4">
-              {/* Nama & NIS */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">
-                    Nama Lengkap *
-                  </Label>
-                  <Input
-                    placeholder="Masukkan nama lengkap"
-                    name="nama"
-                    value={formData.nama}
-                    onChange={handleChange}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">
-                    NIS *
-                  </Label>
-                  <Input
-                    placeholder="Nomor Induk Siswa"
-                    name="nis"
-                    value={formData.nis}
-                    onChange={handleChange}
-                    className="mt-1"
-                  />
-                </div>
+          {/* SECTION: DATA SISWA */}
+          <section className="space-y-6">
+            <h3 className="text-lg font-bold border-l-4 border-blue-600 pl-3">Data Siswa</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2"><Label>Nama Siswa</Label><Input name="nama" value={formData.nama} onChange={handleChange} placeholder="Nama Lengkap" /></div>
+              <div className="space-y-2"><Label>NIS</Label><Input name="nis" value={formData.nis} onChange={handleChange} placeholder="NIS" /></div>
+              <div className="space-y-2"><Label>NISN</Label><Input name="nisn" value={formData.nisn} onChange={handleChange} placeholder="NISN" /></div>
+              <div className="space-y-2"><Label>No. HP Siswa</Label><Input name="noHpSiswa" value={formData.noHpSiswa} onChange={handleChange} placeholder="08..." /></div>
+              <div className="md:col-span-2 space-y-2"><Label>Alamat</Label><Input name="alamat" value={formData.alamat} onChange={handleChange} placeholder="Alamat Lengkap" /></div>
+              <div className="space-y-2"><Label>Tempat Lahir</Label><Input name="tempatLahir" value={formData.tempatLahir} onChange={handleChange} placeholder="Tempat Lahir" /></div>
+              <DateOfBirthPicker value={formData.tanggalLahir} onChange={(v) => setFormData({...formData, tanggalLahir: v})} />
+              <div className="space-y-2">
+                <Label>Jenis Kelamin</Label>
+                <Select value={formData.jenisKelamin} onValueChange={(v) => setFormData({...formData, jenisKelamin: v})}>
+                  <SelectTrigger><SelectValue placeholder="Pilih Jenis Kelamin" /></SelectTrigger>
+                  <SelectContent><SelectItem value="L">Laki-laki</SelectItem><SelectItem value="P">Perempuan</SelectItem></SelectContent>
+                </Select>
               </div>
-
-              {/* Email & Password */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">
-                    Email *
-                  </Label>
-                  <Input
-                    type="email"
-                    placeholder="email@example.com"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">
-                    Password *
-                  </Label>
-                  <div className="relative mt-1">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Masukkan password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Alamat */}
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2">
-                  Alamat
-                </Label>
-                <Input
-                  placeholder="Alamat lengkap siswa"
-                  name="alamat"
-                  value={formData.alamat}
-                  onChange={handleChange}
-                  className="mt-1"
-                />
-              </div>
-
-              {/* Tanggal Lahir & Jenis Kelamin */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <DateOfBirthPicker
-                    value={formData.tanggalLahir}
-                    onChange={(val) =>
-                      setFormData({ ...formData, tanggalLahir: val })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">
-                    Jenis Kelamin *
-                  </Label>
-                  <Select
-                    value={formData.jenisKelamin}
-                    onValueChange={(val) =>
-                      setFormData({ ...formData, jenisKelamin: val })
-                    }>
-                    <SelectTrigger className="w-full mt-1">
-                      <SelectValue placeholder="Pilih jenis kelamin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="L">Laki-laki</SelectItem>
-                      <SelectItem value="P">Perempuan</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Kelas */}
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2">
-                  Kelas
-                </Label>
-                <Select
-                  value={formData.kelasId}
-                  onValueChange={(val) =>
-                    setFormData({ ...formData, kelasId: val })
-                  }>
-                  <SelectTrigger className="w-full mt-1">
-                    <SelectValue placeholder="Pilih kelas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {kelasList.map((k) => (
-                      <SelectItem key={k.id_kelas} value={String(k.id_kelas)}>
-                        {k.namaKelas}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+              <div className="space-y-2"><Label>Agama</Label><Input name="agama" value={formData.agama} onChange={handleChange} placeholder="Agama" /></div>
+              <div className="md:col-span-2 space-y-2">
+                <Label>Kelas</Label>
+                <Select value={formData.kelasId} onValueChange={(v) => setFormData({...formData, kelasId: v})}>
+                  <SelectTrigger><SelectValue placeholder="Pilih Kelas" /></SelectTrigger>
+                  <SelectContent>{kelasList.map((k) => (<SelectItem key={k.id_kelas} value={String(k.id_kelas)}>{k.namaKelas}</SelectItem>))}</SelectContent>
                 </Select>
               </div>
             </div>
-          </div>
+          </section>
 
-          {/* Data Orang Tua Section */}
-          <div className="mb-6 p-4 border rounded-lg">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">
-              Data Orang Tua/Wali
-            </h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">
-                    Nama Orang Tua/Wali
-                  </Label>
-                  <Input
-                    placeholder="Nama lengkap orang tua/wali"
-                    name="orangtuaNama"
-                    value={formData.orangtuaNama}
-                    onChange={handleChange}
-                    className="mt-1"
+          {/* SECTION: AKUN USER (DENGAN SUGGESTIONS) */}
+          <section className="space-y-6">
+            <h3 className="text-lg font-bold border-l-4 border-blue-600 pl-3">Akun User</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2 relative">
+                <Label>Email</Label>
+                <div className="relative">
+                  <Input 
+                    name="email" 
+                    value={formData.email} 
+                    onChange={handleEmailChange} 
+                    onFocus={() => setShowEmailSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowEmailSuggestions(false), 200)}
+                    placeholder="Ketik email baru atau pilih..." 
+                    autoComplete="off"
                   />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">
-                    Hubungan
-                  </Label>
-                  <Input
-                    placeholder="Ayah / Ibu / Wali"
-                    name="orangtuaHubungan"
-                    value={formData.orangtuaHubungan}
-                    onChange={handleChange}
-                    className="mt-1"
-                  />
+                  
+                  {/* Dropdown Suggestions */}
+                  {showEmailSuggestions && filteredEmails.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                      {filteredEmails.map((user) => (
+                        <div key={user.id} onMouseDown={() => handleSelectEmail(user.email)} className="px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer flex justify-between items-center">
+                          <span>{user.email}</span>
+                          <span className="text-[10px] text-gray-400 bg-gray-50 px-2 py-0.5 rounded border">{user.role}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Info Email Baru */}
+                  {showEmailSuggestions && filteredEmails.length === 0 && formData.email && (
+                    <div className="absolute z-50 w-full mt-1 bg-blue-50 border border-blue-200 rounded-md shadow-sm p-2 text-xs text-blue-600 text-center font-medium">
+                      Email baru (Akan dibuatkan akun otomatis)
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">
-                    Pekerjaan
-                  </Label>
-                  <Input
-                    placeholder="Pekerjaan orang tua/wali"
-                    name="orangtuaPekerjaan"
-                    value={formData.orangtuaPekerjaan}
-                    onChange={handleChange}
-                    className="mt-1"
-                  />
+              <div className="space-y-2">
+                <Label>Password (Opsional)</Label>
+                <div className="relative">
+                  <Input name="password" type={showPassword ? "text" : "password"} value={formData.password} onChange={handleChange} placeholder="Password akun" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-gray-400">
+                    {showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
+                  </button>
                 </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">
-                    No. HP
-                  </Label>
-                  <Input
-                    placeholder="08xxxxxxxxxx"
-                    name="orangtuaNoHp"
-                    value={formData.orangtuaNoHp}
-                    onChange={handleChange}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2">
-                  Alamat Orang Tua
-                </Label>
-                <Input
-                  placeholder="Alamat orang tua/wali"
-                  name="orangtuaAlamat"
-                  value={formData.orangtuaAlamat}
-                  onChange={handleChange}
-                  className="mt-1"
-                />
               </div>
             </div>
-          </div>
+          </section>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-6 border-t">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="px-6"
-              disabled={loading}>
-              Batal
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="px-6 bg-blue-600 hover:bg-blue-700">
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Menyimpan...
-                </>
-              ) : (
-                "Simpan Data"
-              )}
-            </Button>
-          </div>
+          {/* SECTION: DATA ORANG TUA */}
+          <section className="space-y-6 pb-10">
+            <h3 className="text-lg font-bold border-l-4 border-blue-600 pl-3">Data Orang Tua</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2"><Label>Nama Ayah</Label><Input name="namaAyah" value={formData.namaAyah} onChange={handleChange} /></div>
+              <div className="space-y-2"><Label>Pekerjaan Ayah</Label><Input name="pekerjaanAyah" value={formData.pekerjaanAyah} onChange={handleChange} /></div>
+              <div className="space-y-2"><Label>Nama Ibu</Label><Input name="namaIbu" value={formData.namaIbu} onChange={handleChange} /></div>
+              <div className="space-y-2"><Label>Pekerjaan Ibu</Label><Input name="pekerjaanIbu" value={formData.pekerjaanIbu} onChange={handleChange} /></div>
+              <div className="space-y-2"><Label>No. Telepon Orang Tua</Label><Input name="noHpOrangtua" value={formData.noHpOrangtua} onChange={handleChange} /></div>
+              <div className="md:col-span-2 space-y-2"><Label>Alamat Orang Tua/Wali</Label><Input name="alamatOrangtua" value={formData.alamatOrangtua} onChange={handleChange} /></div>
+            </div>
+          </section>
+        </div>
+
+        <div className="p-6 border-t bg-gray-50 flex justify-end gap-3 sticky bottom-0 z-10">
+          <Button variant="outline" onClick={onClose} disabled={loading}>Batal</Button>
+          <Button onClick={handleSubmit} disabled={loading} className="bg-blue-600 hover:bg-blue-700 px-8">
+            {loading ? "Menyimpan..." : "Simpan Data"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

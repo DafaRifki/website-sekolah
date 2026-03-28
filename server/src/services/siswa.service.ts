@@ -314,86 +314,6 @@ export class SiswaService {
     return siswa;
   }
 
-  // static async create(data: CreateSiswaData) {
-  //   // 1. Generate data pendukung
-  //   const nis = data.nis || (await this.generateNIS());
-  //   const hashedPassword = await hashPassword(data.password || "123456");
-
-  //   // 2. Jalankan transaksi agar jika salah satu gagal, semua dibatalkan
-  //   return await prisma.$transaction(async (tx) => {
-
-  //     // A. Buat data Siswa
-  //     const siswa = await tx.siswa.create({
-  //       data: {
-  //         nis,
-  //         nama: data.nama,
-  //         alamat: data.alamat,
-  //         tanggalLahir: data.tanggalLahir ? new Date(data.tanggalLahir) : undefined,
-  //         jenisKelamin: data.jenisKelamin,
-  //         kelasId: data.kelasId,
-  //         fotoProfil: data.fotoProfil,
-  //         status: "AKTIF", // Sesuai default di skema
-
-  //         // Relasi Many-to-Many Siswa_Orangtua sesuai skema
-  //         Siswa_Orangtua: data.orangtuaNama ? {
-  //           create: {
-  //             status: "Wali",
-  //             orangtua: {
-  //               create: {
-  //                 nama: data.orangtuaNama,
-  //                 hubungan: data.orangtuaHubungan || "Wali",
-  //                 pekerjaan: data.orangtuaPekerjaan || "-",
-  //                 noHp: data.orangtuaNoHp || "-",
-  //                 alamat: data.orangtuaAlamat || data.alamat || "-",
-  //               }
-  //             }
-  //           }
-  //         } : undefined,
-  //       },
-  //     });
-
-  //     // B. Tangani User (Create atau Update)
-  //     // Karena FK siswaId ada di tabel User
-  //     const existingUser = await tx.user.findUnique({
-  //       where: { email: data.email },
-  //     });
-
-  //     if (existingUser) {
-  //       // Jika user sudah ada (ex: dari akun pendaftaran), update rolenya dan sambungkan ke siswa
-  //       await tx.user.update({
-  //         where: { id: existingUser.id },
-  //         data: {
-  //           role: "SISWA",
-  //           siswaId: siswa.id_siswa // Sambungkan ke siswa yang baru dibuat
-  //         }
-  //       });
-  //     } else {
-  //       // Jika user baru, buat dari nol
-  //       await tx.user.create({
-  //         data: {
-  //           email: data.email,
-  //           password: hashedPassword,
-  //           role: "SISWA",
-  //           siswaId: siswa.id_siswa
-  //         }
-  //       });
-  //     }
-
-  //     // Return data siswa lengkap dengan relasi untuk response
-  //     return await tx.siswa.findUnique({
-  //       where: { id_siswa: siswa.id_siswa },
-  //       include: {
-  //         kelas: {
-  //           select: { id_kelas: true, namaKelas: true, tingkat: true }
-  //         },
-  //         user: {
-  //           select: { email: true }
-  //         }
-  //       }
-  //     });
-  //   });
-  // }
-
   static async update(id: number, data: UpdateSiswaData) {
     // Check if exists
     const existing = await prisma.siswa.findUnique({
@@ -415,22 +335,32 @@ export class SiswaService {
       }
     }
 
-    const updateData: any = {
-      nama: data.nama,
-      nisn: data.nisn,
-      alamat: data.alamat,
-      tempatLahir: data.tempatLahir,
-      agama: data.agama,
-      jenisKelamin: data.jenisKelamin,
-      noHP: data.noHP,
-      kelasId: data.kelasId,
-      fotoProfil: data.fotoProfil,
-      namaAyah: data.namaAyah,
-      namaIbu: data.namaIbu,
-      pekerjaanAyah: data.pekerjaanAyah,
-      pekerjaanIbu: data.pekerjaanIbu,
-      noTeleponOrtu: data.noTeleponOrtu,
-    };
+    // Menggunakan Prisma.SiswaUpdateInput agar lebih ketat (bukan type 'any')
+    const updateData: Prisma.SiswaUpdateInput = {};
+
+    // Pengecekan eksplisit agar nilai yang dikirim tersimpan dengan benar
+    if (data.nama !== undefined) updateData.nama = data.nama;
+    if (data.nisn !== undefined) updateData.nisn = data.nisn;
+    if (data.alamat !== undefined) updateData.alamat = data.alamat;
+    if (data.tempatLahir !== undefined) updateData.tempatLahir = data.tempatLahir;
+    if (data.agama !== undefined) updateData.agama = data.agama;
+    if (data.jenisKelamin !== undefined) updateData.jenisKelamin = data.jenisKelamin;
+    if (data.noHP !== undefined) updateData.noHP = data.noHP;
+    if (data.kelasId !== undefined) {
+      if (data.kelasId === null) {
+        updateData.kelas = { disconnect: true }; // Jika frontend mengirim null (hapus dari kelas)
+      } else {
+        updateData.kelas = { connect: { id_kelas: data.kelasId } }; // Hubungkan ke kelas baru
+      }
+    }
+    if (data.fotoProfil !== undefined) updateData.fotoProfil = data.fotoProfil;
+    
+    // Data Orang Tua
+    if (data.namaAyah !== undefined) updateData.namaAyah = data.namaAyah;
+    if (data.namaIbu !== undefined) updateData.namaIbu = data.namaIbu;
+    if (data.pekerjaanAyah !== undefined) updateData.pekerjaanAyah = data.pekerjaanAyah;
+    if (data.pekerjaanIbu !== undefined) updateData.pekerjaanIbu = data.pekerjaanIbu;
+    if (data.noTeleponOrtu !== undefined) updateData.noTeleponOrtu = data.noTeleponOrtu;
 
     if (data.tanggalLahir) {
       updateData.tanggalLahir = new Date(data.tanggalLahir);
