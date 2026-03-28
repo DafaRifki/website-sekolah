@@ -49,7 +49,7 @@ export function NavUser({
   const [openDialog, setOpenDialog] = useState(false);
   const navigate = useNavigate();
 
-  const initials = user.email
+  const initials = user.name
     .split(" ")
     .slice(0, 2)
     .map((word) => word.charAt(0).toUpperCase())
@@ -57,16 +57,13 @@ export function NavUser({
 
   const handleLogout = async () => {
     try {
-      // Try to call logout API (optional for JWT stateless, but good practice)
       try {
         await apiClient.post("/auth/logout");
       } catch (apiError) {
-        // Even if API call fails (e.g., token expired), continue with logout
         console.log("Logout API call failed (non-critical):", apiError);
       }
 
-      // Clear all authentication data (cache & localStorage) API call handled by hook logic if needed, but we do it manually here for the hook state update
-      logout(false); // pass false to prevent window.location.href, we use navigate instead
+      logout(false); 
 
       setOpenDialog(false);
 
@@ -75,11 +72,33 @@ export function NavUser({
     } catch (error) {
       console.error("Logout error:", error);
 
-      // Even if there's an error, clear localStorage and redirect
       logout(false);
       setOpenDialog(false);
       toast.error("Terjadi kesalahan saat logout");
       navigate("/login", { replace: true });
+    }
+  };
+
+  // --- FUNGSI HELPER ANTI-NYASAR ---
+  const getProfileUrl = (path?: string) => {
+    if (!path) return "";
+    let baseUrl = import.meta.env.VITE_URL_API || import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+    baseUrl = baseUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
+    const fileName = path.split('/').pop();
+    
+    // Kita tebak pertama ke folder guru
+    return `${baseUrl}/uploads/guru/${fileName}?t=${new Date().getTime()}`;
+  };
+
+  // --- LOGIC FALLBACK JIKA TEBAKAN PERTAMA GAGAL ---
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.currentTarget;
+    if (target.src.includes('/uploads/guru/')) {
+      // Jika nyari di folder guru gagal, otomatis coba cari di folder siswa!
+      target.src = target.src.replace('/uploads/guru/', '/uploads/siswa/');
+    } else {
+      // Jika di siswa juga tidak ada, baru sembunyikan gambar agar inisial muncul
+      target.style.display = 'none';
     }
   };
 
@@ -92,19 +111,26 @@ export function NavUser({
               <SidebarMenuButton
                 size="lg"
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
-                  {/* <AvatarFallback className="rounded-lg">
-                    {initials}
-                  </AvatarFallback> */}
+                
+                {/* AVATAR DI SIDEBAR BAWAH */}
+                <Avatar className="h-8 w-8 rounded-lg relative bg-blue-100 flex items-center justify-center">
                   {user.fotoProfil ? (
-                    <img src={`${user.fotoProfil}`} alt={user.name} />
+                    <>
+                      <img 
+                        src={getProfileUrl(user.fotoProfil)} 
+                        alt={user.name} 
+                        className="w-full h-full object-cover rounded-lg absolute z-10"
+                        onError={handleImageError}
+                      />
+                      <span className="text-xs font-bold text-blue-600 z-0">{initials}</span>
+                    </>
                   ) : (
-                    <AvatarFallback className="rounded-lg">
+                    <AvatarFallback className="rounded-lg bg-blue-100 text-blue-600 font-bold">
                       {initials}
                     </AvatarFallback>
                   )}
                 </Avatar>
+
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
                   <span className="truncate text-xs">{user.email}</span>
@@ -119,19 +145,26 @@ export function NavUser({
               sideOffset={4}>
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                  <Avatar className="h-8 w-8 rounded-lg">
-                    {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
-                    {/* <AvatarFallback className="rounded-lg">
-                      {initials}
-                    </AvatarFallback> */}
+                  
+                  {/* AVATAR DI DALAM DROPDOWN MENU */}
+                  <Avatar className="h-8 w-8 rounded-lg relative bg-blue-100 flex items-center justify-center">
                     {user.fotoProfil ? (
-                      <img src={`${user.fotoProfil}`} alt={user.name} />
+                      <>
+                        <img 
+                          src={getProfileUrl(user.fotoProfil)} 
+                          alt={user.name} 
+                          className="w-full h-full object-cover rounded-lg absolute z-10"
+                          onError={handleImageError}
+                        />
+                        <span className="text-xs font-bold text-blue-600 z-0">{initials}</span>
+                      </>
                     ) : (
-                      <AvatarFallback className="rounded-lg">
+                      <AvatarFallback className="rounded-lg bg-blue-100 text-blue-600 font-bold">
                         {initials}
                       </AvatarFallback>
                     )}
                   </Avatar>
+
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">{user.name}</span>
                     <span className="truncate text-xs">{user.email}</span>
