@@ -100,10 +100,6 @@ const DashboardAbsensiAdmin = lazy(
 const DashboardAbsensiGuru = lazy(
   () => import("@/pages/absensi/guru/DashboardAbsensiGuru.tsx"),
 );
-const RiwayatAbsensiSiswa = lazy(
-  () => import("@/pages/absensi/siswa/RiwayatAbsensiSiswa.tsx"),
-);
-
 const LaporanPage = lazy(() => import("@/pages/admin/laporan/LaporanPage.tsx"));
 const UserVerificationPage = lazy(
   () => import("@/pages/admin/users/UserVerificationPage.tsx"),
@@ -184,7 +180,6 @@ ReactDOM.createRoot(root).render(
           <Route path="/siswa/e-rapor" element={<RaporSiswaPage />} />
           {/* Data Jadwal */}
           <Route path="/siswa/jadwal" element={<JadwalSiswaPage />} />
-          {/* <Route path="/siswa/absensi" element={<RiwayatAbsensiSiswa />} /> */}
           <Route
             path="/siswa/absensi/kehadiranku"
             element={<KehadiranSiswa />}
@@ -226,7 +221,7 @@ ReactDOM.createRoot(root).render(
             path="/guru/absensi/pertemuan/:id"
             element={<InputPresensiPage />}
           />
-          <Route path="/guru/absensi/riwayat" element={<InputPresensiPage />} />
+          <Route path="/guru/absensi/riwayat" element={<RiwayatMengajar />} />
           <Route path="/guru/absensi" element={<DashboardAbsensiGuru />} />
 
           {/* Data Jadwal */}

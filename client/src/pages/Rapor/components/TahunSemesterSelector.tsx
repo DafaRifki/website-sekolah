@@ -6,18 +6,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   getTahunAjaranAktif,
   getAllTahunAjaran,
 } from "@/services/nilai.service";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-
-// ============================================================================
-// TYPES - Sesuai dengan backend Anda
-// ============================================================================
+import { Loader2, CalendarDays } from "lucide-react";
 
 interface TahunAjaran {
   id_tahun: number;
@@ -45,24 +39,14 @@ export default function TahunSemesterSelector({ onSelectionChange }: Props) {
   const fetchTahunAjaran = async () => {
     setLoading(true);
     try {
-      // ✅ Get all tahun ajaran
       const allResponse = await getAllTahunAjaran();
-
-      // ✅ Handle pagination response
       const allTahun: TahunAjaran[] = allResponse.data || [];
-
-      console.log("📅 All Tahun Ajaran:", allTahun);
-
       setTahunAjaranList(allTahun);
 
-      // ✅ Get active tahun ajaran
       try {
         const aktifResponse = await getTahunAjaranAktif();
         const aktif: TahunAjaran | null = aktifResponse.data;
 
-        console.log("📅 Active Tahun Ajaran:", aktif);
-
-        // ✅ Set default to active tahun
         if (aktif) {
           setSelectedTahun(aktif.id_tahun.toString());
           setSelectedSemester(aktif.semester.toString());
@@ -71,7 +55,6 @@ export default function TahunSemesterSelector({ onSelectionChange }: Props) {
             aktif.semester.toString(),
           );
         } else if (allTahun.length > 0) {
-          // Fallback to first tahun if no active
           setSelectedTahun(allTahun[0].id_tahun.toString());
           setSelectedSemester(allTahun[0].semester.toString());
           onSelectionChange(
@@ -79,10 +62,7 @@ export default function TahunSemesterSelector({ onSelectionChange }: Props) {
             allTahun[0].semester.toString(),
           );
         }
-      } catch (activeError) {
-        console.warn("No active tahun ajaran, using first available");
-
-        // If no active, use first available
+      } catch {
         if (allTahun.length > 0) {
           setSelectedTahun(allTahun[0].id_tahun.toString());
           setSelectedSemester(allTahun[0].semester.toString());
@@ -92,8 +72,7 @@ export default function TahunSemesterSelector({ onSelectionChange }: Props) {
           );
         }
       }
-    } catch (error) {
-      console.error("Gagal memuat tahun ajaran", error);
+    } catch {
       toast.error("Gagal memuat tahun ajaran");
     } finally {
       setLoading(false);
@@ -102,95 +81,80 @@ export default function TahunSemesterSelector({ onSelectionChange }: Props) {
 
   const handleTahunChange = (value: string) => {
     setSelectedTahun(value);
-
-    // ✅ Find selected tahun to get its semester
     const selected = tahunAjaranList.find(
       (t) => t.id_tahun.toString() === value,
     );
-
     if (selected) {
       setSelectedSemester(selected.semester.toString());
       onSelectionChange(value, selected.semester.toString());
     }
   };
 
-  const handleSemesterChange = (value: string) => {
-    setSelectedSemester(value);
-    if (selectedTahun) {
-      onSelectionChange(selectedTahun, value);
-    }
-  };
-
+  // ── Loading state ──
   if (loading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          <span className="ml-3 text-muted-foreground">
-            Memuat tahun ajaran...
-          </span>
-        </CardContent>
-      </Card>
+      <div className="flex items-center gap-2 h-10 text-sm text-slate-400">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Memuat tahun ajaran...
+      </div>
     );
   }
 
-  // ============================================================================
-  // ✅ GROUP BY namaTahun untuk display yang lebih baik
-  // ============================================================================
-
-  // Get unique tahun (namaTahun)
-  const uniqueTahun = Array.from(
-    new Map(tahunAjaranList.map((t) => [t.namaTahun, t])).values(),
-  );
-
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Tahun Ajaran Selector */}
-          <div>
-            <Label>Tahun Ajaran</Label>
-            <Select value={selectedTahun} onValueChange={handleTahunChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih tahun ajaran" />
-              </SelectTrigger>
-              <SelectContent>
-                {tahunAjaranList.length === 0 ? (
-                  <div className="p-4 text-sm text-muted-foreground text-center">
-                    Tidak ada tahun ajaran
-                  </div>
-                ) : (
-                  tahunAjaranList.map((tahun) => (
-                    <SelectItem
-                      key={tahun.id_tahun}
-                      value={tahun.id_tahun.toString()}>
-                      {tahun.namaTahun} - Semester {tahun.semester}
-                      {tahun.isActive && (
-                        <span className="ml-2 text-xs text-green-600 font-semibold">
-                          (Aktif)
-                        </span>
-                      )}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
+    <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+      {/* Icon */}
+      <div className="p-2.5 bg-slate-100 rounded-lg self-start sm:self-center shrink-0">
+        <CalendarDays className="h-5 w-5 text-slate-600" />
+      </div>
 
-          {/* Semester Info (Read-only, auto dari selection) */}
-          <div>
-            <Label>Semester</Label>
-            <div className="flex items-center h-10 px-3 py-2 border border-input rounded-md bg-muted">
-              <span className="text-sm">
-                Semester {selectedSemester || "-"}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Semester otomatis dari tahun ajaran yang dipilih
-            </p>
-          </div>
+      {/* Tahun Ajaran */}
+      <div className="flex-1 space-y-1">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Tahun Ajaran
+        </p>
+        <Select value={selectedTahun} onValueChange={handleTahunChange}>
+          <SelectTrigger className="h-9 text-sm border-slate-200 bg-slate-50 focus:bg-white">
+            <SelectValue placeholder="Pilih tahun ajaran" />
+          </SelectTrigger>
+          <SelectContent>
+            {tahunAjaranList.length === 0 ? (
+              <div className="p-3 text-sm text-slate-400 text-center">
+                Tidak ada data
+              </div>
+            ) : (
+              tahunAjaranList.map((tahun) => (
+                <SelectItem
+                  key={tahun.id_tahun}
+                  value={tahun.id_tahun.toString()}>
+                  <span>
+                    {tahun.namaTahun} — Sem {tahun.semester}
+                  </span>
+                  {tahun.isActive && (
+                    <span className="ml-2 text-xs text-emerald-600 font-semibold">
+                      Aktif
+                    </span>
+                  )}
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Divider */}
+      <div className="hidden sm:block w-px h-10 bg-slate-200" />
+
+      {/* Semester (read-only) */}
+      <div className="space-y-1 shrink-0">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Semester
+        </p>
+        <div className="h-9 px-3 flex items-center bg-slate-100 rounded-lg border border-slate-200">
+          <span className="text-sm font-medium text-slate-700">
+            {selectedSemester ? `Semester ${selectedSemester}` : "—"}
+          </span>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

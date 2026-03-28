@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../config/database";
+import { totalmem } from "os";
 
 export const getAllRapor = async (
   tahunAjaranId: number,
@@ -152,6 +153,41 @@ export const bulkPublishRapor = async (
   });
 };
 
+/**
+ * HELPER: Sync attendance from Absensi table to Rapor record
+ */
+const _syncRaporAttendance = async (id_rapor: number) => {
+  const rapor = await prisma.rapor.findUnique({
+    where: { id_rapor },
+    select: { id_siswa: true, tahunAjaranId: true },
+  });
+  if (!rapor) return null;
+  const stats = await prisma.absensi.groupBy({
+    by: ["status"],
+    where: {
+      id_siswa: rapor.id_siswa,
+      id_tahun: rapor.tahunAjaranId,
+    },
+    _count: { status: true },
+  });
+  const data = {
+    totalHadir: 0,
+    totalSakit: 0,
+    totalIzin: 0,
+    totalAlpha: 0,
+  };
+  stats.forEach((s) => {
+    if (s.status === "HADIR") data.totalHadir = s._count.status;
+    else if (s.status === "SAKIT") data.totalSakit = s._count.status;
+    else if (s.status === "IZIN") data.totalIzin = s._count.status;
+    else if (s.status === "TIDAK_HADIR") data.totalAlpha = s._count.status;
+  });
+  return await prisma.rapor.update({
+    where: { id_rapor },
+    data,
+  });
+};
+
 export const generateSingleRapor = async (
   id_siswa: number,
   tahunAjaranId: number,
@@ -163,8 +199,6 @@ export const generateSingleRapor = async (
       id_siswa: true,
       kelasId: true,
       status: true,
-      nama: true,
-      nis: true,
     },
   });
 
@@ -186,16 +220,6 @@ export const generateSingleRapor = async (
     throw new Error("Rapor untuk siswa ini sudah ada di periode tersebut");
   }
 
-  const nilaiStats = await prisma.nilaiRapor.aggregate({
-    where: {
-      id_siswa,
-      tahunAjaranId,
-      semester,
-    },
-    _avg: { nilai: true },
-    _count: { id_mapel: true },
-  });
-
   const newRapor = await prisma.rapor.create({
     data: {
       id_siswa,
@@ -203,25 +227,18 @@ export const generateSingleRapor = async (
       semester,
       status: "DRAFT",
     },
-    include: {
-      siswa: {
-        select: { id_siswa: true, nis: true, nama: true },
-      },
-      tahunAjaran: { select: { namaTahun: true } },
-    },
   });
 
-  return {
-    ...newRapor,
-    rataRata: Number(nilaiStats._avg.nilai?.toFixed(1)) || 0,
-    totalMapel: nilaiStats._count.id_mapel || 0,
-  };
+  // Sync attendance stats
+  await _syncRaporAttendance(newRapor.id_rapor);
+
+  return await getRaporDetail(newRapor.id_rapor);
 };
 
-/**
- * Get rapor detail (Wali kelas / siswa)
- */
 export const getRaporDetail = async (id_rapor: number) => {
+  // Always sync attendance before returning detail to ensure data is accurate
+  await _syncRaporAttendance(id_rapor);
+
   const rapor = await prisma.rapor.findUnique({
     where: { id_rapor },
     include: {
@@ -261,8 +278,47 @@ export const getRaporDetail = async (id_rapor: number) => {
     throw new Error("Rapor tidak ditemukan");
   }
 
-  // get nilai grouped by kelompok
-  const nilai = await prisma.nilaiRapor.findMany({
+  // get rank (PER KELAS)
+  const allRaporsInClass = await prisma.rapor.findMany({
+    where: {
+      tahunAjaranId: rapor.tahunAjaranId,
+      semester: rapor.semester,
+      siswa: {
+        kelasId: rapor.siswa.kelas?.id_kelas,
+      },
+    },
+    select: {
+      id_rapor: true,
+      id_siswa: true,
+      tahunAjaranId: true,
+      semester: true,
+    },
+  });
+
+  // calculate avg for each rapor in class
+  const classStats = await Promise.all(
+    allRaporsInClass.map(async (r) => {
+      const avg = await prisma.nilaiRapor.aggregate({
+        where: {
+          id_siswa: r.id_siswa,
+          tahunAjaranId: r.tahunAjaranId,
+          semester: r.semester,
+        },
+        _avg: { nilai: true },
+      });
+      return {
+        id_rapor: r.id_rapor,
+        avg: avg._avg.nilai || 0,
+      };
+    }),
+  );
+
+  // sort by avg desc
+  const sortedStats = classStats.sort((a, b) => b.avg - a.avg);
+  const rank = sortedStats.findIndex((s) => s.id_rapor === id_rapor) + 1;
+
+  // get grades
+  const grades = await prisma.nilaiRapor.findMany({
     where: {
       id_siswa: rapor.id_siswa,
       tahunAjaranId: rapor.tahunAjaranId,
@@ -277,39 +333,49 @@ export const getRaporDetail = async (id_rapor: number) => {
         },
       },
     },
-    orderBy: {
-      mapel: {
-        kelompokMapel: "asc",
-      },
-    },
+    orderBy: [
+      { mapel: { kelompokMapel: "asc" } },
+      { mapel: { namaMapel: "asc" } },
+    ],
   });
 
-  // group by kelompok
-  const nilaiGrouped: { [key: string]: any[] } = {};
-  nilai.forEach((n) => {
-    const kelompok = n.mapel.kelompokMapel || "Lainnya";
+  // group grades for export compatibility
+  const nilaiGrouped: Record<string, any[]> = {};
+  grades.forEach((g) => {
+    const kelompok = g.mapel.kelompokMapel || "Wajib";
     if (!nilaiGrouped[kelompok]) {
       nilaiGrouped[kelompok] = [];
     }
     nilaiGrouped[kelompok].push({
-      id_nilai: n.id_nilai,
-      namaMapel: n.mapel.namaMapel,
-      nilai: n.nilai,
-      nilaiTugas: n.nilaiTugas,
-      nilaiUTS: n.nilaiUTS,
-      nilaiUAS: n.nilaiUAS,
+      ...g,
+      namaMapel: g.mapel.namaMapel,
     });
   });
 
-  // Calculate rata-rata
-  const totalNilai = nilai.reduce((sum, n) => sum + n.nilai, 0);
-  const rataRata = nilai.length > 0 ? totalNilai / nilai.length : 0;
+  // get aggregates
+  const aggregates = await prisma.nilaiRapor.aggregate({
+    where: {
+      id_siswa: rapor.id_siswa,
+      tahunAjaranId: rapor.tahunAjaranId,
+      semester: rapor.semester,
+    },
+    _avg: { nilai: true },
+    _sum: { nilai: true },
+    _count: { nilai: true },
+  });
+  const rataRata = Number(aggregates._avg.nilai?.toFixed(1)) || 0;
 
   return {
-    rapor,
+    rapor: {
+      ...rapor,
+      rank,
+      totalSiswa: allRaporsInClass.length,
+      rataRata,
+      totalNilai: aggregates._sum.nilai || 0,
+      totalMapel: aggregates._count.nilai || 0,
+    },
     nilai: nilaiGrouped,
-    rataRata: Number(rataRata.toFixed(1)),
-    totalMapel: nilai.length,
+    rataRata,
   };
 };
 
