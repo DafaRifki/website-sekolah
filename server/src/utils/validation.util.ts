@@ -25,7 +25,9 @@ export const paginationValidation = Joi.object({
   sortOrder: Joi.string().valid("asc", "desc").default("asc"),
 });
 
-// Guru validation
+// ==========================================
+// Guru validation (SUDAH DIPERBAIKI)
+// ==========================================
 export const guruValidation = Joi.object({
   nip: Joi.string().required().messages({
     "any.required": "NIP wajib diisi",
@@ -35,38 +37,51 @@ export const guruValidation = Joi.object({
     "any.required": "Nama guru wajib diisi",
     "string.empty": "Nama guru tidak boleh kosong",
   }),
-  jenisKelamin: Joi.string().valid("L", "P").optional().messages({
+  jenisKelamin: Joi.string().valid("L", "P").optional().allow("", null).messages({
     "any.only": "Jenis kelamin harus L atau P",
   }),
-  alamat: Joi.string().optional().allow(""),
+  alamat: Joi.string().optional().allow("", null),
   noHP: Joi.string().required().messages({
     "any.required": "Nomor HP wajib diisi",
     "string.empty": "Nomor HP tidak boleh kosong",
   }),
-  email: Joi.string().email().optional().allow("").messages({
+  email: Joi.string().email().optional().allow("", null).messages({
     "string.email": "Format email tidak valid",
   }),
-  jabatan: Joi.string().optional().allow(""),
+  jabatan: Joi.string().optional().allow("", null),
+  
+  // --- FIELD BARU YANG DITAMBAHKAN ---
+  tempatLahir: Joi.string().optional().allow("", null),
+  tanggalLahir: Joi.alternatives().try(Joi.string(), Joi.date()).optional().allow("", null),
+  pendidikan: Joi.string().optional().allow("", null),
+  statusKepegawaian: Joi.string().optional().allow("", null),
+  // -----------------------------------
 });
 
 export const updateGuruValidation = Joi.object({
   nip: Joi.string().optional(),
   nama: Joi.string().optional(),
-  jenisKelamin: Joi.string().valid("L", "P").optional().messages({
+  jenisKelamin: Joi.string().valid("L", "P").optional().allow("", null).messages({
     "any.only": "Jenis kelamin harus L atau P",
   }),
-  alamat: Joi.string().optional().allow(""),
+  alamat: Joi.string().optional().allow("", null),
   noHP: Joi.string().optional(),
-  email: Joi.string().email().optional().allow("").messages({
+  email: Joi.string().email().optional().allow("", null).messages({
     "string.email": "Format email tidak valid",
   }),
-  jabatan: Joi.string().optional().allow(""),
+  jabatan: Joi.string().optional().allow("", null),
+  
+  // --- FIELD BARU YANG DITAMBAHKAN ---
+  tempatLahir: Joi.string().optional().allow("", null),
+  tanggalLahir: Joi.alternatives().try(Joi.string(), Joi.date()).optional().allow("", null),
+  pendidikan: Joi.string().optional().allow("", null),
+  statusKepegawaian: Joi.string().optional().allow("", null),
+  // -----------------------------------
 })
   .min(1)
   .messages({
     "object.min": "Minimal satu field harus diisi",
   });
-
 // ==========================================
 // Siswa validation (SUDAH DIPERBAIKI)
 // ==========================================

@@ -31,6 +31,10 @@ export interface Guru {
   nip?: string;
   noHP?: string;
   jenisKelamin?: string;
+  tempatLahir?: string;      
+  tanggalLahir?: string;     
+  pendidikan?: string;       
+  statusKepegawaian?: string; 
   alamat?: string;
   jabatan?: string;
   fotoProfil?: string;
@@ -46,7 +50,6 @@ interface Props {
   onEdit: (guru: Guru) => void;
 }
 
-// --- KONFIGURASI URL BACKEND (Sama dengan GuruCard) ---
 const ENV_URL = import.meta.env.VITE_URL_API || "http://localhost:5000";
 const BACKEND_URL = ENV_URL.replace(/\/+$/, "");
 
@@ -63,10 +66,26 @@ export default function DetailGuruModal({
     setGuru(guruData);
   }, [guruData]);
 
-  // Logic URL Gambar (Pastikan folder 'uploads/guru' sesuai dengan struktur backend)
   const imageUrl = guru?.fotoProfil
     ? `${BACKEND_URL}/uploads/guru/${guru.fotoProfil}`
     : defaultAvatar;
+
+  // --- TAMBAHAN: FUNGSI FORMAT TANGGAL ---
+  const formatTanggalIndo = (isoString?: string) => {
+    if (!isoString) return "-";
+    try {
+      const date = new Date(isoString);
+      // Format jadi "12 Maret 2026"
+      return date.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    } catch {
+      return isoString;
+    }
+  };
+  // ---------------------------------------
 
   const handleDelete = () => {
     const targetId = guru?.id_guru;
@@ -182,6 +201,12 @@ export default function DetailGuruModal({
                             {guru.jabatan}
                           </Badge>
                         )}
+                        {/* Menampilkan Status Kepegawaian sebagai Badge Tambahan */}
+                        {guru.statusKepegawaian && (
+                          <Badge variant="outline" className="px-3 py-1 border-green-200 text-green-700 bg-green-50">
+                            {guru.statusKepegawaian}
+                          </Badge>
+                        )}
                       </div>
                       
                       {guru.waliKelas && guru.waliKelas.length > 0 && (
@@ -196,6 +221,14 @@ export default function DetailGuruModal({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   <InfoField label="NIP" value={guru.nip || ""} />
                   <InfoField label="Email" value={guru.user?.email || ""} />
+                  
+                  <InfoField label="Tempat Lahir" value={guru.tempatLahir || ""} />
+                  {/* TERAPKAN FUNGSI FORMAT DI SINI */}
+                  <InfoField label="Tanggal Lahir" value={formatTanggalIndo(guru.tanggalLahir)} />
+                  
+                  <InfoField label="Pendidikan Terakhir" value={guru.pendidikan || ""} />
+                  <InfoField label="Status Kepegawaian" value={guru.statusKepegawaian || ""} />
+
                   <InfoField label="No. Handphone" value={guru.noHP || ""} />
                   <InfoField 
                       label="Jenis Kelamin" 

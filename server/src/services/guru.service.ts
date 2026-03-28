@@ -5,19 +5,22 @@ import {
   buildPaginationResult,
   buildSearchFilter,
 } from "../utils/database.util";
-// [PERBAIKAN 1] Import Role dari @prisma/client
 import { Prisma, Role } from "@prisma/client"; 
 import bcrypt from "bcrypt";
 
+// --- [PERBAIKAN 1]: Tambahkan 4 field baru di Interface ---
 interface CreateGuruData {
   nip: string;
   nama: string;
   jenisKelamin?: "L" | "P";
+  tempatLahir?: string;       // Baru
+  tanggalLahir?: string;      // Baru (diterima sebagai string dari form frontend)
+  pendidikan?: string;        // Baru
+  statusKepegawaian?: string; // Baru
   alamat?: string;
   noHP: string;
   email?: string;
   password?: string;
-  // [PERBAIKAN 2] Pastikan tipe role fleksibel (bisa string atau Role)
   role?: Role | string; 
   jabatan?: string;
   fotoProfil?: string;
@@ -27,6 +30,10 @@ interface UpdateGuruData {
   nip?: string;
   nama?: string;
   jenisKelamin?: "L" | "P";
+  tempatLahir?: string;       // Baru
+  tanggalLahir?: string;      // Baru
+  pendidikan?: string;        // Baru
+  statusKepegawaian?: string; // Baru
   alamat?: string;
   noHP?: string;
   email?: string;
@@ -63,6 +70,10 @@ export class GuruService {
           nip: true,
           nama: true,
           jenisKelamin: true,
+          tempatLahir: true,       // --- [PERBAIKAN 2]: Pastikan ter-select ---
+          tanggalLahir: true,      // --- [PERBAIKAN 2]: Pastikan ter-select ---
+          pendidikan: true,        // --- [PERBAIKAN 2]: Pastikan ter-select ---
+          statusKepegawaian: true, // --- [PERBAIKAN 2]: Pastikan ter-select ---
           alamat: true,
           noHP: true,
           email: true,
@@ -173,18 +184,8 @@ export class GuruService {
 
         if (existingUser) {
           userId = existingUser.id;
-          
-          // Cek apakah user sudah terpakai (opsional, tergantung relasi)
-          // const linkedGuru = await tx.guru.findFirst({ where: { userId: userId } });
-          // if (linkedGuru) throw new Error("Email account already linked to another guru");
-
         } else {
-          // Buat User Baru
           const hashedPassword = await bcrypt.hash(password || "123456", 10);
-
-          // [PERBAIKAN 3] Gunakan Casting ke Role Enum
-          // Jika 'role' dikirim string "GURU", ubah jadi Role.GURU
-          // Jika tidak ada, default ke Role.GURU
           const userRole = role ? (role as Role) : Role.GURU;
 
           const newUser = await tx.user.create({
@@ -199,18 +200,21 @@ export class GuruService {
       }
 
       // 3. Buat Guru
-      // Jika error "Unknown arg user", ganti logika di bawah sesuai schema Anda
       const newGuru = await tx.guru.create({
         data: {
           nip: guruData.nip,
           nama: guruData.nama,
           jenisKelamin: guruData.jenisKelamin,
+          tempatLahir: guruData.tempatLahir,         // --- [PERBAIKAN 3]: Mapping Data Baru ---
+          // --- Konversi String ke format DateTime untuk Prisma ---
+          tanggalLahir: guruData.tanggalLahir ? new Date(guruData.tanggalLahir) : null, 
+          pendidikan: guruData.pendidikan,           // --- [PERBAIKAN 3] ---
+          statusKepegawaian: guruData.statusKepegawaian, // --- [PERBAIKAN 3] ---
           alamat: guruData.alamat,
           noHP: guruData.noHP,
           email: guruData.email,
           jabatan: guruData.jabatan,
           fotoProfil: guruData.fotoProfil,
-          // Sambungkan user (pastikan relasi di schema.prisma mendukung connect ini)
           user: userId ? { connect: { id: userId } } : undefined,
         },
         include: {
@@ -248,9 +252,21 @@ export class GuruService {
       if (existingEmail) throw new Error("Email already exists");
     }
 
+    // --- [PERBAIKAN 4]: Parsing tipe tanggalLahir sebelum update ---
+    let dataToUpdate: any = { ...data };
+    
+    // Jika user mengubah tanggal lahir di form, konversi string ke tipe Date
+    if (data.tanggalLahir) {
+      dataToUpdate.tanggalLahir = new Date(data.tanggalLahir);
+    }
+    // Jika frontend mengirim empty string (""), kita jadikan null di database
+    else if (data.tanggalLahir === "") {
+      dataToUpdate.tanggalLahir = null;
+    }
+
     const updated = await prisma.guru.update({
       where: { id_guru: id },
-      data,
+      data: dataToUpdate, // Gunakan objek yang sudah difilter/dikonversi
       include: {
         user: true,
         waliKelas: true,
@@ -358,9 +374,6 @@ export class GuruService {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error("User not found");
 
-    // Asumsi update dilakukan di sisi User
-    // Pastikan schema.prisma Anda memiliki relasi guruId di tabel User
-    // Jika relasi ada di tabel Guru, gunakan prisma.guru.update
     const updated = await prisma.user.update({
       where: { id: userId },
       data: { guruId: guruId }, 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -44,7 +44,7 @@ const FormField = ({
   children: React.ReactNode;
   required?: boolean;
 }) => (
-  <div className="space-y-2 relative"> {}
+  <div className="space-y-2 relative">
     <Label className="text-sm font-medium text-gray-700">
       {label}
       {required && <span className="text-red-500 ml-1">*</span>}
@@ -65,6 +65,10 @@ export default function EditGuruModal({
     nip: "",
     noHP: "",
     jenisKelamin: "",
+    tempatLahir: "",      // TAMBAHAN
+    tanggalLahir: "",     // TAMBAHAN
+    pendidikan: "",       // TAMBAHAN
+    statusKepegawaian: "", // TAMBAHAN
     alamat: "",
     jabatan: "",
     fotoProfil: null as File | null,
@@ -74,11 +78,9 @@ export default function EditGuruModal({
   const [previewImage, setPreviewImage] = useState<string>("");
   const [userOptions, setUserOptions] = useState<UserOption[]>([]);
   const BACKEND_URL = import.meta.env.VITE_URL_API || "http://localhost:5000";
-  // STATE UNTUK AUTOCOMPLETE
   const [showEmailSuggestions, setShowEmailSuggestions] = useState(false);
   const [filteredEmails, setFilteredEmails] = useState<UserOption[]>([]);
 
-  // 1. FETCH DATA USERS
   useEffect(() => {
     if (isOpen) {
         const fetchUsers = async () => {
@@ -86,7 +88,7 @@ export default function EditGuruModal({
                 const res = await apiClient.get("/users"); 
                 const users = res.data.data || [];
                 setUserOptions(users);
-                setFilteredEmails(users); // Init filtered dengan semua user
+                setFilteredEmails(users);
             } catch (error) {
                 console.error("Gagal mengambil daftar user:", error);
             }
@@ -95,15 +97,22 @@ export default function EditGuruModal({
     }
   }, [isOpen]);
 
-  // 2. SET DATA FORM
   useEffect(() => {
     if (guru) {
+      const formatTanggalForm = (isoString?: string) => {
+        if (!isoString) return "";
+        return isoString.split("T")[0]; 
+      };
       setForm({
         email: guru.user?.email || "",
         nama: guru.nama || "",
         nip: guru.nip || "",
         noHP: guru.noHP || "",
         jenisKelamin: guru.jenisKelamin || "",
+        tempatLahir: guru.tempatLahir || "",      // SET DATA AWAL
+       tanggalLahir: formatTanggalForm(guru.tanggalLahir),     // SET DATA AWAL
+        pendidikan: guru.pendidikan || "",         // SET DATA AWAL
+        statusKepegawaian: guru.statusKepegawaian || "", // SET DATA AWAL
         alamat: guru.alamat || "",
         jabatan: guru.jabatan || "",
         fotoProfil: null,
@@ -122,11 +131,9 @@ export default function EditGuruModal({
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // LOGIKA AUTOCOMPLETE EMAIL
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setForm({ ...form, email: value });
-    
     const filtered = userOptions.filter(u => 
         u.email.toLowerCase().includes(value.toLowerCase())
     );
@@ -160,16 +167,12 @@ export default function EditGuruModal({
     Object.entries(form).forEach(([key, value]) => {
       if (value === null || value === undefined) return;
       if (key === "fotoProfil") {
-        if (value instanceof File) {
-          formData.append(key, value);
-        }
+        if (value instanceof File) formData.append(key, value);
         return; 
       }
       if (typeof value === "string") {
         const cleanValue = value.trim(); 
-        if (cleanValue !== "") {
-          formData.append(key, cleanValue);
-        }
+        if (cleanValue !== "") formData.append(key, cleanValue);
         return;
       }
       formData.append(key, String(value));
@@ -191,7 +194,6 @@ export default function EditGuruModal({
       onClose?.();
     } catch (error: any) {
       Swal.close();
-      console.error("Update error detail:", error.response?.data);
       Swal.fire("Gagal!", error.response?.data?.message || "Terjadi kesalahan.", "error");
     }
   };
@@ -228,50 +230,32 @@ export default function EditGuruModal({
               </div>
             </div>
             <div className="flex-1">
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Foto Profil
-              </Label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="text-sm"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Format: JPG, PNG. Maksimal 2MB
-              </p>
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">Foto Profil</Label>
+              <Input type="file" accept="image/*" onChange={handleFileChange} className="text-sm" />
+              <p className="text-xs text-gray-500 mt-1">Format: JPG, PNG. Maksimal 2MB</p>
             </div>
           </div>
 
-          {/* Personal Information */}
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-gray-900 border-b pb-2">
-              Informasi Pribadi
-            </h4>
+            <h4 className="text-sm font-semibold text-gray-900 border-b pb-2">Informasi Pribadi</h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Nama Lengkap" required>
-                <Input
-                  type="text"
-                  name="nama"
-                  value={form.nama}
-                  onChange={handleChange}
-                  placeholder="Masukkan nama lengkap"
-                  required
-                />
+                <Input type="text" name="nama" value={form.nama} onChange={handleChange} required />
               </FormField>
 
               <FormField label="NIP">
-                <Input
-                  type="text"
-                  name="nip"
-                  value={form.nip}
-                  onChange={handleChange}
-                  placeholder="Nomor Induk Pegawai"
-                />
+                <Input type="text" name="nip" value={form.nip} onChange={handleChange} />
               </FormField>
 
-              {/* --- BAGIAN AUTOCOMPLETE EMAIL --- */}
+              {/* BARIS BARU: Tempat & Tanggal Lahir */}
+              <FormField label="Tempat Lahir">
+                <Input type="text" name="tempatLahir" value={form.tempatLahir} onChange={handleChange} placeholder="Kota Kelahiran" />
+              </FormField>
+              <FormField label="Tanggal Lahir">
+                <Input type="date" name="tanggalLahir" value={form.tanggalLahir} onChange={handleChange} />
+              </FormField>
+
               <FormField label="Email Akun" required>
                 <div className="relative">
                     <Input
@@ -279,62 +263,50 @@ export default function EditGuruModal({
                         name="email"
                         value={form.email}
                         onChange={handleEmailChange}
-                        onFocus={() => {
-                            const filtered = userOptions.filter(u => 
-                                u.email.toLowerCase().includes(form.email.toLowerCase())
-                            );
-                            setFilteredEmails(filtered);
-                            setShowEmailSuggestions(true);
-                        }}
+                        onFocus={() => setShowEmailSuggestions(true)}
                         onBlur={() => setTimeout(() => setShowEmailSuggestions(false), 200)}
-                        placeholder="Masukan Email"
                         autoComplete="off"
                     />
-                    
-                    {/* DROPDOWN CUSTOM */}
                     {showEmailSuggestions && filteredEmails.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-40 overflow-y-auto">
                             {filteredEmails.map((user) => (
-                                <div
-                                    key={user.id}
-                                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex justify-between items-center"
-                                    onMouseDown={() => handleSelectEmail(user.email)}
-                                >
+                                <div key={user.id} className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex justify-between" onMouseDown={() => handleSelectEmail(user.email)}>
                                     <span>{user.email}</span>
-                                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">{user.role}</span>
+                                    <span className="text-xs text-gray-400">{user.role}</span>
                                 </div>
                             ))}
-                        </div>
-                    )}
-
-                    {/* Pesan jika input ada isinya tapi tidak cocok dengan data apapun */}
-                    {showEmailSuggestions && filteredEmails.length === 0 && form.email && (
-                         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-2 text-sm text-gray-500 text-center">
-                            Email baru (belum terdaftar)
                         </div>
                     )}
                 </div>
               </FormField>
 
               <FormField label="No. Handphone">
-                <Input
-                  type="text"
-                  name="noHP"
-                  value={form.noHP}
-                  onChange={handleChange}
-                  placeholder="08xxxxxxxxxx"
-                />
+                <Input type="text" name="noHP" value={form.noHP} onChange={handleChange} />
+              </FormField>
+
+              {/* BARIS BARU: Pendidikan & Status Kepegawaian */}
+              <FormField label="Pendidikan Terakhir">
+                <Input type="text" name="pendidikan" value={form.pendidikan} onChange={handleChange} placeholder="Contoh: S1 Pendidikan" />
+              </FormField>
+
+              <FormField label="Status Kepegawaian">
+                <Select
+                  onValueChange={(value) => setForm({ ...form, statusKepegawaian: value })}
+                  value={form.statusKepegawaian}
+                >
+                  <SelectTrigger><SelectValue placeholder="Pilih status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="GTY">GTY (Guru Tetap Yayasan)</SelectItem>
+                    <SelectItem value="GTT">GTT (Guru Tidak Tetap)</SelectItem>
+                    <SelectItem value="PNS">PNS</SelectItem>
+                    <SelectItem value="PPPK">PPPK</SelectItem>
+                  </SelectContent>
+                </Select>
               </FormField>
 
               <FormField label="Jenis Kelamin">
-                <Select
-                  onValueChange={(value) =>
-                    setForm({ ...form, jenisKelamin: value })
-                  }
-                  value={form.jenisKelamin}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih jenis kelamin" />
-                  </SelectTrigger>
+                <Select onValueChange={(value) => setForm({ ...form, jenisKelamin: value })} value={form.jenisKelamin}>
+                  <SelectTrigger><SelectValue placeholder="Pilih jenis kelamin" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="L">Laki-laki</SelectItem>
                     <SelectItem value="P">Perempuan</SelectItem>
@@ -343,12 +315,8 @@ export default function EditGuruModal({
               </FormField>
 
               <FormField label="Role">
-                <Select
-                  value={form.role}
-                  onValueChange={(value) => setForm({ ...form, role: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih role" />
-                  </SelectTrigger>
+                <Select value={form.role} onValueChange={(value) => setForm({ ...form, role: value })}>
+                  <SelectTrigger><SelectValue placeholder="Pilih role" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ADMIN">Admin</SelectItem>
                     <SelectItem value="GURU">Guru</SelectItem>
@@ -358,33 +326,18 @@ export default function EditGuruModal({
             </div>
 
             <FormField label="Jabatan">
-              <Input
-                type="text"
-                name="jabatan"
-                value={form.jabatan}
-                onChange={handleChange}
-                placeholder="Jabatan di sekolah"
-              />
+              <Input type="text" name="jabatan" value={form.jabatan} onChange={handleChange} />
             </FormField>
 
             <FormField label="Alamat">
-              <Input
-                type="text"
-                name="alamat"
-                value={form.alamat}
-                onChange={handleChange}
-                placeholder="Alamat lengkap"
-              />
+              <Input type="text" name="alamat" value={form.alamat} onChange={handleChange} />
             </FormField>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Batal
-            </Button>
+            <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
             <Button type="submit" className="gap-2">
-              <Save className="w-4 h-4" />
-              Simpan Perubahan
+              <Save className="w-4 h-4" /> Simpan Perubahan
             </Button>
           </div>
         </form>

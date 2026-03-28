@@ -447,13 +447,15 @@ export default function UserVerificationPage() {
                   allUsers.map((user, index) => (
                     <TableRow key={user.id}>
                       <TableCell>{(page - 1) * 10 + index + 1}</TableCell>
-                      <TableCell className="font-medium">
+                     <TableCell className="font-medium">
                         {user.guru ? (
                           <span>{user.guru.nama}</span>
                         ) : user.siswa ? (
                           <span>{user.siswa.nama}</span>
+                        ) : user.role === "ADMIN" ? (
+                          <span>Administrator</span>
                         ) : (
-                          "Administrator"
+                          <span className="text-slate-400 italic">Belum Terhubung</span>
                         )}
                       </TableCell>
                       <TableCell>{user.email}</TableCell>

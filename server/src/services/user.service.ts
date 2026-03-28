@@ -461,7 +461,7 @@ export class UserService {
     return { siswa, guru };
   }
 
-  static async verifyAndLinkUser(
+ static async verifyAndLinkUser(
     userId: number,
     targetId: number,
     targetType: "SISWA" | "GURU" | "ADMIN"
@@ -482,42 +482,37 @@ export class UserService {
         include: { user: true },
       });
       if (!targetSiswa) throw new Error("Target Siswa not found");
-      // Allow overwriting: Logic moved to transaction
     } else if (targetType === "GURU") {
       const targetGuru = await prisma.guru.findUnique({
         where: { id_guru: targetId },
         include: { user: true },
       });
       if (!targetGuru) throw new Error("Target Guru not found");
-       // Allow overwriting: Logic moved to transaction
     } 
     // If ADMIN, no targetId check needed
 
     await prisma.$transaction(async (tx) => {
-      // 1. Check if target already has a user (only for SISWA/GURU), and UNLINK them if so
+      // 1. CARI DAN HAPUS AKUN LAMA (CEGAH AKUN YATIM/MENGANGGUR)
       if (targetType !== "ADMIN") {
         const existingUserLinked = await tx.user.findFirst({
           where: targetType === "SISWA" ? { siswaId: targetId } : { guruId: targetId },
         });
 
-        if (existingUserLinked) {
-          // Unlink the old user
-          await tx.user.update({
+        // --- BAGIAN INI YANG KITA UBAH ---
+        // Jika ada akun lama yang menempel di data ini (dan bukan akun yang sedang kita proses)
+        if (existingUserLinked && existingUserLinked.id !== userId) {
+          // HAPUS PERMANEN akun lama tersebut
+          await tx.user.delete({
             where: { id: existingUserLinked.id },
-            data: {
-              siswaId: null,
-              guruId: null,
-            },
           });
         }
+        // ---------------------------------
       }
 
       // 2. Delete the temporary Siswa record created during registration
       // Only if the user currently has a 'SISWA' role and a linked siswa record
       // AND that siswa record was created recently (simple check: same ID as user.siswaId)
       if (user.role === "SISWA" && user.siswaId) {
-        // Double check not to delete the TARGET siswa if they somehow match (unlikely)
-        // If target is SISWA, ensure we don't delete the target. If Admin/Guru, always delete temp.
         if (targetType !== "SISWA" || user.siswaId !== targetId) {
            await tx.siswa.delete({
             where: { id_siswa: user.siswaId },
@@ -525,7 +520,7 @@ export class UserService {
         }
       }
 
-      // 3. Update the User record
+      // 3. Update the User record (Akun yang baru)
       await tx.user.update({
         where: { id: userId },
         data: {

@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -25,7 +22,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations (Existing direction maintained for BE compatibility)
+  // Relations
   guruId Int?  @unique
   guru   Guru? @relation(fields: [guruId], references: [id_guru])
 
@@ -47,14 +44,14 @@ model Guru {
   tempatLahir       String?
   tanggalLahir      DateTime?
   alamat            String?   @db.Text
-  noHP              String? // Mapped to noTelepon in new requirements
+  noHP              String? 
   email             String?
   pendidikan        String?
   jabatan           String?
-  statusKepegawaian String? // PNS, PPPK, Honorer
-  fotoProfil        String? // Mapped to photo
+  statusKepegawaian String? 
+  fotoProfil        String? 
 
-  // NEW: Wali Kelas Status
+  // Wali Kelas Status
   isWaliKelas Boolean @default(false)
 
   createdAt DateTime @default(now())
@@ -63,10 +60,7 @@ model Guru {
   // Relations
   user User?
 
-  // Existing relation (One guru can be wali for multiple classes in history, or 1 active)
   waliKelas Kelas[]
-
-  // NEW: Many-to-Many dengan MataPelajaran via GuruMapel
   mengajarMapel GuruMapel[]
 
   @@map("guru")
@@ -81,12 +75,12 @@ model Siswa {
   nis           String?   @unique
   nisn          String?   @unique
   nama          String
-  jenisKelamin  String? // L/P
+  jenisKelamin  String? 
   tempatLahir   String?
   tanggalLahir  DateTime?
   agama         String?
   alamat        String?   @db.Text
-  noHP          String? // Mapped from noTelepon
+  noHP          String? 
   email         String?
   namaAyah      String?
   namaIbu       String?
@@ -96,7 +90,7 @@ model Siswa {
 
   kelasId    Int?
   tahunMasuk Int?
-  status     String  @default("AKTIF") // AKTIF, LULUS, PINDAH, KELUAR
+  status     String  @default("AKTIF") 
   fotoProfil String?
 
   createdAt DateTime @default(now())
@@ -106,14 +100,13 @@ model Siswa {
   user  User?
   kelas Kelas? @relation(fields: [kelasId], references: [id_kelas])
 
-  nilaiRapor     NilaiRapor[]
-  Siswa_Orangtua Siswa_Orangtua[]
-  absensi        Absensi[]
-  pendaftaran    Pendaftaran[]
-  tagihan        Tagihan[]
-  pembayaran     Pembayaran[]
-  rapor          Rapor[]
-
+  nilaiRapor             NilaiRapor[]
+  Siswa_Orangtua         Siswa_Orangtua[]
+  absensi                Absensi[]
+  pendaftaran            Pendaftaran[]
+  tagihan                Tagihan[]
+  pembayaran             Pembayaran[]
+  rapor                  Rapor[]
   detailAbsensiPertemuan DetailAbsensiPertemuan[]
 
   @@index([kelasId])
@@ -127,7 +120,7 @@ model Siswa {
 model OrangTua {
   id_orangtua Int      @id @default(autoincrement())
   nama        String
-  hubungan    String // Ayah, Ibu, Wali
+  hubungan    String 
   pekerjaan   String?
   noHp        String?
   alamat      String?  @db.Text
@@ -143,7 +136,7 @@ model OrangTua {
 model Siswa_Orangtua {
   id_siswa    Int
   id_orangtua Int
-  status      String? // Added to match existing schema if needed
+  status      String? 
 
   siswa    Siswa    @relation(fields: [id_siswa], references: [id_siswa], onDelete: Cascade)
   orangtua OrangTua @relation(fields: [id_orangtua], references: [id_orangtua], onDelete: Cascade)
@@ -159,8 +152,8 @@ model Siswa_Orangtua {
 model Kelas {
   id_kelas  Int     @id @default(autoincrement())
   namaKelas String
-  tingkat   String // Changed from Int to String to match existing schema (e.g. "X", "10")
-  jurusan   String? // IPA, IPS, etc.
+  tingkat   String 
+  jurusan   String? 
 
   waliId Int?
   guru   Guru? @relation(fields: [waliId], references: [id_guru])
@@ -170,9 +163,7 @@ model Kelas {
 
   // Relations
   siswa    Siswa[]
-  tahunRel KelasTahunAjaran[] // Maintain compatibility with TahunAjaranService
-
-  // NEW: GuruMapel relation
+  tahunRel KelasTahunAjaran[] 
   guruMapel GuruMapel[]
 
   @@map("kelas")
@@ -198,22 +189,20 @@ model MataPelajaran {
   id_mapel      Int      @id @default(autoincrement())
   kodeMapel     String?  @unique
   namaMapel     String
-  kelompokMapel String? // Kelompok A, B, C
+  kelompokMapel String? 
   deskripsi     String?  @db.Text
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   // Relations
-  nilai NilaiRapor[]
-
-  // NEW: GuruMapel relation
+  nilai     NilaiRapor[]
   guruMapel GuruMapel[]
 
   @@map("mata_pelajaran")
 }
 
 // ============================================================================
-// 7. GURU_MAPEL & JADWAL (NEW)
+// 7. GURU_MAPEL & JADWAL 
 // ============================================================================
 
 model GuruMapel {
@@ -235,7 +224,6 @@ model GuruMapel {
 
   absensiPertemuan AbsensiPertemuan[]
 
-  // Constraint: satu guru tidak bisa mengajar mapel yang sama di kelas yang sama di tahun ajaran yang sama
   @@unique([id_guru, id_mapel, id_kelas, tahunAjaranId])
   @@index([id_guru])
   @@index([id_mapel])
@@ -247,10 +235,10 @@ model GuruMapel {
 model Jadwal {
   id_jadwal   Int     @id @default(autoincrement())
   guruMapelId Int
-  hari        String // Senin, Selasa, Rabu, Kamis, Jumat, Sabtu, Minggu
-  jamMulai    String // Format: "07:00"
-  jamSelesai  String // Format: "08:30"
-  ruangan     String? // Opsional: Ruang kelas/lab
+  hari        String 
+  jamMulai    String 
+  jamSelesai  String 
+  ruangan     String? 
   keterangan  String? @db.Text
 
   createdAt DateTime @default(now())
@@ -273,10 +261,9 @@ model NilaiRapor {
   id_siswa      Int
   id_mapel      Int
   tahunAjaranId Int
-  semester      String // "1" atau "2"
-  nilai         Float // Changed to Float to support decimal grades
+  semester      String 
+  nilai         Float 
 
-  // Optional: breakdown nilai
   nilaiTugas Float?
   nilaiUTS   Float?
   nilaiUAS   Float?
@@ -378,10 +365,10 @@ model DetailAbsensiPertemuan {
 
 model TahunAjaran {
   id_tahun  Int      @id @default(autoincrement())
-  namaTahun String // e.g., "2024/2025"
-  semester  Int // 1 atau 2
-  startDate DateTime // Mapped from tanggalMulai
-  endDate   DateTime // Mapped from tanggalSelesai
+  namaTahun String 
+  semester  Int 
+  startDate DateTime 
+  endDate   DateTime 
   isActive  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -401,20 +388,18 @@ model TahunAjaran {
 }
 
 // ============================================================================
-// 11. PENDAFTARAN (Maintained Existing Model)
+// 11. PENDAFTARAN 
 // ============================================================================
 
 model Pendaftaran {
   id_pendaftaran Int @id @default(autoincrement())
 
-  // Informasi Pendaftaran
   unitPendidikan      String?
   jenisPendaftaran    String?
   noIndukPesertaDidik String?
   jurusan             String?
   tanggalPendaftaran  DateTime?
 
-  // Data Siswa - Identitas
   nama         String
   jenisKelamin String?
   nisn         String?
@@ -424,18 +409,15 @@ model Pendaftaran {
   tanggalLahir DateTime?
   agama        String?
 
-  // Data Siswa - Alamat & Kontak
   alamat          String? @db.Text
   noHandphonAktif String?
   tempatTinggal   String?
   transportasi    String?
 
-  // Data Siswa - Keluarga
   anakKe      String?
   penerimaKIP String?
   noKIP       String?
 
-  // Data Ayah
   namaAyah         String?
   nikAyah          String?
   tempatLahirAyah  String?
@@ -445,7 +427,6 @@ model Pendaftaran {
   pekerjaanAyah    String?
   penghasilanAyah  String?
 
-  // Data Ibu
   namaIbu         String?
   nikIbu          String?
   tempatLahirIbu  String?
@@ -455,7 +436,6 @@ model Pendaftaran {
   pekerjaanIbu    String?
   penghasilanIbu  String?
 
-  // Data Wali (jika ada)
   namaWali         String?
   nikWali          String?
   tempatLahirWali  String?
@@ -465,32 +445,26 @@ model Pendaftaran {
   pekerjaanWali    String?
   penghasilanWali  String?
 
-  // Data Fisik & Jarak
   tinggiBadan   String?
   beratBadan    String?
   jarakSekolah  String?
   waktuTempuh   String?
   jumlahSaudara String?
 
-  // Dokumen
   ijazah        String?
   skhun         String?
   kartuKeluarga String?
   aktaKelahiran String?
   ktpOrangTua   String?
-  // New JSON document field if needed
   dokumen       Json?
 
-  // Contact & Asal Sekolah
   email       String?
   noHp        String?
   asalSekolah String?
 
-  // Status
   statusDokumen    StatusDokumen               @default(BELUM_DITERIMA)
   statusPembayaran StatusPembayaranPendaftaran @default(BELUM_BAYAR)
 
-  // Relations
   tahunAjaranId Int
   tahunAjaran   TahunAjaran @relation(fields: [tahunAjaranId], references: [id_tahun])
 
@@ -513,9 +487,9 @@ model Pendaftaran {
 model TarifPembayaran {
   id_tarif      Int     @id @default(autoincrement())
   tahunAjaranId Int
-  namaTagihan   String // Mapped from jenisPembayaran? Keep namaTagihan.
-  nominal       Float // Changed to Float
-  keterangan    String? // Mapped from deskripsi
+  namaTagihan   String 
+  nominal       Float 
+  keterangan    String? 
 
   // Relations
   tahunAjaran TahunAjaran @relation(fields: [tahunAjaranId], references: [id_tahun])
@@ -531,13 +505,12 @@ model TarifPembayaran {
 model Tagihan {
   id_tagihan    Int           @id @default(autoincrement())
   id_siswa      Int
-  tarifId       Int // Mapped to id_tarif
+  tarifId       Int 
   tahunAjaranId Int
   bulan         String?
   status        StatusTagihan @default(BELUM_BAYAR)
 
-  // New fields
-  jumlah     Float? // Copied from tarif if needed
+  jumlah     Float? 
   sisaBayar  Float?
   jatuhTempo DateTime?
 
@@ -564,13 +537,11 @@ model Tagihan {
 model Pembayaran {
   id_pembayaran Int      @id @default(autoincrement())
   tagihanId     Int
-  jumlahBayar   Float // Changed to Float
+  jumlahBayar   Float 
   tanggal       DateTime @default(now())
   metode        String?
   keterangan    String?
-
-  // New fields
-  noBukti String?
+  noBukti       String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -578,7 +549,6 @@ model Pembayaran {
   // Relations
   tagihan Tagihan @relation(fields: [tagihanId], references: [id_tagihan], onDelete: Cascade)
 
-  // Optional: Siswa relation if strictly required by new schema
   id_siswa Int?
   siswa    Siswa? @relation(fields: [id_siswa], references: [id_siswa])
 
@@ -587,46 +557,36 @@ model Pembayaran {
 }
 
 // ============================================================================
-// 15. RAPOR (NEW)
+// 15. RAPOR 
 // ============================================================================
 
 model Rapor {
   id_rapor      Int    @id @default(autoincrement())
   id_siswa      Int
   tahunAjaranId Int
-  semester      String // "1" atau "2"
+  semester      String 
 
-  // Kehadiran Summary (Auto-calculated dari Absensi)
   totalHadir Int @default(0)
   totalSakit Int @default(0)
   totalIzin  Int @default(0)
   totalAlpha Int @default(0)
 
-  // Penilaian Sikap (Input by Wali Kelas)
-  sikapSpritual     String? // A, B, C, D
-  sikapSosial       String? // A, B, C, D
+  sikapSpritual     String? 
+  sikapSosial       String? 
   deskripsiSpritual String? @db.Text
   deskripsiSosial   String? @db.Text
 
-  // Catatan Wali Kelas
   catatanWaliKelas String? @db.Text
 
-  // Ekstrakurikuler (JSON Array)
-  // Format: [{nama: "Pramuka", nilai: "A", keterangan: "Sangat aktif"}]
   ekstrakurikuler Json?
+  prestasi        Json?
 
-  // Prestasi (JSON Array)
-  // Format: [{nama: "Juara 1 Olimpiade", tingkat: "Kabupaten", keterangan: "2024"}]
-  prestasi Json?
+  naik  Boolean? 
+  kelas String? 
 
-  // Kenaikan Kelas
-  naik  Boolean? // true = naik, false = tidak naik, null = belum ditentukan
-  kelas String? // Kelas tujuan jika naik (e.g., "XI IPA 1")
-
-  // Status & Publishing
-  status      String    @default("DRAFT") // DRAFT, PUBLISHED
+  status      String    @default("DRAFT") 
   publishedAt DateTime?
-  publishedBy Int? // User ID yang publish
+  publishedBy Int? 
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -635,7 +595,6 @@ model Rapor {
   siswa       Siswa       @relation(fields: [id_siswa], references: [id_siswa], onDelete: Cascade)
   tahunAjaran TahunAjaran @relation(fields: [tahunAjaranId], references: [id_tahun], onDelete: Cascade)
 
-  // Constraint: satu siswa hanya punya satu rapor per semester per tahun ajaran
   @@unique([id_siswa, tahunAjaranId, semester])
   @@index([id_siswa])
   @@index([tahunAjaranId])
@@ -645,7 +604,7 @@ model Rapor {
 }
 
 // ============================================================================
-// 16. BERITA & PENGUMUMAN (NEW)
+// 16. BERITA & PENGUMUMAN 
 // ============================================================================
 
 model Berita {
@@ -653,7 +612,7 @@ model Berita {
   judul     String
   isi       String   @db.LongText
   gambar    String?
-  kategori  String // Infrastruktur, Prestasi, Kegiatan, Pengumuman
+  kategori  String 
   penulis   String   @default("Admin")
   tanggal   DateTime @default(now())
   createdAt DateTime @default(now())
@@ -690,7 +649,7 @@ enum StatusDokumen {
   BELUM_DITERIMA
   LENGKAP
   KURANG
-  BELUM_LENGKAP // Added to support new schema intent
+  BELUM_LENGKAP 
 }
 
 enum StatusTagihan {
