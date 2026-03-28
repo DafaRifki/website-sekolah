@@ -20,8 +20,8 @@ export const registerValidation = Joi.object({
 export const paginationValidation = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(1000).default(10),
-  search: Joi.string().optional(),
-  sortBy: Joi.string().optional(),
+  search: Joi.string().optional().allow(""),
+  sortBy: Joi.string().optional().allow(""),
   sortOrder: Joi.string().valid("asc", "desc").default("asc"),
 });
 
@@ -67,13 +67,16 @@ export const updateGuruValidation = Joi.object({
     "object.min": "Minimal satu field harus diisi",
   });
 
-// Siswa validation
+// ==========================================
+// Siswa validation (SUDAH DIPERBAIKI)
+// ==========================================
 export const siswaValidation = Joi.object({
   nama: Joi.string().required().messages({
     "any.required": "Nama siswa wajib diisi",
     "string.empty": "Nama siswa tidak boleh kosong",
   }),
-  nis: Joi.string().optional().allow(""),
+  nis: Joi.string().optional().allow("", null),
+  nisn: Joi.string().optional().allow("", null),
   email: Joi.string().email().required().messages({
     "any.required": "Email wajib diisi",
     "string.email": "Format email tidak valid",
@@ -82,28 +85,52 @@ export const siswaValidation = Joi.object({
     "string.min": "Password minimal 6 karakter",
     "any.required": "Password wajib diisi",
   }),
-  alamat: Joi.string().optional().allow(""),
-  tanggalLahir: Joi.date().iso().optional().allow(null),
-  jenisKelamin: Joi.string().valid("L", "P").optional().messages({
+  tempatLahir: Joi.string().optional().allow("", null),
+  alamat: Joi.string().optional().allow("", null),
+  tanggalLahir: Joi.alternatives().try(Joi.string(), Joi.date()).optional().allow("", null),
+  agama: Joi.string().optional().allow("", null),
+  jenisKelamin: Joi.string().valid("L", "P").optional().allow("", null).messages({
     "any.only": "Jenis kelamin harus L atau P",
   }),
+  noHP: Joi.string().optional().allow("", null),
   kelasId: Joi.number().integer().optional().allow(null),
 
-  // Orang Tua
-  orangtuaNama: Joi.string().optional().allow(""),
-  orangtuaHubungan: Joi.string().optional().allow(""),
-  orangtuaPekerjaan: Joi.string().optional().allow(""),
-  orangtuaAlamat: Joi.string().optional().allow(""),
-  orangtuaNoHp: Joi.string().optional().allow(""),
+  // Data Orang Tua (Ayah/Ibu)
+  namaAyah: Joi.string().optional().allow("", null),
+  namaIbu: Joi.string().optional().allow("", null),
+  pekerjaanAyah: Joi.string().optional().allow("", null),
+  pekerjaanIbu: Joi.string().optional().allow("", null),
+  noTeleponOrtu: Joi.string().optional().allow("", null),
+
+  // Orang Tua Wali Tambahan (Opsional)
+  orangtuaNama: Joi.string().optional().allow("", null),
+  orangtuaHubungan: Joi.string().optional().allow("", null),
+  orangtuaPekerjaan: Joi.string().optional().allow("", null),
+  orangtuaAlamat: Joi.string().optional().allow("", null),
+  orangtuaNoHp: Joi.string().optional().allow("", null),
 });
 
 export const updateSiswaValidation = Joi.object({
   nama: Joi.string().optional(),
-  alamat: Joi.string().optional().allow(""),
-  tanggalLahir: Joi.date().iso().optional().allow(null),
-  jenisKelamin: Joi.string().valid("L", "P").optional(),
+  nis: Joi.string().optional().allow("", null),
+  nisn: Joi.string().optional().allow("", null),
+  alamat: Joi.string().optional().allow("", null),
+  tempatLahir: Joi.string().optional().allow("", null),
+  tanggalLahir: Joi.alternatives().try(Joi.string(), Joi.date()).optional().allow("", null),
+  agama: Joi.string().optional().allow("", null),
+  jenisKelamin: Joi.string().valid("L", "P").optional().allow("", null),
+  noHP: Joi.string().optional().allow("", null),
   kelasId: Joi.number().integer().optional().allow(null),
+  
+  // Data Orang Tua
+  namaAyah: Joi.string().optional().allow("", null),
+  namaIbu: Joi.string().optional().allow("", null),
+  pekerjaanAyah: Joi.string().optional().allow("", null),
+  pekerjaanIbu: Joi.string().optional().allow("", null),
+  noTeleponOrtu: Joi.string().optional().allow("", null),
 }).min(1);
+
+// ==========================================
 
 export const changePasswordValidation = Joi.object({
   currentPassword: Joi.string().required().messages({

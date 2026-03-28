@@ -387,7 +387,7 @@ export default function TambahGuruModal({ isOpen, onClose, onAdded }: Props) {
                 name="jabatan"
                 value={form.jabatan}
                 onChange={handleChange}
-                placeholder="Contoh: Guru Matematika"
+                placeholder="Contoh: Staff Pengajar, Kepala Lab, dll."
               />
             </FormField>
 

@@ -12,9 +12,14 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let folder = "others";
 
-    // Ubah "profiles" menjadi "guru" agar sinkron dengan Frontend
     if (file.fieldname === "fotoProfil") {
-      folder = "guru"; 
+      if (req.originalUrl.includes("/siswa")) {
+        folder = "siswa";
+      } else if (req.originalUrl.includes("/guru")) {
+        folder = "guru";
+      } else {
+        folder = "profiles";
+      }
     } else if (file.fieldname === "dokumen") {
       folder = "documents";
     } else if (file.fieldname === "gambar") {

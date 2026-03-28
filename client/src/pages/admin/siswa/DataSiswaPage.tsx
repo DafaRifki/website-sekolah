@@ -36,11 +36,21 @@ interface Siswa {
   id_siswa: number;
   nama: string;
   nis?: string;
-  alamat?: string;
+  nisn?: string;
+  tempatLahir?: string;
   tanggalLahir?: string;
+  agama?: string;
   jenisKelamin?: string;
+  noHP?: string;
+  alamat?: string;
+  namaAyah?: string;
+  pekerjaanAyah?: string;
+  namaIbu?: string;
+  pekerjaanIbu?: string;
+  noTeleponOrtu?: string;
+  fotoProfil?: string;
   user?: {
-    email: string;
+  email: string;
   };
   kelas?: {
     id_kelas: number;
@@ -49,6 +59,15 @@ interface Siswa {
       nama: string;
     };
   };
+  Siswa_Orangtua?: {
+    orangtua: {
+      nama: string;
+      hubungan: string;
+      pekerjaan: string;
+      alamat: string;
+      noHp: string;
+    };
+  }[];
 }
 
 interface Kelas {
@@ -87,7 +106,10 @@ const DataSiswaPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchSiswa();
+    const timeoutId = setTimeout(() => {
+      fetchSiswa();
+    }, 300);
+    return () => clearTimeout(timeoutId);
   }, [currentPage, search, kelasFilter]);
 
   useEffect(() => {
@@ -97,7 +119,6 @@ const DataSiswaPage: React.FC = () => {
       .catch((err) => console.error(err));
   }, []);
 
-  // Server-side filtering/pagination is now used
   const currentData = siswa;
 
   const handleDelete = async (id: number) => {
@@ -122,7 +143,7 @@ const DataSiswaPage: React.FC = () => {
       });
 
       await apiClient.delete(`/siswa/${id}`, { withCredentials: true });
-      fetchSiswa(); // Refetch to update list correctly
+      fetchSiswa();
 
       Swal.fire("Berhasil!", "Data siswa berhasil dihapus.", "success");
     } catch (error: any) {
@@ -135,10 +156,28 @@ const DataSiswaPage: React.FC = () => {
     }
   };
 
+  const handleViewDetail = async (id: number) => {
+    try {
+      Swal.fire({
+        title: "Memuat data...",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+      });
+
+      const res = await apiClient.get(`/siswa/${id}`);
+      
+      Swal.close();
+      setSelectedSiswa(res.data.data);
+    } catch (error: any) {
+      console.error(error);
+      Swal.fire("Gagal", "Tidak dapat memuat detail data siswa", "error");
+    }
+  };
+
   const InfoField = ({ label, value }: { label: string; value: string }) => (
     <div className="space-y-1">
-      <div className="text-sm font-medium text-gray-700">{label}</div>
-      <div className="text-sm text-gray-900">{value || "-"}</div>
+      <div className="text-sm font-medium text-gray-500">{label}</div>
+      <div className="text-sm font-medium text-gray-900">{value || "-"}</div>
     </div>
   );
 
@@ -151,9 +190,7 @@ const DataSiswaPage: React.FC = () => {
               Data Siswa
             </CardTitle>
 
-            {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-              {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
@@ -167,7 +204,6 @@ const DataSiswaPage: React.FC = () => {
                 />
               </div>
 
-              {/* Filter */}
               <Select
                 value={kelasFilter}
                 onValueChange={(value) => {
@@ -187,7 +223,6 @@ const DataSiswaPage: React.FC = () => {
                 </SelectContent>
               </Select>
 
-              {/* Add Button */}
               <Button onClick={() => setIsAddOpenModal(true)} className="gap-2">
                 <UserPlus className="w-4 h-4" />
                 Tambah Siswa
@@ -197,7 +232,6 @@ const DataSiswaPage: React.FC = () => {
         </CardHeader>
 
         <CardContent className="p-0">
-          {/* Table */}
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -244,7 +278,7 @@ const DataSiswaPage: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setSelectedSiswa(s)}
+                            onClick={() => handleViewDetail(s.id_siswa)} 
                             className="h-8 w-8 p-0">
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -272,7 +306,6 @@ const DataSiswaPage: React.FC = () => {
             </Table>
           </div>
 
-          {/* Pagination */}
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
@@ -285,8 +318,8 @@ const DataSiswaPage: React.FC = () => {
       <Dialog
         open={!!selectedSiswa}
         onOpenChange={() => setSelectedSiswa(null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader className="pb-4 border-b">
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="p-6 pb-4 border-b shrink-0">
             <DialogTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
               <Eye className="w-5 h-5" />
               Detail Siswa
@@ -296,56 +329,74 @@ const DataSiswaPage: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
 
-          {selectedSiswa && (
-            <div className="py-6">
-              {/* Profile Section */}
-              <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg mb-6">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-xl font-semibold text-blue-600">
-                    {selectedSiswa.nama.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {selectedSiswa.nama}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    {selectedSiswa.kelas?.namaKelas && (
-                      <Badge variant="secondary" className="text-xs">
-                        {selectedSiswa.kelas.namaKelas}
-                      </Badge>
-                    )}
-                    <span className="text-sm text-gray-500">
-                      NIS: {selectedSiswa.nis || "Tidak ada"}
-                    </span>
+          <div className="flex-1 overflow-y-auto p-6">
+            {selectedSiswa && (
+              <div className="space-y-8">
+               {/* Profile Section (Tengah / Centered) */}
+                <div className="flex flex-col items-center justify-center p-8 bg-gradient-to-b from-blue-50 to-white rounded-xl border border-blue-100 shadow-sm">
+                  <div className="w-28 h-28 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden border-4 border-white shadow-md shrink-0 mb-4 relative group">
+                    {selectedSiswa.fotoProfil ? (
+                      <img 
+                        src={(() => {
+                          // 1. Ambil URL murni dari .env kamu (http://localhost:3000)
+                          let baseUrl = import.meta.env.VITE_URL_API || "http://localhost:3000";
+                          
+                          // 2. Bersihkan jika di .env kamu ada tambahan "/api" di belakangnya
+                          baseUrl = baseUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
+                          
+                          // 3. Ambil HANYA nama filenya saja (contoh: 1774664271734-911365222.jpg)
+                          const fileName = selectedSiswa.fotoProfil.split('/').pop();
+                          
+                          // 4. Bentuk URL langsung ke folder uploads/siswa
+                          return `${baseUrl}/uploads/siswa/${fileName}?t=${new Date().getTime()}`;
+                        })()} 
+                        alt={selectedSiswa.nama} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Jika gagal, langsung tampilkan inisial
+                          const target = e.currentTarget;
+                          target.style.display = 'none'; 
+                          const initialFallback = target.nextElementSibling as HTMLElement;
+                          if (initialFallback) initialFallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                  
+                  {/* Nama dan Info (Rata Tengah) */}
+                  <div className="text-center">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight">
+                      {selectedSiswa.nama}
+                    </h3>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      {selectedSiswa.kelas?.namaKelas && (
+                        <Badge variant="default" className="bg-blue-600 hover:bg-blue-700 px-3 py-1 text-sm shadow-sm">
+                          Kelas {selectedSiswa.kelas.namaKelas}
+                        </Badge>
+                      )}
+                      <span className="text-sm font-medium text-gray-600 bg-white px-3 py-1 rounded-full border shadow-sm">
+                        NIS: {selectedSiswa.nis || "-"}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Information Sections */}
-              <div className="space-y-6">
-                {/* Personal Information */}
+                {/* Informasi Pribadi */}
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 border-b pb-2 mb-4">
                     Informasi Pribadi
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InfoField
-                      label="Nama Lengkap"
-                      value={selectedSiswa.nama}
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
+                    <InfoField label="Nama Lengkap" value={selectedSiswa.nama} />
                     <InfoField label="NIS" value={selectedSiswa.nis || ""} />
-                    <InfoField
-                      label="Jenis Kelamin"
-                      value={selectedSiswa.jenisKelamin || ""}
-                    />
+                    <InfoField label="NISN" value={selectedSiswa.nisn || ""} />
+                    <InfoField label="No. HP Siswa" value={selectedSiswa.noHP || ""} />
+                    <InfoField label="Tempat Lahir" value={selectedSiswa.tempatLahir || ""} />
                     <InfoField
                       label="Tanggal Lahir"
                       value={
                         selectedSiswa.tanggalLahir
-                          ? new Date(
-                              selectedSiswa.tanggalLahir
-                            ).toLocaleDateString("id-ID", {
+                          ? new Date(selectedSiswa.tanggalLahir).toLocaleDateString("id-ID", {
                               day: "numeric",
                               month: "long",
                               year: "numeric",
@@ -353,40 +404,59 @@ const DataSiswaPage: React.FC = () => {
                           : ""
                       }
                     />
+                    <InfoField
+                      label="Jenis Kelamin"
+                      value={
+                        selectedSiswa.jenisKelamin === "L" 
+                          ? "Laki-laki" 
+                          : selectedSiswa.jenisKelamin === "P" 
+                            ? "Perempuan" 
+                            : selectedSiswa.jenisKelamin || ""
+                      }
+                    />
+                    <InfoField label="Agama" value={selectedSiswa.agama || ""} />
                   </div>
                   <div className="mt-4">
-                    <InfoField
-                      label="Alamat"
-                      value={selectedSiswa.alamat || ""}
-                    />
+                    <InfoField label="Alamat" value={selectedSiswa.alamat || ""} />
                   </div>
                 </div>
 
-                {/* Academic Information */}
+                {/* Informasi Akademik */}
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 border-b pb-2 mb-4">
                     Informasi Akademik
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InfoField
-                      label="Email"
-                      value={selectedSiswa.user?.email || ""}
-                    />
-                    <InfoField
-                      label="Kelas"
-                      value={selectedSiswa.kelas?.namaKelas || ""}
-                    />
-                    <InfoField
-                      label="Wali Kelas"
-                      value={selectedSiswa.kelas?.guru?.nama || ""}
+                    <InfoField label="Email" value={selectedSiswa.user?.email || ""} />
+                    <InfoField label="Kelas" value={selectedSiswa.kelas?.namaKelas || ""} />
+                    <InfoField label="Wali Kelas" value={selectedSiswa.kelas?.guru?.nama || ""} />
+                  </div>
+                </div>
+
+                {/* Data Orang Tua */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 border-b pb-2 mb-4">
+                    Data Orang Tua
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
+                    <InfoField label="Nama Ayah" value={selectedSiswa.namaAyah || ""} />
+                    <InfoField label="Pekerjaan Ayah" value={selectedSiswa.pekerjaanAyah || ""} />
+                    <InfoField label="Nama Ibu" value={selectedSiswa.namaIbu || ""} />
+                    <InfoField label="Pekerjaan Ibu" value={selectedSiswa.pekerjaanIbu || ""} />
+                    <InfoField label="No. Telepon Orang Tua" value={selectedSiswa.noTeleponOrtu || ""} />
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-dashed">
+                    <InfoField 
+                      label="Alamat Orang Tua/Wali" 
+                      value={selectedSiswa.Siswa_Orangtua?.[0]?.orangtua?.alamat || "-"} 
                     />
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex justify-end gap-3 p-4 border-t bg-gray-50 shrink-0">
             <Button variant="outline" onClick={() => setSelectedSiswa(null)}>
               Tutup
             </Button>
@@ -402,7 +472,6 @@ const DataSiswaPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Add Modal */}
       <TambahSiswaModal
         isOpen={isAddOpenModal}
         onClose={() => setIsAddOpenModal(false)}
