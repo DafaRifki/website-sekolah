@@ -34,6 +34,14 @@ export interface MapelKelas {
   };
 }
 
+export interface NilaiData {
+  id_nilai: number;
+  nilai: number;
+  nilaiTugas?: number;
+  nilaiUTS?: number;
+  nilaiUAS?: number;
+}
+
 export interface SiswaWithNilai {
   id_siswa: number;
   nis: string;
@@ -42,13 +50,9 @@ export interface SiswaWithNilai {
     id_kelas: number;
     namaKelas: string;
   };
-  nilai?: {
-    id_nilai: number;
-    nilai: number;
-    nilaiTugas?: number;
-    nilaiUTS?: number;
-    nilaiUAS?: number;
-  };
+  nilai?: NilaiData;
+  semester1?: NilaiData | null;
+  semester2?: NilaiData | null;
 }
 
 export interface NilaiStatistics {

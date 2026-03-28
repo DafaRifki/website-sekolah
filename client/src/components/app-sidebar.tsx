@@ -8,6 +8,7 @@ import {
   Notebook,
   FileUser,
   Banknote,
+  UserCheck,
 } from "lucide-react";
 import { type LucideIcon } from "lucide-react";
 
@@ -127,8 +128,16 @@ const menuItems: Record<Role, MenuSection[]> = {
           items: [
             { title: "Input Nilai", url: "/guru/nilai" },
             { title: "Jadwal", url: "/guru/jadwal" },
-            { title: "Absensi", url: "/guru/absensi/jadwal" },
             { title: "E-Rapor", url: "/e-rapor" },
+          ],
+        },
+        {
+          title: "Absensi",
+          url: "#",
+          icon: UserCheck,
+          items: [
+            { title: "Jadwal Mengajar", url: "/guru/absensi/jadwal" },
+            { title: "Riwayat Mengajar", url: "/guru/absensi/riwayat" },
           ],
         },
       ],

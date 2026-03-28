@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { inputNilai, updateNilai } from "@/services/nilai.service";
-import type { NilaiInput } from "@/types/nilai.types";
+// import type { NilaiInput } from "@/types/nilai.types";
 
 interface Props {
   isOpen: boolean;
