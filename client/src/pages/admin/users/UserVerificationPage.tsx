@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input"; // Add Input import
-import { Check, X, UserCheck, Link as LinkIcon, ChevronsUpDown, Search, Shield, Users as UsersIcon, GraduationCap, ChevronLeft, ChevronRight, Edit, ShieldAlert, Save } from "lucide-react"; // Add icons
+import { Check, X, UserCheck, Link as LinkIcon, ChevronsUpDown, Search, Shield, Users as UsersIcon, GraduationCap, ChevronLeft, ChevronRight, Edit, ShieldAlert, Save,Trash2 } from "lucide-react"; // Add icons
 import apiClient from "@/config/axios";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
@@ -271,6 +271,37 @@ export default function UserVerificationPage() {
       toast.error(error.response?.data?.message || "Gagal menghubungi user");
     }
   };
+
+  const handleDeleteUser = async (user: User) => {
+  setRoleDialogOpen(false);
+  const result = await Swal.fire({
+    title: "Hapus User?",
+    text: `Akun ${user.email} akan dihapus permanen.`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Ya, Hapus Permanen",
+    cancelButtonText: "Batal",
+    confirmButtonColor: "#ef4444",
+    cancelButtonColor: "#64748b",
+  });
+
+  if (result.isConfirmed) {
+    try {
+      setUpdateLoading(true);
+      const response = await apiClient.delete(`/users/${user.id}`);
+      if (response.data.success) {
+        toast.success(`User berhasil dihapus`);
+        fetchAllUsers();
+        fetchUnlinkedData();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Gagal menghapus user");
+    } finally {
+      setUpdateLoading(false);
+    }
+  } else {
+  }
+};
 
 
   return (
@@ -652,7 +683,7 @@ export default function UserVerificationPage() {
        </Dialog>
 
       {/* Role Edit Dialog */}
-      <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
+     <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -663,6 +694,7 @@ export default function UserVerificationPage() {
               Ubah hak akses untuk akun <strong>{editingUser?.email}</strong>.
             </DialogDescription>
           </DialogHeader>
+
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Pilih Role Baru:</Label>
@@ -674,10 +706,10 @@ export default function UserVerificationPage() {
                     variant={newRole === r ? "default" : "outline"}
                     onClick={() => setNewRole(r)}
                     className={cn(
-                       "flex flex-col h-20 gap-1 capitalize",
-                       newRole === r && r === "ADMIN" && "bg-red-600 hover:bg-red-700",
-                       newRole === r && r === "GURU" && "bg-blue-600 hover:bg-blue-700",
-                       newRole === r && r === "SISWA" && "bg-green-600 hover:bg-green-700"
+                      "flex flex-col h-20 gap-1 capitalize",
+                      newRole === r && r === "ADMIN" && "bg-red-600 hover:bg-red-700",
+                      newRole === r && r === "GURU" && "bg-blue-600 hover:bg-blue-700",
+                      newRole === r && r === "SISWA" && "bg-green-600 hover:bg-green-700"
                     )}
                   >
                     {r === "ADMIN" && <Shield className="h-5 w-5" />}
@@ -689,34 +721,40 @@ export default function UserVerificationPage() {
               </div>
             </div>
 
-            {newRole === "ADMIN" && (
-              <div className="p-3 bg-red-50 border border-red-100 rounded-md text-xs text-red-800">
-                <p className="font-bold flex items-center gap-1 mb-1">
-                  <ShieldAlert className="h-3 w-3" /> Peringatan Admin
-                </p>
-                Menjadikan user sebagai ADMIN akan memberikan akses penuh ke seluruh sistem.
-                User tidak akan lagi terhubung ke data Siswa atau Guru yang spesifik.
+            {/* --- BAGIAN HAPUS USER (DANGER ZONE) --- */}
+            <div className="pt-4 border-t">
+              <Label className="text-red-600 font-semibold">Danger Zone</Label>
+              <div className="mt-2 p-3 bg-red-50 border border-red-100 rounded-md flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-red-800">Hapus Akun Ini</p>
+                  <p className="text-[10px] text-red-600">Data login akan dihapus permanen.</p>
+                </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  type="button"
+                  className="h-8 text-xs bg-red-600 hover:bg-red-700"
+                  onClick={() => editingUser && handleDeleteUser(editingUser)}
+                  disabled={updateLoading}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Hapus
+                </Button>
               </div>
-            )}
-            
-            {editingUser?.role !== newRole && (
-               <p className="text-xs text-slate-500 italic text-center">
-                 Mengubah dari {editingUser?.role} ke {newRole}
-               </p>
-            )}
+            </div>
           </div>
-          <DialogFooter>
+
+          <DialogFooter className="flex justify-between items-center sm:justify-between">
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => setRoleDialogOpen(false)}
               disabled={updateLoading}
             >
               Batal
             </Button>
-            <Button 
-               onClick={handleUpdateRole} 
-               disabled={updateLoading || editingUser?.role === newRole}
-               className="bg-blue-600 hover:bg-blue-700"
+            <Button
+              onClick={handleUpdateRole}
+              disabled={updateLoading || editingUser?.role === newRole}
+              className="bg-blue-600 hover:bg-blue-700"
             >
               {updateLoading ? "Menyimpan..." : (
                 <>
