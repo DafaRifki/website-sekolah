@@ -29,13 +29,15 @@ import LaporanRoutes from "./routes/laporan.routes";
 import beritaRoutes from "./routes/berita.routes";
 import absensiEnhancedRoutes from "./routes/absensi.routes.enhanced";
 import absensiAdminRoutes from "./routes/absensi.admin.routes";
+import strukturOrganisasiRoutes from './routes/strukturOrganisasi.route';
 
 const app = express();
 
 // 1. Security & Base Middleware
 app.use(
   helmet({
-    crossOriginResourcePolicy: false, // IZINKAN GAMBAR DILOAD DARI ORIGIN BERBEDA
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false, // IZINKAN GAMBAR DILOAD DARI ORIGIN BERBEDA
   }),
 );
 
@@ -123,6 +125,7 @@ app.use("/api/guru-mapel", GuruMapelRoutes);
 app.use("/api/jadwal", JadwalRoutes);
 app.use("/api/laporan", LaporanRoutes);
 app.use("/api/berita", beritaRoutes);
+app.use('/api/struktur-organisasi', strukturOrganisasiRoutes);
 // 8. Error Handling
 app.use(notFoundHandler);
 app.use(errorHandler);

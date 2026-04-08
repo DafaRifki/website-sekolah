@@ -1,8 +1,12 @@
 import PublicLayout from "@/pages/layout/PublicLayout";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Tambahkan konstanta BACKEND_URL
+const BACKEND_URL = "http://localhost:3000";
+
 type Jabatan = {
+  id?: number;
   jabatan: string;
   nama: string;
   foto: string;
@@ -11,113 +15,44 @@ type Jabatan = {
   telp?: string;
 };
 
-const StrukturOrganisasi: React.FC = () => {
-  const data: { [key: string]: Jabatan[] } = {
-    ketuaYayasan: [
-      {
-        jabatan: "Ketua Yayasan",
-        nama: "Elis Tsamrotul Aeni, M.Pd",
-        foto: "/foto/ketua-yayasan.jpg",
-        ttl: "Bogor, 12 Mei 1980",
-        alamat: "Jl. Merdeka No. 45, Pamijahan",
-        telp: "0812-3456-7890",
-      },
-    ],
-    kepalaKomiteTU: [
-      {
-        jabatan: "Kepala Sekolah",
-        nama: "Komarudin, S.Pd",
-        foto: "/img/guru/kepala-sekolah.jpg",
-        ttl: "Bogor, 01 Januari 1975",
-        alamat: "Cibungbulang, Bogor",
-        telp: "0812-8888-7777",
-      },
-      {
-        jabatan: "Ketua Komite",
-        nama: "Nuryadin Lutfi",
-        foto: "/foto/komite.jpg",
-        ttl: "Bogor, 10 Maret 1970",
-        alamat: "Pamijahan, Bogor",
-        telp: "0813-4444-5555",
-      },
-      {
-        jabatan: "Tata Usaha",
-        nama: "Nur Zakky Fadlani",
-        foto: "/foto/tu.jpg",
-        ttl: "Bogor, 23 Agustus 1995",
-        alamat: "Ciampea, Bogor",
-        telp: "0812-9999-2222",
-      },
-    ],
-    wakasek: [
-      {
-        jabatan: "Wakasek Kurikulum",
-        nama: "Abdul Hakim, M.Pd",
-        foto: "/foto/kurikulum.jpg",
-        ttl: "Bogor, 5 Juli 1982",
-        alamat: "Cibinong, Bogor",
-        telp: "0813-1234-5678",
-      },
-      {
-        jabatan: "Wakasek Kesiswaan",
-        nama: "Robihudin, S.Pd",
-        foto: "/foto/kesiswaan.jpg",
-        ttl: "Bogor, 18 Mei 1987",
-        alamat: "Dramaga, Bogor",
-        telp: "0812-2222-3333",
-      },
-      {
-        jabatan: "Wakasek Sarpras",
-        nama: "Jamaludin, S.Pd",
-        foto: "/foto/sarpras.jpg",
-        ttl: "Bogor, 30 September 1983",
-        alamat: "Caringin, Bogor",
-        telp: "0812-1111-9999",
-      },
-      {
-        jabatan: "Bendahara",
-        nama: "Intan Rifa'atul Mutmainnah",
-        foto: "/foto/bendahara.jpg",
-        ttl: "Bogor, 25 Desember 1990",
-        alamat: "Leuwiliang, Bogor",
-        telp: "0813-6666-0000",
-      },
-    ],
-    staff: [
-      {
-        jabatan: "Pembina Osis",
-        nama: "Burhan Nawawi",
-        foto: "/img/guru/osis.jpg",
-        ttl: "Bogor, 5 Juli 1982",
-        alamat: "Cibinong, Bogor",
-        telp: "0813-1234-5678",
-      },
-      {
-        jabatan: "Ka. Perpustakaan",
-        nama: "Mario Febrio",
-        foto: "/foto/kesiswaan.jpg",
-        ttl: "Bogor, 18 Mei 1987",
-        alamat: "Dramaga, Bogor",
-        telp: "0812-2222-3333",
-      },
-      {
-        jabatan: "Guru BK/BP",
-        nama: "Kholifah Maulidina, S.Pd",
-        foto: "/foto/sarpras.jpg",
-        ttl: "Bogor, 30 September 1983",
-        alamat: "Caringin, Bogor",
-        telp: "0812-1111-9999",
-      },
-    ],
-  };
+type DataStruktur = {
+  ketuaYayasan: Jabatan[];
+  kepalaKomiteTU: Jabatan[];
+  wakasek: Jabatan[];
+  staff: Jabatan[];
+};
 
+const StrukturOrganisasi: React.FC = () => {
+  const [data, setData] = useState<DataStruktur | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [selected, setSelected] = useState<Jabatan | null>(null);
 
-  // Enhanced Card dengan design yang lebih modern
+  useEffect(() => {
+    const fetchStrukturOrganisasi = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/struktur-organisasi`); 
+        
+        if (!response.ok) throw new Error('Gagal mengambil data');
+        
+        const result = await response.json();
+        setData(result.data); 
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStrukturOrganisasi();
+  }, []);
+
   const Card: React.FC<Jabatan & { index: number; level?: 'top' | 'middle' | 'bottom' }> = ({
     jabatan,
     nama,
     foto,
+    ttl,
+    alamat,
+    telp,
     index,
     level = 'middle',
   }) => {
@@ -151,29 +86,30 @@ const StrukturOrganisasi: React.FC = () => {
           rotateY: 5,
           transition: { duration: 0.3 }
         }}
-        onClick={() => setSelected({ jabatan, nama, foto })}
+        onClick={() => setSelected({ jabatan, nama, foto, ttl, alamat, telp })}
         style={{
           background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%)',
           boxShadow: '0 10px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.5) inset'
         }}
       >
-        {/* Decorative background elements */}
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500"></div>
         <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-emerald-100 to-transparent rounded-bl-full"></div>
         
-        {/* Photo with enhanced styling */}
         <div className="relative mb-4">
           <div className={`${photoSizes[level]} rounded-full bg-gradient-to-br from-emerald-200 to-teal-300 p-1`}>
+            {/* PERBAIKAN FOTO DI CARD */}
             <img
-              src={foto}
+              src={foto ? `${BACKEND_URL}/uploads/${foto.replace(/^\//, '')}` : "/img/default-user.jpg"}
               alt={jabatan}
               className={`${photoSizes[level]} object-cover rounded-full border-2 border-white shadow-lg`}
+              onError={(e) => {
+                e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nama)}&background=10b981&color=fff`;
+              }}
             />
           </div>
           <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full border-2 border-white shadow-sm"></div>
         </div>
 
-        {/* Position title */}
         <div className="text-center mb-3">
           <h4 className="font-bold text-gray-800 text-sm leading-tight mb-1 group-hover:text-emerald-700 transition-colors duration-300">
             {jabatan}
@@ -181,17 +117,14 @@ const StrukturOrganisasi: React.FC = () => {
           <div className="w-12 h-0.5 bg-gradient-to-r from-emerald-400 to-teal-500 mx-auto"></div>
         </div>
 
-        {/* Name with hover effect */}
         <div className="relative">
           <p className="text-xs font-semibold text-gray-600 text-center px-3 py-2 rounded-lg bg-gray-50 group-hover:bg-emerald-50 transition-all duration-300 group-hover:text-emerald-700">
             {nama}
           </p>
         </div>
 
-        {/* Hover overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-emerald-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-2xl"></div>
         
-        {/* Click indicator */}
         <div className="absolute bottom-2 right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -202,10 +135,30 @@ const StrukturOrganisasi: React.FC = () => {
     );
   };
 
+  if (loading) {
+    return (
+      <PublicLayout>
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+        </div>
+      </PublicLayout>
+    );
+  }
+
+  if (!data) {
+    return (
+      <PublicLayout>
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+          <p className="text-gray-500">Data struktur organisasi belum tersedia.</p>
+        </div>
+      </PublicLayout>
+    );
+  }
+
   return (
     <PublicLayout>
       <section className="min-h-screen py-16 px-6 relative overflow-hidden">
-        {/* Enhanced background with geometric patterns */}
+        {/* Background Decorative Asli Milikmu */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50"></div>
         <div className="absolute top-0 left-0 w-full h-full opacity-30">
           <svg className="w-full h-full" viewBox="0 0 1200 800" fill="none">
@@ -227,7 +180,6 @@ const StrukturOrganisasi: React.FC = () => {
         </div>
 
         <div className="max-w-7xl mx-auto text-center relative z-10">
-          {/* Enhanced title */}
           <motion.div
             className="mb-16"
             initial={{ opacity: 0, y: -50 }}
@@ -243,47 +195,51 @@ const StrukturOrganisasi: React.FC = () => {
             <div className="w-24 h-1 bg-gradient-to-r from-emerald-400 to-teal-500 mx-auto rounded-full"></div>
           </motion.div>
 
-          {/* Ketua Yayasan - Top Level */}
-          <div className="mb-16 flex justify-center">
-            {data.ketuaYayasan.map((item, i) => (
-              <Card key={i} {...item} index={i} level="top" />
-            ))}
-          </div>
+          {data.ketuaYayasan?.length > 0 && (
+            <div className="mb-16 flex justify-center">
+              {data.ketuaYayasan.map((item, i) => (
+                <Card key={i} {...item} index={i} level="top" />
+              ))}
+            </div>
+          )}
 
-          {/* Connection lines */}
-          <div className="flex justify-center mb-8">
-            <div className="w-px h-8 bg-gradient-to-b from-emerald-400 to-teal-500"></div>
-          </div>
+          {data.kepalaKomiteTU?.length > 0 && (
+            <>
+              <div className="flex justify-center mb-8">
+                <div className="w-px h-8 bg-gradient-to-b from-emerald-400 to-teal-500"></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 justify-items-center">
+                {data.kepalaKomiteTU.map((item, i) => (
+                  <Card key={i} {...item} index={i} level="middle" />
+                ))}
+              </div>
+            </>
+          )}
 
-          {/* Kepala Sekolah - Komite - TU */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 justify-items-center">
-            {data.kepalaKomiteTU.map((item, i) => (
-              <Card key={i} {...item} index={i} level="middle" />
-            ))}
-          </div>
+          {data.wakasek?.length > 0 && (
+            <>
+              <div className="flex justify-center mb-8">
+                <div className="w-px h-8 bg-gradient-to-b from-emerald-400 to-teal-500"></div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 justify-items-center">
+                {data.wakasek.map((item, i) => (
+                  <Card key={i} {...item} index={i} level="bottom" />
+                ))}
+              </div>
+            </>
+          )}
 
-          {/* Connection lines */}
-          <div className="flex justify-center mb-8">
-            <div className="w-px h-8 bg-gradient-to-b from-emerald-400 to-teal-500"></div>
-          </div>
-
-          {/* Wakasek & Bendahara */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 justify-items-center">
-            {data.wakasek.map((item, i) => (
-              <Card key={i} {...item} index={i} level="bottom" />
-            ))}
-          </div>
-
-          {/* Staff */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 justify-items-center">
-            {data.staff.map((item, i) => (
-              <Card key={i} {...item} index={i} level="bottom" />
-            ))}
-          </div>
+          {data.staff?.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 justify-items-center">
+              {data.staff.map((item, i) => (
+                <Card key={i} {...item} index={i} level="bottom" />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Enhanced Modal */}
+      {/* Modal Box */}
       <AnimatePresence>
         {selected && (
           <motion.div
@@ -301,7 +257,6 @@ const StrukturOrganisasi: React.FC = () => {
               transition={{ duration: 0.5, type: "spring", stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close button */}
               <button 
                 onClick={() => setSelected(null)}
                 className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
@@ -311,7 +266,6 @@ const StrukturOrganisasi: React.FC = () => {
                 </svg>
               </button>
 
-              {/* Photo section dengan gradient background */}
               <div className="md:w-2/5 bg-gradient-to-br from-emerald-100 via-teal-50 to-cyan-100 flex items-center justify-center p-8 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-full opacity-20">
                   <svg viewBox="0 0 200 200" className="w-full h-full">
@@ -325,10 +279,14 @@ const StrukturOrganisasi: React.FC = () => {
                 </div>
                 <div className="relative">
                   <div className="w-48 h-48 rounded-full bg-gradient-to-br from-emerald-200 to-teal-300 p-2">
+                    {/* PERBAIKAN FOTO DI DALAM MODAL */}
                     <img
-                      src={selected.foto}
+                      src={selected.foto ? `${BACKEND_URL}/uploads/${selected.foto.replace(/^\//, '')}` : "/img/default-user.jpg"}
                       alt={selected.jabatan}
                       className="w-full h-full object-cover rounded-full border-4 border-white shadow-xl"
+                      onError={(e) => {
+                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selected.nama)}&background=10b981&color=fff`;
+                      }}
                     />
                   </div>
                   <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-emerald-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
@@ -339,7 +297,6 @@ const StrukturOrganisasi: React.FC = () => {
                 </div>
               </div>
 
-              {/* Detail section dengan design yang lebih modern */}
               <div className="md:w-3/5 p-8 text-left bg-gradient-to-br from-white to-gray-50">
                 <div className="mb-6">
                   <span className="inline-block px-3 py-1 text-xs font-medium text-emerald-700 bg-emerald-100 rounded-full mb-3">

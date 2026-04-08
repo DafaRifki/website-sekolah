@@ -10,6 +10,7 @@ import RaporDetailPage from "./pages/Rapor/RaporDetailPage.tsx";
 import RaporFormPage from "./pages/Rapor/RaporFormPage.tsx";
 import RaporSiswaPage from "./pages/Rapor/RaporSiswaPage.tsx";
 import NilaiInputPage from "./pages/Rapor/Guru/NilaiInputPage.tsx";
+import IndexStrukturOrganisasi from "./pages/admin/struktur-organisasi/index";
 
 // Lazy load all page components
 const LoginPage = lazy(() => import("./pages/LoginPage.tsx"));
@@ -254,6 +255,8 @@ ReactDOM.createRoot(root).render(
             element={<MataPelajaranFormPage />}
           />
           <Route path="/admin/berita" element={<AdminBeritaPage />} />
+
+          <Route path="/admin/struktur-organisasi" element={<IndexStrukturOrganisasi />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

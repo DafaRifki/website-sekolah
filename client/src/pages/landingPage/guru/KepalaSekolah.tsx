@@ -1,145 +1,106 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import PublicLayout from "@/pages/layout/PublicLayout";
 import { Quote, Award, Target, Users, BookOpen, Heart } from "lucide-react";
 
+// Port backend kamu
+const BACKEND_URL = "http://localhost:3000";
+
 const KepalaSekolah: React.FC = () => {
+  const [kepsek, setKepsek] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // 1. Ambil data Kepala Sekolah dari API
+  const fetchKepsek = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/struktur-organisasi`);
+      const result = await response.json();
+      
+      if (result.success && result.data.kepalaKomiteTU) {
+        // Cari data yang jabatannya "Kepala Sekolah"
+        const dataFound = result.data.kepalaKomiteTU.find((item: any) => 
+          item.jabatan.toLowerCase().includes("kepala sekolah")
+        );
+        setKepsek(dataFound);
+      }
+    } catch (error) {
+      console.error("Gagal memuat data Kepala Sekolah:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchKepsek();
+  }, []);
+
+  // Jika sedang loading, tampilkan skeleton atau spinner sederhana
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Memuat...</div>;
+
   return (
     <PublicLayout>
       <div className="bg-gradient-to-br from-slate-50 via-emerald-50/30 to-teal-50/40 min-h-screen">
-        {/* Hero Section */}
         <section className="relative py-20 px-6 overflow-hidden">
-          {/* Decorative Background Elements */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <motion.div
-              className="absolute w-72 h-72 bg-emerald-200/20 rounded-full -top-20 -left-20 blur-3xl"
-              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <motion.div
-              className="absolute w-96 h-96 bg-teal-200/20 rounded-full -bottom-20 -right-20 blur-3xl"
-              animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }}
-              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            />
-          </div>
-
           <div className="max-w-7xl mx-auto relative z-10">
-            {/* Title */}
-            <motion.div
-              initial={{ opacity: 0, y: -30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1 }}
-              className="text-center mb-16"
-            >
+            
+            {/* Title Section */}
+            <motion.div initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-16">
               <span className="inline-block px-6 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold mb-4">
                 Pemimpin Kami
               </span>
               <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-emerald-700 to-teal-600 bg-clip-text text-transparent mb-4">
                 Kepala Sekolah
               </h1>
-              <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                Dedikasi dan visi untuk membentuk generasi berakhlak mulia
-              </p>
             </motion.div>
 
-            {/* Main Content */}
             <div className="grid lg:grid-cols-2 gap-12 items-start">
-              {/* Photo Section */}
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 1, delay: 0.2 }}
-                className="relative"
-              >
-                <div className="relative">
-                  {/* Decorative Border */}
-                  <div className="absolute -inset-4 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-3xl opacity-20 blur-xl"></div>
-                  
-                  {/* Photo Card */}
-                  <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white">
-                    <img
-                      src="/img/kepsek.jpg"
-                      alt="Kepala Sekolah"
-                      className="w-full h-auto object-cover"
+              
+              {/* Photo Section - DINAMIS */}
+              <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} className="relative">
+                <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white">
+                  <img
+                      // PERHATIKAN: Saya menambahkan /uploads/ di sini agar sama dengan Dashboard
+                      src={kepsek?.foto ? `${BACKEND_URL}/uploads/${kepsek.foto.replace(/^\//, '')}` : "/img/default-kepsek.jpg"}
+                      alt={kepsek?.nama || "Kepala Sekolah"}
+                      className="w-full h-[600px] object-cover"
+                      onError={(e) => { 
+                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(kepsek?.nama || 'Kepala Sekolah')}&background=10b981&color=fff`; 
+                      }}
                     />
-                    
-                    {/* Info Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-emerald-900/95 to-transparent p-8">
-                      <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                        Ust Komarudin, S.Pd
-                      </h2>
-                      <p className="text-emerald-100 text-lg">
-                        Kepala Sekolah SMA IT As-Sakinah
-                      </p>
-                    </div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-emerald-900/95 to-transparent p-8">
+                    <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                      {kepsek?.nama || "Nama Kepala Sekolah"}
+                    </h2>
+                    <p className="text-emerald-100 text-lg">
+                      {kepsek?.jabatan || "Kepala Sekolah SMA IT As-Sakinah"}
+                    </p>
                   </div>
-
-                  {/* Achievement Badges */}
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.8, delay: 0.6 }}
-                    className="absolute -bottom-5 -right-6 bg-gradient-to-br from-yellow-400 to-orange-400 text-white p-4 rounded-xl shadow-2xl"
-                  >
-                    <Award size={32} className="mb-2" />
-                    <div className="text-2xl font-bold">7+</div>
-                    <div className="text-sm opacity-100">Tahun Pengalaman</div>
-                  </motion.div>
+                </div>
+                
+                {/* Badge Pengalaman - Bisa disesuaikan atau tetap static */}
+                <div className="absolute -bottom-5 -right-6 bg-gradient-to-br from-yellow-400 to-orange-400 text-white p-4 rounded-xl shadow-2xl">
+                  <Award size={32} className="mb-2" />
+                  <div className="text-2xl font-bold">{kepsek?.ttl?.split(',')[0] ? "Aktif" : "7+"}</div>
+                  <div className="text-sm">Dedikasi Tinggi</div>
                 </div>
               </motion.div>
 
-              {/* Message Section */}
-              <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 1, delay: 0.4 }}
-                className="space-y-6"
-              >
-                {/* Quote Card */}
+              {/* Message Section - DINAMIS */}
+              <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                 <div className="relative bg-white rounded-2xl shadow-lg p-8 border border-emerald-100">
                   <Quote className="absolute top-4 right-4 text-emerald-200" size={48} />
                   
-                  <div className="relative space-y-4">
-                    <p className="text-gray-700 leading-relaxed font-medium text-lg">
-                      <span className="text-emerald-700 font-semibold">
-                        Assalamu'alaikum warahmatullahi wabarakatuh,
-                      </span>
-                    </p>
-                    
-                    <p className="text-gray-700 leading-relaxed">
-                      Segala puji bagi Allah SWT, Tuhan semesta alam. Shalawat serta salam
-                      semoga senantiasa tercurah kepada Nabi Muhammad SAW, keluarga, sahabat,
-                      serta kita semua sebagai pengikutnya.
-                    </p>
-                    
-                    <p className="text-gray-700 leading-relaxed">
-                      Dengan hadirnya website resmi sekolah ini, kami berharap dapat menjadi
-                      sarana informasi, komunikasi, serta media pembelajaran yang bermanfaat
-                      bagi seluruh siswa, orang tua, dan masyarakat.
-                    </p>
-                    
-                    <p className="text-gray-700 leading-relaxed">
-                      Kami berkomitmen untuk membimbing generasi muda agar menjadi insan yang
-                      <span className="text-emerald-700 font-semibold"> beriman, berilmu, dan berakhlak mulia</span>. 
-                      Pendidikan di sekolah kami tidak hanya fokus pada pencapaian akademik, tetapi juga 
-                      pembentukan karakter Islami yang kuat dan siap menghadapi tantangan zaman.
-                    </p>
-                    
-                    <p className="text-gray-700 leading-relaxed">
-                      Mari bersama-sama kita wujudkan visi mulia ini demi masa depan generasi 
-                      yang lebih baik dan penuh berkah.
-                    </p>
-                    
-                    <p className="text-emerald-700 font-semibold text-lg mt-6">
-                      Wassalamu'alaikum warahmatullahi wabarakatuh.
-                    </p>
+                  <div className="relative space-y-4 text-gray-700 leading-relaxed whitespace-pre-line">
+                    {/* Gunakan whitespace-pre-line agar Enter/Paragraf 
+                        yang diketik di Modal Admin tetap terbaca di sini 
+                    */}
+                    {kepsek?.sambutan || "Belum ada sambutan yang ditambahkan."}
                   </div>
                 </div>
 
-                {/* Signature */}
                 <div className="text-right">
                   <div className="inline-block bg-gradient-to-br from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl shadow-lg">
-                    <div className="font-bold text-lg">Ust Komarudin, S.Pd</div>
+                    <div className="font-bold text-lg">{kepsek?.nama}</div>
                     <div className="text-sm opacity-90">Kepala Sekolah</div>
                   </div>
                 </div>

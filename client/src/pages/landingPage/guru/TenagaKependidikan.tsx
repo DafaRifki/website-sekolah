@@ -1,135 +1,83 @@
-import React from 'react';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import PublicLayout from '@/pages/layout/PublicLayout';
 import { 
   Users, 
-  GraduationCap, 
-  Award,
-  BookOpen,
   Search,
-  Mail,
   Phone,
+  Mail,
+  Award,
+  BookOpen
 } from 'lucide-react';
+
+// --- KUNCI PERBAIKAN: Gunakan Port 3000 ---
+const BACKEND_URL = "http://localhost:3000";
+const API_URL = `${BACKEND_URL}/api/guru`;
 
 const TenagaKependidikan = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
+  const [staff, setStaff] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Data Tenaga Kependidikan
-  const staff = [
-    {
-      id: 1,
-      name: "Ust. Ahmad Fauzi, S.Pd.I",
-      position: "Guru Pendidikan Agama Islam",
-      category: "Guru",
-      photo: "/img/tenagapendidik.jpg",
-      email: "ahmad.fauzi@smait-assakinah.sch.id",
-      phone: "0812-3456-7890",
-      education: "S1 Pendidikan Agama Islam",
-      experience: "8 Tahun"
-    },
-    {
-      id: 2,
-      name: "Ustadzah Siti Fatimah, S.Pd",
-      position: "Guru Bahasa Indonesia",
-      category: "Guru",
-      photo: "/img/tenagapendidik.jpg",
-      email: "siti.fatimah@smait-assakinah.sch.id",
-      phone: "0813-4567-8901",
-      education: "S1 Pendidikan Bahasa Indonesia",
-      experience: "6 Tahun"
-    },
-    {
-      id: 3,
-      name: "Ust. Budi Santoso, S.Si",
-      position: "Guru Matematika",
-      category: "Guru",
-      photo: "/img/tenagapendidik.jpg",
-      email: "budi.santoso@smait-assakinah.sch.id",
-      phone: "0814-5678-9012",
-      education: "S1 Matematika",
-      experience: "10 Tahun"
-    },
-    {
-      id: 4,
-      name: "Ustadzah Nur Hasanah, S.Pd",
-      position: "Guru Bahasa Inggris",
-      category: "Guru",
-      photo: "/img/tenagapendidik.jpg",
-      email: "nur.hasanah@smait-assakinah.sch.id",
-      phone: "0815-6789-0123",
-      education: "S1 Pendidikan Bahasa Inggris",
-      experience: "7 Tahun"
-    },
-    {
-      id: 5,
-      name: "Ust. Rizki Ramadhan, S.Kom",
-      position: "Guru TIK & Multimedia",
-      category: "Guru",
-      photo: "/img/tenagapendidik.jpg",
-      email: "rizki.ramadhan@smait-assakinah.sch.id",
-      phone: "0816-7890-1234",
-      education: "S1 Teknik Informatika",
-      experience: "5 Tahun"
-    },
-    {
-      id: 6,
-      name: "Ustadzah Dewi Lestari, S.Pd",
-      position: "Guru Biologi",
-      category: "Guru",
-      photo: "/img/tenagapendidik.jpg",
-      email: "dewi.lestari@smait-assakinah.sch.id",
-      phone: "0817-8901-2345",
-      education: "S1 Pendidikan Biologi",
-      experience: "6 Tahun"
-    },
-    {
-      id: 7,
-      name: "Ibu Ratna Sari",
-      position: "Staf Administrasi",
-      category: "Administrasi",
-      photo: "/img/tenagapendidik.jpg",
-      email: "ratna.sari@smait-assakinah.sch.id",
-      phone: "0818-9012-3456",
-      education: "D3 Administrasi",
-      experience: "4 Tahun"
-    },
-    {
-      id: 8,
-      name: "Bapak Joko Susilo",
-      position: "Staf Keuangan",
-      category: "Administrasi",
-      photo: "/img/tenagapendidik.jpg",
-      email: "joko.susilo@smait-assakinah.sch.id",
-      phone: "0819-0123-4567",
-      education: "S1 Akuntansi",
-      experience: "5 Tahun"
-    },
-    {
-      id: 9,
-      name: "Bapak Usman",
-      position: "Kepala Bagian Kebersihan",
-      category: "Pendukung",
-      photo: "/img/tenagapendidik.jpg",
-      email: "-",
-      phone: "0820-1234-5678",
-      education: "SMA",
-      experience: "3 Tahun"
-    }
-  ];
+  // --- AMBIL DATA DARI API GURU ---
+  useEffect(() => {
+    const fetchGuru = async () => {
+      try {
+        const response = await fetch(API_URL);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
 
-  const categories = ["Semua", "Guru", "Administrasi", "Pendukung"];
+        const result = await response.json();
 
-  // Filter staff based on search and category
+        // Ambil data array (mengatasi perbedaan struktur data antara axios dan fetch)
+        let rawData = [];
+        if (Array.isArray(result)) {
+          rawData = result;
+        } else if (Array.isArray(result.data?.data)) {
+          rawData = result.data.data;
+        } else if (Array.isArray(result.data)) {
+          rawData = result.data;
+        }
+
+        // Format data sesuai kebutuhan UI
+        const formattedStaff = rawData.map((guru: any) => {
+          // Kategori otomatis (Admin = Administrasi, User biasa = Guru)
+          const cat = guru.user?.role === "ADMIN" ? "Administrasi" : "Guru";
+
+          return {
+            id: guru.id_guru,
+            name: guru.nama || "Tanpa Nama",
+            position: guru.jabatan || "Guru Pengajar",
+            category: cat,
+            photo: guru.fotoProfil,
+            email: guru.user?.email || "Tidak ada email",
+            phone: guru.noHP || "Tidak ada nomor"
+          };
+        });
+
+        setStaff(formattedStaff);
+      } catch (error) {
+        console.error("Gagal mengambil data guru:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGuru();
+  }, []);
+
+  const categories = ["Semua", "Guru", "Administrasi"];
+
   const filteredStaff = staff.filter(person => {
     const matchesSearch = person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         person.position.toLowerCase().includes(searchTerm.toLowerCase());
+                          person.position.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'Semua' || person.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  // Statistics
   const stats = [
     { 
       icon: <Users size={32} />, 
@@ -138,31 +86,36 @@ const TenagaKependidikan = () => {
       color: "from-blue-500 to-blue-600"
     },
     { 
-      icon: <Award size={32} />, 
-      number: "95%", 
-      label: "Bersertifikat",
-      color: "from-emerald-500 to-emerald-600"
-    },
-    { 
-      icon: <GraduationCap size={32} />, 
+      icon: <BookOpen size={32} />, 
       number: staff.filter(s => s.category === "Administrasi").length, 
       label: "Staf Administrasi",
       color: "from-purple-500 to-purple-600"
     },
     { 
-      icon: <BookOpen size={32} />, 
-      number: "10+", 
-      label: "Tahun Pengalaman",
-      color: "from-orange-500 to-orange-600"
+      icon: <Award size={32} />, 
+      number: staff.length, 
+      label: "Total Pegawai",
+      color: "from-emerald-500 to-emerald-600"
     }
   ];
+
+  if (loading) {
+    return (
+      <PublicLayout>
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-emerald-500"></div>
+            <p className="text-slate-500 font-medium animate-pulse">Menarik Data Guru...</p>
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
 
   return (
     <PublicLayout>
       <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-green-50 min-h-screen">
-        {/* Hero Section */}
         <section className="relative py-20 px-6 overflow-hidden">
-          {/* Decorative Background */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <motion.div
               className="absolute w-96 h-96 bg-emerald-200/20 rounded-full -top-20 -left-20 blur-3xl"
@@ -177,7 +130,6 @@ const TenagaKependidikan = () => {
           </div>
 
           <div className="max-w-7xl mx-auto relative z-10">
-            {/* Title */}
             <motion.div
               initial={{ opacity: 0, y: -30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -191,12 +143,11 @@ const TenagaKependidikan = () => {
                 Tenaga Kependidikan
               </h1>
               <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                Tenaga profesional dan berdedikasi untuk pendidikan berkualitas
+                Mengenal lebih dekat para pendidik dan staf profesional kami.
               </p>
             </motion.div>
 
-            {/* Statistics */}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <div className="flex justify-center flex-wrap gap-6 mb-12">
               {stats.map((stat, index) => (
                 <motion.div
                   key={index}
@@ -204,10 +155,10 @@ const TenagaKependidikan = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: index * 0.1 }}
                   whileHover={{ y: -5 }}
-                  className="relative group"
+                  className="relative group w-full sm:w-64"
                 >
                   <div className={`absolute -inset-2 bg-gradient-to-r ${stat.color} rounded-2xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300`}></div>
-                  <div className="relative bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+                  <div className="relative bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col items-center text-center">
                     <div className={`w-14 h-14 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center text-white mb-4`}>
                       {stat.icon}
                     </div>
@@ -222,7 +173,6 @@ const TenagaKependidikan = () => {
               ))}
             </div>
 
-            {/* Search and Filter */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -230,19 +180,17 @@ const TenagaKependidikan = () => {
               className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
             >
               <div className="flex flex-col md:flex-row gap-4">
-                {/* Search Bar */}
                 <div className="flex-1 relative">
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                   <input
                     type="text"
-                    placeholder="Cari nama atau posisi..."
+                    placeholder="Cari nama atau jabatan..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   />
                 </div>
 
-                {/* Category Filter */}
                 <div className="flex gap-2 flex-wrap">
                   {categories.map((category) => (
                     <button
@@ -263,7 +211,6 @@ const TenagaKependidikan = () => {
           </div>
         </section>
 
-        {/* Staff Grid */}
         <section className="py-12 px-6">
           <div className="max-w-7xl mx-auto">
             {filteredStaff.length > 0 ? (
@@ -279,55 +226,44 @@ const TenagaKependidikan = () => {
                     className="relative group"
                   >
                     <div className="absolute -inset-2 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300"></div>
-                    <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 h-full">
-                      {/* Photo */}
-                      <div className="relative h-64 bg-gradient-to-br from-emerald-100 to-teal-100 overflow-hidden">
+                    <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 h-full flex flex-col">
+                      
+                      {/* Photo Section */}
+                      <div className="relative h-64 bg-gradient-to-br from-emerald-100 to-teal-100 overflow-hidden shrink-0">
                         <img
-                          src={person.photo}
+                          src={person.photo ? `${BACKEND_URL}/uploads/guru/${person.photo}` : "/img/default-user.jpg"}
                           alt={person.name}
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23e0e7ff" width="200" height="200"/%3E%3Ctext fill="%236366f1" font-family="Arial" font-size="80" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3E' + person.name.charAt(0) + '%3C/text%3E%3C/svg%3E';
+                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=10b981&color=fff`;
                           }}
                         />
-                        {/* Category Badge */}
-                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-1 rounded-full text-xs font-semibold text-emerald-700">
+                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-1 rounded-full text-xs font-semibold text-emerald-700 shadow-sm">
                           {person.category}
                         </div>
                       </div>
 
-                      {/* Info */}
-                      <div className="p-6">
+                      {/* Info Section (Nama, Jabatan, Email, Telp) */}
+                      <div className="p-6 flex-1 flex flex-col">
                         <h3 className="text-xl font-bold text-gray-800 mb-1">
                           {person.name}
                         </h3>
-                        <p className="text-emerald-600 font-medium mb-4">
+                        <p className="text-emerald-600 font-medium mb-4 flex-1">
                           {person.position}
                         </p>
 
-                        <div className="space-y-3 mb-4">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <GraduationCap size={16} className="text-emerald-600" />
-                            <span>{person.education}</span>
+                        <div className="border-t pt-4 space-y-3">
+                          <div className="flex items-center gap-3 text-sm text-gray-600 font-medium">
+                            <Mail size={18} className="text-gray-400 shrink-0" />
+                            <span className="truncate">{person.email}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Award size={16} className="text-emerald-600" />
-                            <span>Pengalaman: {person.experience}</span>
-                          </div>
-                        </div>
-
-                        <div className="border-t pt-4 space-y-2">
-                          {person.email !== "-" && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <Mail size={16} className="text-gray-400" />
-                              <span className="truncate">{person.email}</span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Phone size={16} className="text-gray-400" />
+                          
+                          <div className="flex items-center gap-3 text-sm text-gray-600 font-medium">
+                            <Phone size={18} className="text-gray-400 shrink-0" />
                             <span>{person.phone}</span>
                           </div>
                         </div>
+                        
                       </div>
                     </div>
                   </motion.div>
@@ -344,44 +280,13 @@ const TenagaKependidikan = () => {
                   Tidak Ada Hasil
                 </h3>
                 <p className="text-gray-600">
-                  Coba ubah kata kunci pencarian atau filter kategori
+                  Data belum masuk atau format tidak dikenali.
                 </p>
               </motion.div>
             )}
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-20 px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 1 }}
-            className="max-w-4xl mx-auto"
-          >
-            <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl opacity-20 blur-2xl"></div>
-              <div className="relative bg-gradient-to-br from-emerald-600 to-teal-600 rounded-3xl p-12 text-center text-white shadow-2xl">
-                <Users className="mx-auto mb-6" size={48} />
-                <h2 className="text-3xl font-bold mb-4">
-                  Bergabung dengan Tim Kami
-                </h2>
-                <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-                  Kami selalu mencari individu berbakat dan berdedikasi untuk bergabung 
-                  dalam misi pendidikan berkualitas
-                </p>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="bg-white text-emerald-700 px-8 py-4 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all"
-                >
-                  Kirim Lamaran
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
-        </section>
       </div>
     </PublicLayout>
   );
