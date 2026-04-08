@@ -12,10 +12,10 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let folder = "others";
 
-    if (file.fieldname === "fotoProfil") {
+    if (file.fieldname === "fotoProfil"|| file.fieldname === "foto") {
       if (req.originalUrl.includes("/siswa")) {
         folder = "siswa";
-      } else if (req.originalUrl.includes("/guru")) {
+      } else if (req.originalUrl.includes("/guru") || req.originalUrl.includes("/struktur-organisasi")) {
         folder = "guru";
       } else {
         folder = "profiles";

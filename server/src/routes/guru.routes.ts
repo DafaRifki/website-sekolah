@@ -11,7 +11,21 @@ import { upload } from "../middleware/upload.middleware";
 
 const router = Router();
 
-// Apply authentication to all routes
+// ==========================================
+// 🔓 PUBLIC ROUTES (Bisa diakses Landing Page tanpa Login)
+// ==========================================
+
+/**
+ * GET /api/guru
+ * Get all guru with pagination
+ */
+router.get("/", validateQuery(paginationValidation), GuruController.getAll);
+
+// ==========================================
+// 🔒 PROTECTED ROUTES (Wajib Login / Token)
+// ==========================================
+
+// Terapkan autentikasi untuk SEMUA rute di bawah baris ini
 router.use(authenticateToken);
 
 /**
@@ -25,12 +39,6 @@ router.get("/stats", GuruController.getStats);
  * Get guru available for wali kelas assignment
  */
 router.get("/available/wali-kelas", GuruController.getAvailableForWaliKelas);
-
-/**
- * GET /api/guru
- * Get all guru with pagination
- */
-router.get("/", validateQuery(paginationValidation), GuruController.getAll);
 
 /**
  * GET /api/guru/nip/:nip
@@ -58,12 +66,10 @@ router.post(
 /**
  * PUT /api/guru/:id
  * Update guru
- * [PERBAIKAN 1 - FATAL] Tambahkan upload.single("fotoProfil") disini!
- * Tanpa ini, edit foto tidak akan pernah masuk ke controller.
  */
 router.put(
   "/:id", 
-  upload.single("fotoProfil"), // <--- WAJIB DITAMBAHKAN
+  upload.single("fotoProfil"), 
   validate(updateGuruValidation), 
   GuruController.update
 );
@@ -71,11 +77,10 @@ router.put(
 /**
  * POST /api/guru/:id/upload
  * Upload foto profil guru (Standalone)
- * [PERBAIKAN 2] Ubah "photo" menjadi "fotoProfil" agar konsisten dengan middleware
  */
 router.post(
   "/:id/upload", 
-  upload.single("fotoProfil"), // <--- Ganti "photo" jadi "fotoProfil"
+  upload.single("fotoProfil"), 
   GuruController.uploadPhoto
 );
 

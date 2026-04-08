@@ -78,6 +78,7 @@ const menuItems: Record<Role, MenuSection[]> = {
             { title: "Tahun Ajaran", url: "/tahun-ajaran" },
             { title: "E-Rapor", url: "/e-rapor" },
             { title: "Verifikasi User", url: "/users/verification" },
+            { title: "Struktur Organisasi", url: "/admin/struktur-organisasi" },
           ],
         },
       ],

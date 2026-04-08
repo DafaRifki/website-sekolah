@@ -663,3 +663,19 @@ enum StatusPembayaranPendaftaran {
   LUNAS
   CICIL
 }
+
+model StrukturOrganisasi {
+  id        Int      @id @default(autoincrement())
+  kategori  String   // 'ketuaYayasan', 'kepalaKomiteTU', 'wakasek', 'staff'
+  jabatan   String
+  nama      String
+  foto      String   
+  ttl       String?  
+  alamat    String?  
+  telp      String?  
+  sambutan  String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("struktur_organisasi")
+}
