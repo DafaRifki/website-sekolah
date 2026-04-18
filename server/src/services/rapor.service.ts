@@ -448,6 +448,7 @@ export const getSiswaForNilaiInput = async (
   kelasId: number,
   mapelId: number,
   tahunAjaranId: number,
+  semester: string, // ✅ Added parameter
   isAdmin: boolean = false,
 ) => {
   // Verify guru mengajar mapel ini di kelas ini (Skip for Admin)
@@ -512,9 +513,11 @@ export const getSiswaForNilaiInput = async (
   const result = siswa.map((s) => {
     const nilai1 = nilaiMap.get(`${s.id_siswa}-1`);
     const nilai2 = nilaiMap.get(`${s.id_siswa}-2`);
+    const targetNilai = nilaiMap.get(`${s.id_siswa}-${semester}`); // ✅ Get specific semester
 
     return {
       ...s,
+      // Maintain backward compatibility for pages that expect semester1/semester2
       semester1: nilai1
         ? {
             nilai: nilai1.nilai,
@@ -531,11 +534,21 @@ export const getSiswaForNilaiInput = async (
             nilaiUAS: nilai2.nilaiUAS,
           }
         : null,
+      // ✅ Added "nilai" property for cleaner access in bulk input
+      nilai: targetNilai
+        ? {
+            nilai: targetNilai.nilai,
+            nilaiTugas: targetNilai.nilaiTugas,
+            nilaiUTS: targetNilai.nilaiUTS,
+            nilaiUAS: targetNilai.nilaiUAS,
+          }
+        : null,
     };
   });
 
   return result;
 };
+
 
 /**
  * Input nilai single student (Guru Mapel)

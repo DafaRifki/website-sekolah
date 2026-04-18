@@ -98,6 +98,9 @@ export class SiswaService {
       ...(query.kelasId && query.kelasId !== "all"
         ? { kelasId: parseInt(query.kelasId as string) }
         : {}),
+      ...(query.status && query.status !== "all"
+        ? { status: query.status }
+        : {}),
     };
 
     const [siswa, total] = await Promise.all([
@@ -114,6 +117,7 @@ export class SiswaService {
           tanggalLahir: true,
           jenisKelamin: true,
           fotoProfil: true,
+          status: true,
           kelasId: true,
           kelas: {
             select: {

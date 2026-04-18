@@ -24,10 +24,12 @@ export const getSiswaForNilai = async (
   kelasId: number,
   mapelId: number,
   tahunId: number,
+  semester: string, // ✅ Added parameter
 ) => {
   const response = await apiClient.get("/rapor/guru/siswa", {
-    params: { kelasId, mapelId, tahunId },
+    params: { kelasId, mapelId, tahunId, semester }, // ✅ Include semester
   });
+
 
   // ✅ FIX: Return response.data (sudah include success, message, data)
   return response.data;

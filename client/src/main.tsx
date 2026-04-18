@@ -129,6 +129,10 @@ const KehadiranSiswa = lazy(
   () => import("@/pages/absensi/siswa/KehadiranSiswa.tsx"),
 );
 
+const NilaiBulkPage = lazy(
+  () => import("@/pages/Rapor/Guru/NilaiInputBulkPage.tsx"),
+);
+
 const root = document.getElementById("root") as HTMLElement;
 
 const publicRoute = [
@@ -207,6 +211,7 @@ ReactDOM.createRoot(root).render(
           <Route path="/e-rapor/:id" element={<RaporDetailPage />} />
           <Route path="/e-rapor/:id/edit" element={<RaporFormPage />} />
           <Route path="/guru/nilai" element={<NilaiInputPage />} />
+          <Route path="/guru/nilai-bulk" element={<NilaiBulkPage />} />
           {/* Guru Mapel */}
           <Route path="/guru-mapel" element={<GuruMapelPage />} />
           <Route path="/guru-mapel/create" element={<GuruMapelFormPage />} />

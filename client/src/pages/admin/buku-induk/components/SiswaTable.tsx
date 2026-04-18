@@ -7,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import avatarDefault from "../../../../assets/avatar.png";
 
 interface Siswa {
@@ -16,6 +17,7 @@ interface Siswa {
   jenisKelamin?: string;
   fotoProfil?: string;
   kelas?: { namaKelas: string };
+  status?: string;
 }
 
 interface Props {
@@ -33,6 +35,7 @@ export default function SiswaTable({ siswaList, onDetail }: Props) {
           <TableHead>Nama</TableHead>
           <TableHead>Jenis Kelamin</TableHead>
           <TableHead>Kelas</TableHead>
+          <TableHead>Status</TableHead>
           <TableHead>Aksi</TableHead>
         </TableRow>
       </TableHeader>
@@ -60,7 +63,12 @@ export default function SiswaTable({ siswaList, onDetail }: Props) {
             <TableCell>{siswa.nis}</TableCell>
             <TableCell>{siswa.nama}</TableCell>
             <TableCell>{siswa.jenisKelamin}</TableCell>
-            <TableCell>{siswa.kelas?.namaKelas}</TableCell>
+            <TableCell>{siswa.kelas?.namaKelas || "-"}</TableCell>
+            <TableCell>
+              <Badge variant={siswa.status === "LULUS" ? "secondary" : "default"}>
+                {siswa.status || "AKTIF"}
+              </Badge>
+            </TableCell>
             <TableCell>
               <Button
                 variant="outline"

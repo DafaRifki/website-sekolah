@@ -5,7 +5,7 @@ import apiClient from "@/config/axios";
 import SiswaTable from "./components/SiswaTable";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface Siswa {
   id_siswa: number;
   nis: string;
@@ -22,6 +22,7 @@ export default function BukuIndukPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalData, setTotalData] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
   const perPage = 10;
   const navigate = useNavigate();
 
@@ -44,8 +45,12 @@ export default function BukuIndukPage() {
   }, [search]);
 
   useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
+
+  useEffect(() => {
     fetchData();
-  }, [currentPage, debouncedSearch]);
+  }, [currentPage, debouncedSearch, statusFilter]);
 
   const fetchData = React.useCallback(() => {
     setLoading(true);
@@ -56,6 +61,7 @@ export default function BukuIndukPage() {
           limit: perPage,
           // Only send search if it has value
           ...(debouncedSearch ? { search: debouncedSearch } : {}),
+          status: statusFilter,
         },
       })
       .then((res) => {
@@ -71,7 +77,7 @@ export default function BukuIndukPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, [currentPage, debouncedSearch]);
+  }, [currentPage, debouncedSearch, statusFilter]);
 
   return (
     <div className="container mx-auto p-6">
@@ -88,8 +94,15 @@ export default function BukuIndukPage() {
         <CardContent className="p-6">
           <div className="space-y-6">
             {/* Search Section */}
-            <div>
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <SiswaSearch search={search} setSearch={setSearch} />
+              <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full sm:w-[400px]">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="all">Semua</TabsTrigger>
+                  <TabsTrigger value="AKTIF">Aktif</TabsTrigger>
+                  <TabsTrigger value="LULUS">Lulus</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
 
             {/* Table Section */}

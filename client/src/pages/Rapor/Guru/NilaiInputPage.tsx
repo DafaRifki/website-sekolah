@@ -169,6 +169,7 @@ export default function NilaiInputPage() {
         Number(selectedKelas),
         Number(selectedMapel),
         Number(tahunAjaranId),
+        semester, // ✅ Pass semester
       );
       setSiswaList(res.data || []);
     } catch {
@@ -176,7 +177,8 @@ export default function NilaiInputPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedKelas, selectedMapel, tahunAjaranId]);
+  }, [selectedKelas, selectedMapel, tahunAjaranId, semester]);
+
 
   const fetchStatistics = useCallback(async () => {
     try {
@@ -238,7 +240,7 @@ export default function NilaiInputPage() {
             <Button
               onClick={() =>
                 navigate(
-                  `/guru/nilai/bulk?kelasId=${selectedKelas}&mapelId=${selectedMapel}&tahunId=${tahunAjaranId}&semester=${semester}`,
+                  `/guru/nilai-bulk?kelasId=${selectedKelas}&mapelId=${selectedMapel}&tahunId=${tahunAjaranId}&semester=${semester}`,
                 )
               }
               className="shrink-0">
@@ -274,7 +276,7 @@ export default function NilaiInputPage() {
               onBulkInput={() => {
                 if (selectedMapel && selectedKelas) {
                   navigate(
-                    `/guru/nilai/bulk?kelasId=${selectedKelas}&mapelId=${selectedMapel}&tahunId=${tahunAjaranId}&semester=${semester}`,
+                    `/guru/nilai-bulk?kelasId=${selectedKelas}&mapelId=${selectedMapel}&tahunId=${tahunAjaranId}&semester=${semester}`,
                   );
                 }
               }}

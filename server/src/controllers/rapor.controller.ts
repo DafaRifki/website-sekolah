@@ -251,16 +251,16 @@ export const getMapelByGuru = async (req: Request, res: Response) => {
 export const getSiswaForNilai = async (req: Request, res: Response) => {
   try {
     const guruId = req.user?.role === "ADMIN" ? null : req.user?.guruId;
-    const { kelasId, mapelId, tahunId } = req.query;
+    const { kelasId, mapelId, tahunId, semester } = req.query;
 
     if (req.user?.role !== "ADMIN" && !guruId) {
       return sendError(res, "Guru ID tidak ditemukan", null, 400);
     }
 
-    if (!kelasId || !mapelId || !tahunId) {
+    if (!kelasId || !mapelId || !tahunId || !semester) {
       return sendError(
         res,
-        "kelasId, mapelId, dan tahunId wajib diisi",
+        "kelasId, mapelId, tahunId, dan semester wajib diisi",
         null,
         400,
       );
@@ -271,8 +271,10 @@ export const getSiswaForNilai = async (req: Request, res: Response) => {
       Number(kelasId),
       Number(mapelId),
       Number(tahunId),
+      String(semester),
       req.user?.role === "ADMIN",
     );
+
 
     return sendSuccess(res, "Berhasil mengambil data siswa", siswa);
   } catch (error: any) {
