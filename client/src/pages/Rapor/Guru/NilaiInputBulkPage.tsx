@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getSiswaForNilai, inputNilaiBulk } from "@/services/nilai.service";
@@ -28,7 +28,7 @@ interface NilaiRow {
 }
 
 export default function NilaiInputBulkPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -42,24 +42,16 @@ export default function NilaiInputBulkPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (!kelasId || !mapelId) {
-      toast.error("Parameter tidak lengkap");
-      navigate("/guru/nilai");
-      return;
-    }
-
-    fetchSiswa();
-  }, [kelasId, mapelId, tahunId]);
-
-  const fetchSiswa = async () => {
+  const fetchSiswa = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getSiswaForNilai(
         Number(kelasId),
         Number(mapelId),
         Number(tahunId),
+        semester, // ✅ Pass semester from searchParams
       );
+
       const siswaList: SiswaWithNilai[] = response.data || [];
 
       const initialData: NilaiRow[] = siswaList.map((s) => ({
@@ -79,7 +71,17 @@ export default function NilaiInputBulkPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [kelasId, mapelId, tahunId, semester]);
+
+  useEffect(() => {
+    if (!kelasId || !mapelId) {
+      toast.error("Parameter tidak lengkap");
+      navigate("/guru/nilai");
+      return;
+    }
+
+    fetchSiswa();
+  }, [kelasId, mapelId, fetchSiswa, navigate]);
 
   const calculateNilaiAkhir = (
     tugas: string,
@@ -148,9 +150,13 @@ export default function NilaiInputBulkPage() {
       setTimeout(() => {
         navigate("/guru/nilai");
       }, 1500);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving bulk nilai:", error);
-      toast.error(error.response?.data?.message || "Gagal menyimpan nilai");
+      const message =
+        error instanceof Error
+          ? (error as any).response?.data?.message || error.message
+          : "Gagal menyimpan nilai";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
