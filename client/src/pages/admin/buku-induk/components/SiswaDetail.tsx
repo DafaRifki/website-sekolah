@@ -23,6 +23,7 @@ import {
 
 import PrintPreview from "./PrintPreview"; // sesuaikan path
 
+// 1. UPDATE INTERFACE: Tambahkan field data orang tua yang sebelumnya kurang
 interface Siswa {
   id_siswa: number;
   nis: string;
@@ -31,6 +32,11 @@ interface Siswa {
   jenisKelamin?: string;
   tanggalLahir?: string;
   fotoProfil?: string;
+  namaAyah?: string;
+  pekerjaanAyah?: string;
+  namaIbu?: string;
+  pekerjaanIbu?: string;
+  noTeleponOrtu?: string;
   user?: { email: string; role: string };
   kelas?: {
     namaKelas: string;
@@ -38,7 +44,12 @@ interface Siswa {
     tahunRel?: { tahunAjaran: { namaTahun: string }; isActive: boolean }[];
   };
   Siswa_Orangtua?: {
-    orangtua: { nama: string; hubungan: string; noHp: string };
+    orangtua: { 
+      nama: string; 
+      hubungan: string; 
+      noHp: string;
+      alamat?: string;
+    };
   }[];
   nilaiRapor?: {
     semester: string;
@@ -47,15 +58,21 @@ interface Siswa {
   }[];
 }
 
+// 2. KOMPONEN PEMBANTU: Untuk merapikan baris data agar seragam
+const InfoItem = ({ label, value }: { label: string; value: string | undefined | null }) => (
+  <div className="space-y-1">
+    <span className="text-sm text-gray-500 block">{label}</span>
+    <span className="text-sm font-medium text-gray-900 block">{value || "-"}</span>
+  </div>
+);
+
 export default function DetailSiswaPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [siswa, setSiswa] = useState<Siswa | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [semesterFilter, setSemesterFilter] = useState<"Ganjil" | "Genap">(
-    "Ganjil"
-  );
+  const [semesterFilter, setSemesterFilter] = useState<"Ganjil" | "Genap">("Ganjil");
 
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -64,9 +81,7 @@ export default function DetailSiswaPage() {
     if (!fotoProfil || !fotoProfil.trim()) {
       return AvatarDefault;
     }
-
-    const baseUrl =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/uploads/";
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/uploads/";
     return `${baseUrl}${fotoProfil}`;
   };
 
@@ -165,7 +180,6 @@ export default function DetailSiswaPage() {
           </CardHeader>
           <CardContent className="p-6">
             <div className="flex gap-8">
-              {/* Profile Image */}
               <div className="flex-shrink-0">
                 <img
                   src={getProfileImageUrl(siswa.fotoProfil)}
@@ -177,7 +191,6 @@ export default function DetailSiswaPage() {
                 />
               </div>
 
-              {/* Student Info */}
               <div className="flex-1 space-y-4">
                 <div>
                   <h2 className="text-2xl font-semibold text-gray-900">
@@ -196,9 +209,7 @@ export default function DetailSiswaPage() {
                       <span className="text-gray-500">Tanggal Lahir:</span>
                       <span className="ml-2">
                         {siswa.tanggalLahir
-                          ? new Date(siswa.tanggalLahir).toLocaleDateString(
-                              "id-ID"
-                            )
+                          ? new Date(siswa.tanggalLahir).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })
                           : "-"}
                       </span>
                     </div>
@@ -234,10 +245,9 @@ export default function DetailSiswaPage() {
                   </div>
                 </div>
 
-                {/* Badges */}
                 <div className="flex flex-wrap gap-2 pt-2">
                   <Badge variant="secondary">
-                    {siswa.jenisKelamin || "Tidak diketahui"}
+                    {siswa.jenisKelamin === "L" ? "Laki-laki" : siswa.jenisKelamin === "P" ? "Perempuan" : "Tidak diketahui"}
                   </Badge>
                   <Badge variant="outline">{siswa.user?.role || "Siswa"}</Badge>
                   {siswa.kelas?.namaKelas && (
@@ -249,34 +259,41 @@ export default function DetailSiswaPage() {
           </CardContent>
         </Card>
 
-        {/* Data Orang Tua Card */}
+        {/* 3. UPDATE: Data Orang Tua Card yang baru dan lebih rapi */}
         <Card className="border-0 shadow-sm">
           <CardHeader className="border-b bg-gray-50/50">
             <CardTitle className="text-lg font-semibold">
-              Data Orang Tua
+              Data Orang Tua / Wali
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            {siswa.Siswa_Orangtua?.length ? (
-              <div className="space-y-3">
-                {siswa.Siswa_Orangtua.map((rel, i) => (
-                  <div
-                    key={i}
-                    className="flex justify-between items-center p-4 border rounded-lg bg-gray-50/50">
-                    <div>
-                      <p className="font-medium">{rel.orangtua.nama}</p>
-                      <p className="text-sm text-gray-600">
-                        {rel.orangtua.hubungan}
-                      </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+              <InfoItem label="Nama Ayah" value={siswa.namaAyah} />
+              <InfoItem label="Pekerjaan Ayah" value={siswa.pekerjaanAyah} />
+              
+              <InfoItem label="Nama Ibu" value={siswa.namaIbu} />
+              <InfoItem label="Pekerjaan Ibu" value={siswa.pekerjaanIbu} />
+              
+              <InfoItem label="No. Telepon Orang Tua" value={siswa.noTeleponOrtu} />
+              <InfoItem label="Alamat Orang Tua / Wali" value={siswa.Siswa_Orangtua?.[0]?.orangtua?.alamat} />
+            </div>
+
+            {/* Jika ada data relasi wali tambahan yang terdaftar, tampilkan di bawahnya */}
+            {siswa.Siswa_Orangtua && siswa.Siswa_Orangtua.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <h4 className="text-sm font-medium text-gray-500 mb-3">Kontak Darurat / Wali Terdaftar</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {siswa.Siswa_Orangtua.map((rel, i) => (
+                    <div key={i} className="p-4 border rounded-lg bg-gray-50">
+                      <p className="font-semibold text-gray-900 mb-1">{rel.orangtua.nama}</p>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p>Hubungan: <span className="font-medium text-gray-800">{rel.orangtua.hubungan}</span></p>
+                        <p>Telp: <span className="font-medium text-gray-800">{rel.orangtua.noHp || "-"}</span></p>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600">{rel.orangtua.noHp}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            ) : (
-              <p className="text-gray-500 text-center py-8">
-                Belum ada data orang tua
-              </p>
             )}
           </CardContent>
         </Card>

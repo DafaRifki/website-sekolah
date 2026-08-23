@@ -9,6 +9,11 @@ interface PrintPreviewProps {
     jenisKelamin?: string;
     tanggalLahir?: string;
     fotoProfil?: string;
+    namaAyah?: string;
+    pekerjaanAyah?: string;
+    namaIbu?: string;
+    pekerjaanIbu?: string;
+    noTeleponOrtu?: string;
     user?: { email: string; role: string };
     kelas?: {
       namaKelas: string;
@@ -16,7 +21,7 @@ interface PrintPreviewProps {
       tahunRel?: { tahunAjaran: { namaTahun: string }; isActive: boolean }[];
     };
     Siswa_Orangtua?: {
-      orangtua: { nama: string; hubungan: string; noHp: string };
+      orangtua: { nama: string; hubungan: string; noHp: string; alamat?: string; };
     }[];
     nilaiRapor?: {
       semester: string;
@@ -69,15 +74,12 @@ const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
               font-size: 8pt;
               line-height: 1.2;
             }
-
             .print-header {
               font-size: 11pt;
             }
-
             .print-section-title {
               font-size: 9pt;
             }
-
             .print-table {
               font-size: 7pt;
             }
@@ -104,8 +106,7 @@ const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
               SMA Islam Terpadu As-Sakinah
             </h2>
             <p className="text-xs mt-0.5">
-              Jl. Cibening Raya, Kp Cempaka Putih Rt.001/006 Cibening Pamijahan
-              Bogor
+              Jl. Cibening Raya, Kp Cempaka Putih Rt.001/006 Cibening Pamijahan Bogor
             </p>
             <p className="text-xs">
               Telp: +62 814-0062-5336 | Email: assakinahpamijahanbogor@gmail.com
@@ -131,7 +132,6 @@ const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
                       (e.target as HTMLImageElement).src = AvatarDefault;
                     }}
                   />
-                  {/* <p className="text-xs">Foto</p> */}
                 </div>
 
                 {/* Personal Data - Compact Table */}
@@ -151,16 +151,14 @@ const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
                       <tr>
                         <td className="py-0 font-medium">Kelamin</td>
                         <td className="py-0">:</td>
-                        <td className="py-0">{siswa.jenisKelamin || "-"}</td>
+                        <td className="py-0">{siswa.jenisKelamin === "L" ? "Laki-laki" : siswa.jenisKelamin === "P" ? "Perempuan" : "-"}</td>
                       </tr>
                       <tr>
                         <td className="py-0 font-medium">Tgl Lahir</td>
                         <td className="py-0">:</td>
                         <td className="py-0">
                           {siswa.tanggalLahir
-                            ? new Date(siswa.tanggalLahir).toLocaleDateString(
-                                "id-ID"
-                              )
+                            ? new Date(siswa.tanggalLahir).toLocaleDateString("id-ID")
                             : "-"}
                         </td>
                       </tr>
@@ -203,9 +201,7 @@ const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
                     <td className="py-0">:</td>
                     <td className="py-0">
                       {activeTahunAjaran.length
-                        ? activeTahunAjaran
-                            .map((tr) => tr.tahunAjaran.namaTahun)
-                            .join(", ")
+                        ? activeTahunAjaran.map((tr) => tr.tahunAjaran.namaTahun).join(", ")
                         : "-"}
                     </td>
                   </tr>
@@ -218,51 +214,68 @@ const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
               </table>
             </div>
 
-            {/* Parent Data - Compact */}
+            {/* Parent Data - UPDATE DENGAN DATA LENGKAP */}
             <div>
               <h3 className="text-xs font-bold mb-1 bg-gray-100 p-1 border print-section-title">
                 III. DATA ORANG TUA/WALI
               </h3>
 
-              {siswa.Siswa_Orangtua?.length ? (
-                <table className="w-full border-collapse border border-black text-xs print-table">
-                  <thead>
-                    <tr className="bg-gray-200">
-                      <th className="border border-black p-0.5 text-left font-bold w-4">
-                        No
-                      </th>
-                      <th className="border border-black p-0.5 text-left font-bold">
-                        Nama
-                      </th>
-                      <th className="border border-black p-0.5 text-left font-bold">
-                        Hubungan
-                      </th>
-                      <th className="border border-black p-0.5 text-left font-bold">
-                        No. Telepon
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {siswa.Siswa_Orangtua.slice(0, 3).map((rel, i) => (
-                      <tr key={i}>
-                        <td className="border border-black p-0.5 text-center">
-                          {i + 1}
-                        </td>
-                        <td className="border border-black p-0.5">
-                          {rel.orangtua.nama}
-                        </td>
-                        <td className="border border-black p-0.5">
-                          {rel.orangtua.hubungan}
-                        </td>
-                        <td className="border border-black p-0.5">
-                          {rel.orangtua.noHp}
-                        </td>
+              <table className="w-full text-xs mb-1">
+                <tbody>
+                  <tr>
+                    <td className="py-0 w-28 font-medium">Nama Ayah</td>
+                    <td className="py-0 w-2">:</td>
+                    <td className="py-0">{siswa.namaAyah || "-"}</td>
+                    <td className="py-0 w-24 font-medium pl-2">Pekerjaan Ayah</td>
+                    <td className="py-0 w-2">:</td>
+                    <td className="py-0">{siswa.pekerjaanAyah || "-"}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-0 font-medium">Nama Ibu</td>
+                    <td className="py-0">:</td>
+                    <td className="py-0">{siswa.namaIbu || "-"}</td>
+                    <td className="py-0 font-medium pl-2">Pekerjaan Ibu</td>
+                    <td className="py-0">:</td>
+                    <td className="py-0">{siswa.pekerjaanIbu || "-"}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-0 font-medium">No. Telepon</td>
+                    <td className="py-0">:</td>
+                    <td colSpan={4} className="py-0">{siswa.noTeleponOrtu || "-"}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-0 font-medium align-top">Alamat Orang Tua</td>
+                    <td className="py-0 align-top">:</td>
+                    <td colSpan={4} className="py-0">{siswa.Siswa_Orangtua?.[0]?.orangtua?.alamat || "-"}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* Jika ada data relasi wali tambahan di tabel Siswa_Orangtua */}
+              {siswa.Siswa_Orangtua && siswa.Siswa_Orangtua.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs font-semibold underline mb-0.5">Wali Terdaftar / Darurat:</p>
+                  <table className="w-full border-collapse border border-black text-xs print-table">
+                    <thead>
+                      <tr className="bg-gray-200">
+                        <th className="border border-black p-0.5 text-center font-bold w-4">No</th>
+                        <th className="border border-black p-0.5 text-left font-bold">Nama Wali</th>
+                        <th className="border border-black p-0.5 text-left font-bold">Hubungan</th>
+                        <th className="border border-black p-0.5 text-left font-bold">No. Telepon</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p className="text-xs italic">Data belum tersedia.</p>
+                    </thead>
+                    <tbody>
+                      {siswa.Siswa_Orangtua.slice(0, 2).map((rel, i) => (
+                        <tr key={i}>
+                          <td className="border border-black p-0.5 text-center">{i + 1}</td>
+                          <td className="border border-black p-0.5">{rel.orangtua.nama}</td>
+                          <td className="border border-black p-0.5">{rel.orangtua.hubungan}</td>
+                          <td className="border border-black p-0.5">{rel.orangtua.noHp}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
 
@@ -276,21 +289,11 @@ const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
                 <table className="w-full border-collapse border border-black text-xs print-table">
                   <thead>
                     <tr className="bg-gray-200">
-                      <th className="border border-black p-0.5 text-center font-bold w-4">
-                        No
-                      </th>
-                      <th className="border border-black p-0.5 text-left font-bold">
-                        Mata Pelajaran
-                      </th>
-                      <th className="border border-black p-0.5 text-center font-bold w-8">
-                        Semester
-                      </th>
-                      <th className="border border-black p-0.5 text-center font-bold w-8">
-                        Nilai
-                      </th>
-                      <th className="border border-black p-0.5 text-center font-bold w-6">
-                        Predikat
-                      </th>
+                      <th className="border border-black p-0.5 text-center font-bold w-4">No</th>
+                      <th className="border border-black p-0.5 text-left font-bold">Mata Pelajaran</th>
+                      <th className="border border-black p-0.5 text-center font-bold w-8">Semester</th>
+                      <th className="border border-black p-0.5 text-center font-bold w-8">Nilai</th>
+                      <th className="border border-black p-0.5 text-center font-bold w-6">Predikat</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -302,25 +305,13 @@ const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
 
                       return (
                         <tr key={i}>
+                          <td className="border border-black p-0.5 text-center">{i + 1}</td>
+                          <td className="border border-black p-0.5">{n.mapel.namaMapel}</td>
                           <td className="border border-black p-0.5 text-center">
-                            {i + 1}
+                            {n.semester === "1" ? "Ganjil" : n.semester === "2" ? "Genap" : n.semester}
                           </td>
-                          <td className="border border-black p-0.5">
-                            {n.mapel.namaMapel}
-                          </td>
-                          <td className="border border-black p-0.5 text-center">
-                            {n.semester === "1"
-                              ? "Ganjil"
-                              : n.semester === "2"
-                              ? "Genap"
-                              : n.semester}
-                          </td>
-                          <td className="border border-black p-0.5 text-center font-medium">
-                            {n.nilai}
-                          </td>
-                          <td className="border border-black p-0.5 text-center font-medium">
-                            {predikat}
-                          </td>
+                          <td className="border border-black p-0.5 text-center font-medium">{n.nilai}</td>
+                          <td className="border border-black p-0.5 text-center font-medium">{predikat}</td>
                         </tr>
                       );
                     })}
@@ -329,8 +320,7 @@ const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
               ) : (
                 <div className="border border-dashed border-gray-300 p-2 text-center">
                   <p className="text-xs italic text-gray-600">
-                    Belum ada nilai untuk semester{" "}
-                    {semesterFilter.toLowerCase()}.
+                    Belum ada nilai untuk semester {semesterFilter.toLowerCase()}.
                   </p>
                 </div>
               )}
@@ -354,14 +344,10 @@ const PrintPreview = forwardRef<HTMLDivElement, PrintPreviewProps>(
 
               <div className="text-center w-32">
                 <p className="text-xs font-medium mb-0.5">Wali Kelas</p>
-                <p className="text-xs font-bold">
-                  {siswa.kelas?.namaKelas || "________"}
-                </p>
+                <p className="text-xs font-bold">{siswa.kelas?.namaKelas || "________"}</p>
                 <div className="h-8 my-1"></div>
                 <div className="border-b border-black w-24 mx-auto mb-0.5"></div>
-                <p className="text-xs">
-                  {siswa.kelas?.guru?.nama || "_____________"}
-                </p>
+                <p className="text-xs">{siswa.kelas?.guru?.nama || "_____________"}</p>
                 <p className="text-xs">NIP. ______________</p>
               </div>
             </div>
