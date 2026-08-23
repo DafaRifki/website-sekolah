@@ -112,13 +112,30 @@ export class SiswaService {
         select: {
           id_siswa: true,
           nis: true,
+          nisn: true,
           nama: true,
           alamat: true,
           tanggalLahir: true,
+          tempatLahir: true,
+          agama: true,
           jenisKelamin: true,
+          noHP: true,
           fotoProfil: true,
           status: true,
           kelasId: true,
+          namaAyah: true,
+          namaIbu: true,
+          pekerjaanAyah: true,
+          pekerjaanIbu: true,
+          noTeleponOrtu: true,
+          tahunMasuk: true,
+
+          Siswa_Orangtua: {
+            include: {
+              orangtua: true
+            }
+          },
+          
           kelas: {
             select: {
               id_kelas: true,

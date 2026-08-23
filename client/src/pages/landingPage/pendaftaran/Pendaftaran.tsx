@@ -346,11 +346,11 @@ const Pendaftaran = () => {
             <div className="flex flex-wrap justify-center gap-6 text-gray-700">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">📞 Telepon:</span>
-                <span>(0251) 123-4567</span>
+                <span>+62 814-0062-5336</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-semibold">✉️ Email:</span>
-                <span>info@smait-assakinah.sch.id</span>
+                <span>assakinahpamijahanbogor@gmail.com</span>
               </div>
             </div>
           </motion.div>

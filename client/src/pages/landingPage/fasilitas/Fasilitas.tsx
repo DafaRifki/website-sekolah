@@ -53,9 +53,9 @@ const fasilitasList = [
     category: "umum"
   },
     {
-    title: "Pinter ",
+    title: "Printer ",
     img: "/img/fasilitas/PRINTERR.jpeg",
-    description: "Sekolah menyediakan fasilitas Pinter untuk mendukung pembelajaran interaktif dan kreatif dengan teknologi terkini",
+    description: "Sekolah menyediakan fasilitas Printer untuk mendukung pembelajaran interaktif dan kreatif dengan teknologi terkini",
     category: "akademik"
   },
     {

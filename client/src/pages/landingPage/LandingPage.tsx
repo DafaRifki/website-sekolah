@@ -63,8 +63,7 @@ const LandingPage: React.FC = () => {
           </h2>
 
           <p className="text-black-500 mb-8 max-w-2xl mx-auto">
-            Nikmati pengalaman belajar interaktif dengan fitur modern, akses
-            mudah, dan desain yang ramah pengguna.
+            Mencetak generasi yang berakhlak mulia, berprestasi, dan siap menghadapi tantangan global dengan bekal iman dan ilmu.
           </p>
         </div>
       </section>
@@ -103,7 +102,7 @@ const LandingPage: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <Award className="w-5 h-5 text-yellow-500" />
                 <div className="text-sm">
-                  <div className="font-bold text-gray-800">15+</div>
+                  <div className="font-bold text-gray-800">25+</div>
                   <div className="text-gray-600">Prestasi</div>
                 </div>
               </div>

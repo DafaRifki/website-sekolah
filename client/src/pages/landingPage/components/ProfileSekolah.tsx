@@ -438,7 +438,7 @@ const [pageLoaded, setPageLoaded] = useState(false);
               </div>
               <div className="mt-4 text-center">
                 <span className="inline-block px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium">
-                  📍 Kunjungi Kami di Lokasi Ini
+                  Kunjungi Kami di Lokasi Ini
                 </span>
               </div>
             </div>

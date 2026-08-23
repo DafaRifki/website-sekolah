@@ -29,6 +29,7 @@ import { Search, UserPlus, Eye, Edit3, Trash2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import TambahSiswaModal from "./TambahSiswaModal";
+import ExportExcelButton from "./ExportExcelButton";
 import Swal from "sweetalert2";
 import Pagination from "./components/Pagination";
 
@@ -222,6 +223,8 @@ const DataSiswaPage: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
+
+              <ExportExcelButton search={search} kelasFilter={kelasFilter} />
 
               <Button onClick={() => setIsAddOpenModal(true)} className="gap-2">
                 <UserPlus className="w-4 h-4" />

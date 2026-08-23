@@ -21,7 +21,7 @@ import {
 import { Label } from "@/components/ui/label";
 import DateOfBirthPicker from "@/components/DateOfBirthPicker";
 import { Eye, EyeOff, Camera, Upload, Mail } from "lucide-react";
-import { Badge } from "@/components/ui/badge"; // <--- Tambahkan baris ini
+import { Badge } from "@/components/ui/badge";
 
 interface Kelas {
   id_kelas: number;
