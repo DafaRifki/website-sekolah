@@ -132,10 +132,10 @@ export class SiswaService {
 
           Siswa_Orangtua: {
             include: {
-              orangtua: true
-            }
+              orangtua: true,
+            },
           },
-          
+
           kelas: {
             select: {
               id_kelas: true,
@@ -361,11 +361,15 @@ export class SiswaService {
 
     // Pengecekan eksplisit agar nilai yang dikirim tersimpan dengan benar
     if (data.nama !== undefined) updateData.nama = data.nama;
-    if (data.nisn !== undefined) updateData.nisn = data.nisn;
+    if (data.nisn !== undefined) {
+      updateData.nisn = data.nisn?.trim() || null;
+    }
     if (data.alamat !== undefined) updateData.alamat = data.alamat;
-    if (data.tempatLahir !== undefined) updateData.tempatLahir = data.tempatLahir;
+    if (data.tempatLahir !== undefined)
+      updateData.tempatLahir = data.tempatLahir;
     if (data.agama !== undefined) updateData.agama = data.agama;
-    if (data.jenisKelamin !== undefined) updateData.jenisKelamin = data.jenisKelamin;
+    if (data.jenisKelamin !== undefined)
+      updateData.jenisKelamin = data.jenisKelamin;
     if (data.noHP !== undefined) updateData.noHP = data.noHP;
     if (data.kelasId !== undefined) {
       if (data.kelasId === null) {
@@ -375,13 +379,16 @@ export class SiswaService {
       }
     }
     if (data.fotoProfil !== undefined) updateData.fotoProfil = data.fotoProfil;
-    
+
     // Data Orang Tua
     if (data.namaAyah !== undefined) updateData.namaAyah = data.namaAyah;
     if (data.namaIbu !== undefined) updateData.namaIbu = data.namaIbu;
-    if (data.pekerjaanAyah !== undefined) updateData.pekerjaanAyah = data.pekerjaanAyah;
-    if (data.pekerjaanIbu !== undefined) updateData.pekerjaanIbu = data.pekerjaanIbu;
-    if (data.noTeleponOrtu !== undefined) updateData.noTeleponOrtu = data.noTeleponOrtu;
+    if (data.pekerjaanAyah !== undefined)
+      updateData.pekerjaanAyah = data.pekerjaanAyah;
+    if (data.pekerjaanIbu !== undefined)
+      updateData.pekerjaanIbu = data.pekerjaanIbu;
+    if (data.noTeleponOrtu !== undefined)
+      updateData.noTeleponOrtu = data.noTeleponOrtu;
 
     if (data.tanggalLahir) {
       updateData.tanggalLahir = new Date(data.tanggalLahir);
